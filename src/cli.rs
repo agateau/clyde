@@ -1,6 +1,7 @@
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 
+use crate::app::App;
 use crate::install::install;
 use crate::show::show;
 
@@ -20,17 +21,17 @@ enum Command {
     /// Install an application
     Install {
         /// Application name
-        app_name: String,
+        package_name: String,
     },
     /// Uninstall an application
     Remove {
         /// Application name
-        app_name: String,
+        package_name: String,
     },
     /// Show details about an application
     Show {
         /// Application name
-        app_name: String,
+        package_name: String,
     },
     /// List installed applications
     List {
@@ -46,19 +47,20 @@ struct GlobalOpts {
 
 impl Cli {
     pub fn exec(self) -> Result<()> {
+        let app = App::new();
         match self.command {
-            Command::Install { app_name } => {
-                install(&app_name)
+            Command::Install { package_name } => {
+                install(&app, &package_name)
             }
-            Command::Remove { app_name } => {
-                println!("Removing {}", app_name);
+            Command::Remove { package_name } => {
+                println!("Removing {}", package_name);
                 Ok(())
             }
-            Command::Show { app_name } => {
-                show(&app_name)
+            Command::Show { package_name } => {
+                show(&package_name)
             }
             Command::List {} => {
-                println!("Listing installed applications");
+                println!("Listing installed packages");
                 Ok(())
             }
         }

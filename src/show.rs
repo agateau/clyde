@@ -1,10 +1,10 @@
-use std::ffi::OsStr;
+use std::path::PathBuf;
 use anyhow::Result;
 
 use crate::package::Package;
 
 pub fn show(app_name: &str) -> Result<()> {
-    let package = Package::from_file(OsStr::new(app_name))?;
+    let package = Package::from_file(&PathBuf::from(app_name))?;
     println!("Name: {}", package.name);
     println!("Description: {}", package.description);
 
