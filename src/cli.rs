@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 
 use crate::install::install;
+use crate::show::show;
 
 /// A dumb application package manager
 #[derive(Debug, Parser)]
@@ -26,6 +27,11 @@ enum Command {
         /// Application name
         app_name: String,
     },
+    /// Show details about an application
+    Show {
+        /// Application name
+        app_name: String,
+    },
     /// List installed applications
     List {
     }
@@ -47,6 +53,9 @@ impl Cli {
             Command::Remove { app_name } => {
                 println!("Removing {}", app_name);
                 Ok(())
+            }
+            Command::Show { app_name } => {
+                show(&app_name)
             }
             Command::List {} => {
                 println!("Listing installed applications");

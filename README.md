@@ -17,11 +17,11 @@ releases:
 
 Binaries are added to ~/.local/lib/pinky.
 
-Pinky database is checked out in ~/.local/share/pinky/db.
+Pinky store DB is checked out in ~/.local/share/pinky/store.
 
-Install state stored in ~/.local/share/pinky/pinky.yaml.
+Install DB stored in ~/.local/share/pinky/installed.yaml.
 
-`pinky.yaml`:
+`installed.yaml`:
 
 ```yaml
 packages:
@@ -31,19 +31,32 @@ packages:
 ```
 
 `$installed_version` is a copy of `version` field for the installed version.
-`$requested_version` is the version number specified by the user when they called `pinky install foobar==version`
+`$requested_version` is the version number specified by the user when they called `pinky install foobar==version`.
 
 ## Commands
 
 ### `pinky install foobar[==$version]`
 
-1. Look for `foobar` in DB.
-2. If installed:
+1. Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
+2. If not found: exit with error.
+3. Look for `foobar [version==$version]` in installed DB.
     if $installed_version matches $version
         exit
     else:
         uninstall `foobar`
-3. Download archive to temporary directory
-4. Unpack archive
-5. Copy binaries to `$PINKY_BINARY_DIR`
-6. Update install status
+4. Download archive to temporary directory.
+5. Check archive checksum.
+6. Unpack archive.
+7. Copy binaries to `$PINKY_BINARY_DIR`.
+8. Update installed DB.
+
+### `pinky remove foobar`
+
+1. Look for `foobar` in installed DB.
+2. If not installed: exit with error.
+3. Delete all binaries listed in foobar@version.
+4. Remove `foobar` from installed DB.
+
+### `pinky show foobar`
+
+Shows details about `foobar` package.
