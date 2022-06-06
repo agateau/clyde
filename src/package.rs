@@ -3,13 +3,14 @@ use serde::Deserialize;
 use std::ffi::OsString;
 use std::path::Path;
 use std::fs::File;
-use std::vec::Vec;
+use std::collections::HashMap;
 
 #[derive(Debug, Deserialize)]
 pub struct Release {
     pub version: String,
     pub url: String,
-    pub sha256: String
+    pub sha256: String,
+    pub binaries: HashMap<String, String>
 }
 
 impl Release {

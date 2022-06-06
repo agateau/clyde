@@ -1,3 +1,5 @@
+use std::env;
+use std::path::Path;
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 
@@ -47,7 +49,10 @@ struct GlobalOpts {
 
 impl Cli {
     pub fn exec(self) -> Result<()> {
-        let app = App::new();
+        let home_var = env::var("HOME")?;
+        let prefix = Path::new(&home_var).join(".local");
+
+        let app = App::new(&prefix);
         match self.command {
             Command::Install { package_name } => {
                 install(&app, &package_name)

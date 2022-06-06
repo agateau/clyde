@@ -10,7 +10,7 @@ releases:
     url: https://example.com/foobar/foobar-{{ version }}-{{ os }}-{{ arch }}.tar.gz
     sha256: 1234567890abcdef
     binaries:
-      - foobar-{{ version }}/foobar: foobar
+      foobar-{{ version }}/foobar: foobar
 ```
 
 ## Folder hierarchy
