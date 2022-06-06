@@ -1,8 +1,14 @@
 use std::collections::HashMap;
+use std::fs::File;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{Result, anyhow};
+
+use sha2::{digest::DynDigest, Sha256};
+
+use hex;
 
 use crate::app::App;
 use crate::package::{Package, Release};
@@ -19,6 +25,25 @@ fn download(url: &str, dst_path: &Path) -> Result<()> {
     let status = cmd.status()?;
     if !status.success() {
         return Err(anyhow!("Download failed"));
+    }
+    Ok(())
+}
+
+fn compute_checksum(path: &Path) -> Result<Box<[u8]>> {
+    let mut file = File::open(path)?;
+    let mut hasher = Sha256::default();
+    io::copy(&mut file, &mut hasher)?;
+    Ok(hasher.finalize_reset())
+}
+
+fn verify_checksum(path: &Path, expected: &str) -> Result<()> {
+    println!("Verifying checksum...");
+    let result = compute_checksum(path)?;
+
+    let actual = hex::encode(result);
+
+    if actual != expected {
+        return Err(anyhow!("Checksums do not match.\nExpected: {}\nReceived: {}", expected, actual));
     }
     Ok(())
 }
@@ -46,7 +71,9 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     } else {
         download(&release.url, &dst_path)?;
     }
-    // TODO verify checksum
+
+    verify_checksum(&dst_path, &release.sha256)?;
+
     unpack(&dst_path, &release.binaries, &app.bin_dir)?;
 
     Ok(())
