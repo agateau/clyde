@@ -59,7 +59,7 @@ pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {
         )?.to_str().ok_or(
             anyhow!("Invalid file name in {}", archive.display())
         )?;
-    if name.ends_with(".tar.gz") {
+    if name.ends_with(".tar.gz") || name.ends_with(".tar.bz2") || name.ends_with(".tar.xz") {
         return Ok(Box::new(TarUnpacker::new(&archive)));
     }
     Err(anyhow!("Unsupported format {}", archive.display()))
