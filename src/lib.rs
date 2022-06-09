@@ -4,4 +4,5 @@ pub mod file_cache;
 pub mod install;
 pub mod package;
 pub mod show;
+pub mod store;
 pub mod unpacker;

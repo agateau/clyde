@@ -1,10 +1,9 @@
-use std::path::PathBuf;
 use anyhow::Result;
 
-use crate::package::Package;
+use crate::app::App;
 
-pub fn show(app_name: &str) -> Result<()> {
-    let package = Package::from_file(&PathBuf::from(app_name))?;
+pub fn show(app: &App, app_name: &str) -> Result<()> {
+    let package = app.store.get_package(app_name)?;
     println!("Name: {}", package.name);
     println!("Description: {}", package.description);
 

@@ -62,7 +62,7 @@ impl Cli {
                 Ok(())
             }
             Command::Show { package_name } => {
-                show(&package_name)
+                show(&app, &package_name)
             }
             Command::List {} => {
                 println!("Listing installed packages");

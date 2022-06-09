@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::fs::File;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::process::Command;
 
 use anyhow::{Result, anyhow};
@@ -11,7 +11,7 @@ use sha2::{digest::DynDigest, Sha256};
 use hex;
 
 use crate::app::App;
-use crate::package::{Package, Release};
+use crate::package::Release;
 use crate::unpacker::get_unpacker;
 
 fn download(url: &str, dst_path: &Path) -> Result<()> {
@@ -55,9 +55,8 @@ fn unpack(archive: &Path, binaries: &HashMap<String, String>, bin_dir: &Path) ->
 }
 
 pub fn install(app: &App, package_name: &str) -> Result<()> {
+    let package = app.store.get_package(package_name)?;
     println!("Installing {}", package_name);
-    let package_def_path = PathBuf::from(package_name);
-    let package = Package::from_file(&package_def_path)?;
 
     let release : &Release = package.releases.get(0).ok_or(
         anyhow!("No release in package")
