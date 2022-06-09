@@ -4,7 +4,7 @@ use std::io;
 use std::path::Path;
 use std::process::Command;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 use sha2::{digest::DynDigest, Sha256};
 
@@ -43,7 +43,11 @@ fn verify_checksum(path: &Path, expected: &str) -> Result<()> {
     let actual = hex::encode(result);
 
     if actual != expected {
-        return Err(anyhow!("Checksums do not match.\nExpected: {}\nReceived: {}", expected, actual));
+        return Err(anyhow!(
+            "Checksums do not match.\nExpected: {}\nReceived: {}",
+            expected,
+            actual
+        ));
     }
     Ok(())
 }
@@ -58,9 +62,10 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     let package = app.store.get_package(package_name)?;
     println!("Installing {}", package_name);
 
-    let release : &Release = package.releases.get(0).ok_or(
-        anyhow!("No release in package")
-    )?;
+    let release: &Release = package
+        .releases
+        .get(0)
+        .ok_or(anyhow!("No release in package"))?;
 
     let dst_name = release.get_archive_name()?;
     let dst_path = app.download_cache.get_path(&dst_name);

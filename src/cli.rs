@@ -1,7 +1,7 @@
-use std::env;
-use std::path::Path;
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
+use std::env;
+use std::path::Path;
 
 use crate::app::App;
 use crate::install::install;
@@ -36,8 +36,7 @@ enum Command {
         package_name: String,
     },
     /// List installed applications
-    List {
-    }
+    List {},
 }
 
 #[derive(Debug, Args)]
@@ -54,16 +53,12 @@ impl Cli {
 
         let app = App::new(&prefix);
         match self.command {
-            Command::Install { package_name } => {
-                install(&app, &package_name)
-            }
+            Command::Install { package_name } => install(&app, &package_name),
             Command::Remove { package_name } => {
                 println!("Removing {}", package_name);
                 Ok(())
             }
-            Command::Show { package_name } => {
-                show(&app, &package_name)
-            }
+            Command::Show { package_name } => show(&app, &package_name),
             Command::List {} => {
                 println!("Listing installed packages");
                 Ok(())

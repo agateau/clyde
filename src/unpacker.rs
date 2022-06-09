@@ -4,7 +4,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 use tempfile::TempDir;
 
@@ -13,13 +13,13 @@ pub trait Unpacker {
 }
 
 struct TarUnpacker {
-    pub archive: PathBuf
+    pub archive: PathBuf,
 }
 
 impl TarUnpacker {
     fn new(archive: &Path) -> TarUnpacker {
         TarUnpacker {
-            archive: archive.to_path_buf()
+            archive: archive.to_path_buf(),
         }
     }
 }
@@ -54,11 +54,11 @@ impl Unpacker for TarUnpacker {
 }
 
 pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {
-    let name = archive.file_name().ok_or(
-            anyhow!("Can't find file name in {}", archive.display())
-        )?.to_str().ok_or(
-            anyhow!("Invalid file name in {}", archive.display())
-        )?;
+    let name = archive
+        .file_name()
+        .ok_or(anyhow!("Can't find file name in {}", archive.display()))?
+        .to_str()
+        .ok_or(anyhow!("Invalid file name in {}", archive.display()))?;
     if name.ends_with(".tar.gz") || name.ends_with(".tar.bz2") || name.ends_with(".tar.xz") {
         return Ok(Box::new(TarUnpacker::new(&archive)));
     }

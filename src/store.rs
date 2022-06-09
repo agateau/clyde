@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 
 use crate::package::Package;
 
@@ -10,13 +10,13 @@ pub trait Store {
 }
 
 pub struct GitStore {
-    dir: PathBuf
+    dir: PathBuf,
 }
 
 impl GitStore {
     pub fn new(dir: &Path) -> GitStore {
         GitStore {
-            dir: dir.to_path_buf()
+            dir: dir.to_path_buf(),
         }
     }
 
@@ -39,9 +39,9 @@ impl Store for GitStore {
     }
 
     fn get_package(&self, name: &str) -> Result<Package> {
-        let path = self.find_package_path(&name).ok_or(
-            anyhow!("No such package: {}", name)
-        )?;
+        let path = self
+            .find_package_path(&name)
+            .ok_or(anyhow!("No such package: {}", name))?;
         Package::from_file(&path)
     }
 }

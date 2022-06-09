@@ -2,13 +2,13 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 
 pub struct FileCache {
-    dir: PathBuf
+    dir: PathBuf,
 }
 
 impl FileCache {
     pub fn new(dir: &Path) -> FileCache {
         FileCache {
-            dir: PathBuf::from(dir)
+            dir: PathBuf::from(dir),
         }
     }
 
