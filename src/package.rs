@@ -18,7 +18,7 @@ impl Release {
         let (_, name) = self
             .url
             .rsplit_once('/')
-            .ok_or(anyhow!("Can't find archive name in URL {}", self.url))?;
+            .ok_or_else(|| anyhow!("Can't find archive name in URL {}", self.url))?;
 
         Ok(OsString::from(name))
     }

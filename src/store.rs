@@ -40,8 +40,8 @@ impl Store for GitStore {
 
     fn get_package(&self, name: &str) -> Result<Package> {
         let path = self
-            .find_package_path(&name)
-            .ok_or(anyhow!("No such package: {}", name))?;
+            .find_package_path(name)
+            .ok_or_else(|| anyhow!("No such package: {}", name))?;
         Package::from_file(&path)
     }
 }

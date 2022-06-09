@@ -53,8 +53,8 @@ fn verify_checksum(path: &Path, expected: &str) -> Result<()> {
 }
 
 fn unpack(archive: &Path, binaries: &HashMap<String, String>, bin_dir: &Path) -> Result<()> {
-    let unpacker = get_unpacker(&archive)?;
-    unpacker.unpack(&binaries, &bin_dir)?;
+    let unpacker = get_unpacker(archive)?;
+    unpacker.unpack(binaries, bin_dir)?;
     Ok(())
 }
 

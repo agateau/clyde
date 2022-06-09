@@ -56,11 +56,11 @@ impl Unpacker for TarUnpacker {
 pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {
     let name = archive
         .file_name()
-        .ok_or(anyhow!("Can't find file name in {}", archive.display()))?
+        .ok_or_else(|| anyhow!("Can't find file name in {}", archive.display()))?
         .to_str()
-        .ok_or(anyhow!("Invalid file name in {}", archive.display()))?;
+        .ok_or_else(|| anyhow!("Invalid file name in {}", archive.display()))?;
     if name.ends_with(".tar.gz") || name.ends_with(".tar.bz2") || name.ends_with(".tar.xz") {
-        return Ok(Box::new(TarUnpacker::new(&archive)));
+        return Ok(Box::new(TarUnpacker::new(archive)));
     }
     Err(anyhow!("Unsupported format {}", archive.display()))
 }
