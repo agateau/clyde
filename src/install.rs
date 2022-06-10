@@ -63,9 +63,8 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     println!("Installing {}", package_name);
 
     let release: &Release = package
-        .releases
-        .get(0)
-        .ok_or(anyhow!("No release in package"))?;
+        .get_latest_release()
+        .ok_or_else(|| anyhow!("No release available for {}", package_name))?;
 
     let dst_name = release.get_archive_name()?;
     let dst_path = app.download_cache.get_path(&dst_name);

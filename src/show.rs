@@ -8,8 +8,8 @@ pub fn show(app: &App, app_name: &str) -> Result<()> {
     println!("Description: {}", package.description);
 
     println!("Available versions:");
-    for release in package.releases {
-        println!("- {}", release.version);
+    for version in package.releases.keys() {
+        println!("- {}", version);
     }
     Ok(())
 }

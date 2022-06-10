@@ -4,13 +4,12 @@
 name: foobar
 description: Foo Bar Baz
 releases:
-  - version: 1.2.3
-    arch: amd64
-    os: linux
-    url: https://example.com/foobar/foobar-{{ version }}-{{ os }}-{{ arch }}.tar.gz
-    sha256: 1234567890abcdef
-    binaries:
-      foobar-{{ version }}/foobar: foobar
+  "1.2.3":
+    x86_64-linux:
+      url: https://example.com/foobar/foobar-{{ version }}-{{ os }}-{{ arch }}.tar.gz
+      sha256: 1234567890abcdef
+      binaries:
+        foobar-{{ version }}/foobar: foobar
 ```
 
 ## Folder hierarchy
