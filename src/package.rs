@@ -70,10 +70,7 @@ impl Package {
     }
 
     pub fn get_latest_build(&self) -> Option<&Build> {
-        let max_entry = self
-            .releases
-            .iter()
-            .last()?;
+        let max_entry = self.releases.iter().last()?;
 
         let arch_os = ArchOs::current();
         max_entry.1.get(&arch_os)

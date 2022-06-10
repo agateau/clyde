@@ -49,7 +49,7 @@ struct GlobalOpts {
 impl Cli {
     pub fn exec(self) -> Result<()> {
         let home_var = env::var("HOME")?;
-        let prefix = Path::new(&home_var).join(".local");
+        let prefix = Path::new(&home_var).join(".cache").join("pinky");
 
         let app = App::new(&prefix);
         match self.command {

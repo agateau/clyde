@@ -1,15 +1,12 @@
 use std::boxed::Box;
-use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{anyhow, Result};
 
-use tempfile::TempDir;
-
 pub trait Unpacker {
-    fn unpack(&self, binaries: &HashMap<String, String>, bin_dir: &Path) -> Result<()>;
+    fn unpack(&self, dst_dir: &Path) -> Result<()>;
 }
 
 struct TarUnpacker {
@@ -25,28 +22,17 @@ impl TarUnpacker {
 }
 
 impl Unpacker for TarUnpacker {
-    fn unpack(&self, binaries: &HashMap<String, String>, bin_dir: &Path) -> Result<()> {
-        fs::create_dir_all(&bin_dir)?;
-
-        let temp_dir = TempDir::new_in(bin_dir)?;
+    fn unpack(&self, dst_dir: &Path) -> Result<()> {
+        fs::create_dir_all(&dst_dir)?;
 
         let mut cmd = Command::new("tar");
         cmd.arg("-C");
-        cmd.arg(temp_dir.path());
-        cmd.arg("-xvf");
+        cmd.arg(dst_dir);
+        cmd.arg("-xf");
         cmd.arg(self.archive.canonicalize()?);
-        for src in binaries.keys() {
-            cmd.arg(src);
-        }
         let status = cmd.status()?;
         if !status.success() {
             return Err(anyhow!("Error unpacking {}", self.archive.display()));
-        }
-
-        for (src, dst) in binaries.iter() {
-            let src_path = temp_dir.path().join(src);
-            let dst_path = bin_dir.join(dst);
-            fs::rename(src_path, dst_path)?;
         }
 
         Ok(())

@@ -14,11 +14,15 @@ releases:
 
 ## Folder hierarchy
 
-Binaries are added to ~/.local/lib/pinky.
+Default prefix is ~/.cache/pinky.
 
-Pinky store DB is checked out in ~/.local/share/pinky/store.
+Binaries are in $prefix/bin.
 
-Install DB stored in ~/.local/share/pinky/installed.yaml.
+Packages are in $prefix/pkg/$pkgname.
+
+Pinky store DB is checked out in $prefix/store.
+
+Install DB stored in $prefix/installed.yaml.
 
 `installed.yaml`:
 

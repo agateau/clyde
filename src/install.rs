@@ -1,6 +1,7 @@
 use std::collections::HashMap;
-use std::fs::File;
+use std::fs::{self, File};
 use std::io;
+use std::os::unix;
 use std::path::Path;
 use std::process::Command;
 
@@ -52,9 +53,25 @@ fn verify_checksum(path: &Path, expected: &str) -> Result<()> {
     Ok(())
 }
 
-fn unpack(archive: &Path, binaries: &HashMap<String, String>, bin_dir: &Path) -> Result<()> {
+fn unpack(archive: &Path, pkg_dir: &Path) -> Result<()> {
+    println!("Unpacking...");
     let unpacker = get_unpacker(archive)?;
-    unpacker.unpack(binaries, bin_dir)?;
+    unpacker.unpack(pkg_dir)?;
+    Ok(())
+}
+
+fn install_binaries(
+    pkg_dir: &Path,
+    bin_dir: &Path,
+    binaries: &HashMap<String, String>,
+) -> Result<()> {
+    println!("Installing binaries...");
+    fs::create_dir_all(&bin_dir)?;
+    for (src, dst) in binaries.iter() {
+        let src_path = pkg_dir.join(src);
+        let dst_path = bin_dir.join(dst);
+        unix::fs::symlink(src_path, dst_path)?;
+    }
     Ok(())
 }
 
@@ -77,7 +94,13 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
 
     verify_checksum(&dst_path, &build.sha256)?;
 
-    unpack(&dst_path, &build.binaries, &app.bin_dir)?;
+    let pkg_dir = app.pkg_base_dir.join(&package.name);
+    if pkg_dir.exists() {
+        fs::remove_dir_all(&pkg_dir)?
+    }
+    unpack(&dst_path, &pkg_dir)?;
+
+    install_binaries(&pkg_dir, &app.bin_dir, &build.binaries)?;
 
     Ok(())
 }
