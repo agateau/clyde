@@ -11,7 +11,7 @@ use sha2::{digest::DynDigest, Sha256};
 use hex;
 
 use crate::app::App;
-use crate::package::Release;
+use crate::package::Build;
 use crate::unpacker::get_unpacker;
 
 fn download(url: &str, dst_path: &Path) -> Result<()> {
@@ -62,22 +62,22 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     let package = app.store.get_package(package_name)?;
     println!("Installing {}", package_name);
 
-    let release: &Release = package
-        .get_latest_release()
-        .ok_or_else(|| anyhow!("No release available for {}", package_name))?;
+    let build: &Build = package
+        .get_latest_build()
+        .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
 
-    let dst_name = release.get_archive_name()?;
+    let dst_name = build.get_archive_name()?;
     let dst_path = app.download_cache.get_path(&dst_name);
 
     if dst_path.exists() {
         println!("Already downloaded");
     } else {
-        download(&release.url, &dst_path)?;
+        download(&build.url, &dst_path)?;
     }
 
-    verify_checksum(&dst_path, &release.sha256)?;
+    verify_checksum(&dst_path, &build.sha256)?;
 
-    unpack(&dst_path, &release.binaries, &app.bin_dir)?;
+    unpack(&dst_path, &build.binaries, &app.bin_dir)?;
 
     Ok(())
 }
