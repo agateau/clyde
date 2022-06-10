@@ -1,6 +1,6 @@
 use anyhow::{anyhow, Result};
 use serde::Deserialize;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsString;
 use std::fs::File;
 use std::path::Path;
@@ -31,7 +31,7 @@ impl Build {
 pub struct Package {
     pub name: String,
     pub description: String,
-    pub releases: HashMap<Version, HashMap<ArchOs, Build>>,
+    pub releases: BTreeMap<Version, HashMap<ArchOs, Build>>,
 }
 
 /// Internal class, used to deserialize: this is then turned into Package, which has stronger
@@ -45,7 +45,7 @@ struct InternalPackage {
 
 impl InternalPackage {
     fn to_package(&self) -> Result<Package> {
-        let mut releases = HashMap::<Version, HashMap<ArchOs, Build>>::new();
+        let mut releases = BTreeMap::<Version, HashMap<ArchOs, Build>>::new();
         for (version_str, builds) in self.releases.iter() {
             let version = Version::parse(version_str)?;
             let builds = builds
@@ -73,7 +73,7 @@ impl Package {
         let max_entry = self
             .releases
             .iter()
-            .max_by_key(|(version, _)| version.clone())?;
+            .last()?;
 
         let arch_os = ArchOs::current();
         max_entry.1.get(&arch_os)
