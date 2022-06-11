@@ -17,6 +17,10 @@ impl ArchOs {
     }
 
     pub fn parse(text: &str) -> Result<ArchOs> {
+        if text == "any" {
+            return Ok(ArchOs::new("any", "any"));
+        }
+
         let mut iter = text.split('-');
         let arch = iter
             .next()

@@ -6,19 +6,47 @@ description: Foo Bar Baz
 releases:
   "1.2.3":
     x86_64-linux:
-      url: https://example.com/foobar/foobar-{{ version }}-{{ os }}-{{ arch }}.tar.gz
+      url: https://example.com/foobar/foobar-1.2.3-x86_65-linux.tar.gz
       sha256: 1234567890abcdef
-      binaries:
-        foobar-{{ version }}/foobar: foobar
+
+  "1.2.1":
+    x86_64-linux:
+      url: https://example.com/foobar/foobar-1.2.1-x86_65-linux.tar.gz
+      sha256: 1234567890abcdef
+
+installs:
+  # `install` command is going to use the highest version <= version to install.
+  #
+  # This means if you have files entries for 1.2.0 and 1.3.0, then installing
+  # 1.3.4 would use the 1.3.0 files entries. Installing 1.2.4 would use the
+  # 1.2.0 entries.
+  "1.2.0":
+    any:
+      # instructions for all arch-os
+
+      # Ignore first level of directory
+      strip: 1
+      files:
+        bin/foo-*: bin/foo
+        # This is the same as bin/bar: bin/bar
+        bin/bar:
+        man/*: share/man
+        README.md share/doc/foobar/README.md
+    any-macos:
+      # macOS special instructions
 ```
 
 ## Folder hierarchy
 
 Default prefix is ~/.cache/pinky.
 
-Binaries are in $prefix/bin.
+Packages are all installed in $prefix/inst.
 
-Packages are in $prefix/pkg/$pkgname.
+Packages must follow these rules:
+- install binaries in $prefix/inst/bin
+- install man pages in $prefix/inst/share/man
+- install bash completion files in $prefix/inst/share/completion/bash
+- install zsh completion files in $prefix/inst/share/completion/zsh
 
 Pinky store DB is checked out in $prefix/store.
 
