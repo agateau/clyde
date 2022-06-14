@@ -1,7 +1,5 @@
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
-use std::env;
-use std::path::Path;
 
 use crate::app::App;
 use crate::install::install;
@@ -48,8 +46,7 @@ struct GlobalOpts {
 
 impl Cli {
     pub fn exec(self) -> Result<()> {
-        let home_var = env::var("HOME")?;
-        let prefix = Path::new(&home_var).join(".cache").join("clyde");
+        let prefix = App::find_prefix()?;
 
         let app = App::new(&prefix);
         match self.command {

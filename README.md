@@ -42,7 +42,12 @@ installs:
 
 ## Folder hierarchy
 
-Default prefix is ~/.cache/clyde.
+The default prefix is a `clyde` directory created in the cache directory. The location of this cache depends on your OS:
+- Linux: `$HOME/.cache/clyde` by default
+- Windows: `{FOLDERID_LocalAppData}/clyde/cache`
+- macOS: `$HOME/Library/Caches/clyde`
+
+The prefix can be defined using the `$CLYDE_PREFIX` environment variable.
 
 Packages are all installed in $prefix/inst.
 
