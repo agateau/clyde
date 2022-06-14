@@ -118,6 +118,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "clyde"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "assert_fs",
+ "clap",
+ "hex",
+ "semver",
+ "serde",
+ "serde_yaml",
+ "sha2",
+]
+
+[[package]]
 name = "cpufeatures"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -340,20 +354,6 @@ name = "os_str_bytes"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8e22443d1643a904602595ba1cd8f7d896afe56d26712531c5ff73a15b2fbf64"
-
-[[package]]
-name = "pinky"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "assert_fs",
- "clap",
- "hex",
- "semver",
- "serde",
- "serde_yaml",
- "sha2",
-]
 
 [[package]]
 name = "predicates"

@@ -9,7 +9,7 @@ use crate::show::show;
 
 /// A dumb application package manager
 #[derive(Debug, Parser)]
-#[clap(name = "pinky", version)]
+#[clap(name = "clyde", version)]
 pub struct Cli {
     #[clap(flatten)]
     global_opts: GlobalOpts,
@@ -49,7 +49,7 @@ struct GlobalOpts {
 impl Cli {
     pub fn exec(self) -> Result<()> {
         let home_var = env::var("HOME")?;
-        let prefix = Path::new(&home_var).join(".cache").join("pinky");
+        let prefix = Path::new(&home_var).join(".cache").join("clyde");
 
         let app = App::new(&prefix);
         match self.command {

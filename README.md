@@ -1,4 +1,8 @@
-## pinky YAML format
+# Clyde
+
+Clyde is a package manager for prebuilt applications.
+
+## Clyde YAML format
 
 ```yaml
 name: foobar
@@ -38,7 +42,7 @@ installs:
 
 ## Folder hierarchy
 
-Default prefix is ~/.cache/pinky.
+Default prefix is ~/.cache/clyde.
 
 Packages are all installed in $prefix/inst.
 
@@ -48,7 +52,7 @@ Packages must follow these rules:
 - install bash completion files in $prefix/inst/share/completion/bash
 - install zsh completion files in $prefix/inst/share/completion/zsh
 
-Pinky store DB is checked out in $prefix/store.
+Clyde store DB is checked out in $prefix/store.
 
 Install DB stored in $prefix/installed.yaml.
 
@@ -62,11 +66,11 @@ packages:
 ```
 
 `$installed_version` is a copy of `version` field for the installed version.
-`$requested_version` is the version number specified by the user when they called `pinky install foobar==version`.
+`$requested_version` is the version number specified by the user when they called `clyde install foobar==version`.
 
 ## Commands
 
-### `pinky install foobar[==$version]`
+### `clyde install foobar[==$version]`
 
 1. Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
 2. If not found: exit with error.
@@ -78,16 +82,16 @@ packages:
 4. Download archive to temporary directory.
 5. Check archive checksum.
 6. Unpack archive.
-7. Copy binaries to `$PINKY_BINARY_DIR`.
+7. Move files.
 8. Update installed DB.
 
-### `pinky remove foobar`
+### `clyde remove foobar`
 
 1. Look for `foobar` in installed DB.
 2. If not installed: exit with error.
 3. Delete all binaries listed in foobar@version.
 4. Remove `foobar` from installed DB.
 
-### `pinky show foobar`
+### `clyde show foobar`
 
 Shows details about `foobar` package.
