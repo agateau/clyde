@@ -7,7 +7,7 @@ use crate::store::{GitStore, Store};
 pub struct App {
     pub download_cache: FileCache,
     pub install_dir: PathBuf,
-    pub pkg_base_dir: PathBuf,
+    pub tmp_dir: PathBuf,
     pub store: Box<dyn Store>,
 }
 
@@ -17,7 +17,7 @@ impl App {
         App {
             download_cache: FileCache::new(Path::new("/tmp")),
             install_dir: prefix.join("inst"),
-            pkg_base_dir: prefix.join("pkg"),
+            tmp_dir: prefix.join("tmp"),
             store: Box::new(GitStore::new(&store_dir)),
         }
     }

@@ -119,24 +119,26 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
         .get_install(version, &arch_os)
         .ok_or_else(|| anyhow!("No files instruction for {}", package_name))?;
 
-    let dst_name = build.get_archive_name()?;
-    let dst_path = app.download_cache.get_path(&dst_name);
+    let archive_name = build.get_archive_name()?;
+    let archive_path = app.download_cache.get_path(&archive_name);
 
-    if dst_path.exists() {
+    if archive_path.exists() {
         println!("Already downloaded");
     } else {
-        download(&build.url, &dst_path)?;
+        download(&build.url, &archive_path)?;
     }
 
-    verify_checksum(&dst_path, &build.sha256)?;
+    verify_checksum(&archive_path, &build.sha256)?;
 
-    let pkg_dir = app.pkg_base_dir.join(&package.name);
-    if pkg_dir.exists() {
-        fs::remove_dir_all(&pkg_dir)?
+    let unpack_dir = app.tmp_dir.join(&package.name);
+    if unpack_dir.exists() {
+        fs::remove_dir_all(&unpack_dir)?
     }
-    unpack(&dst_path, &pkg_dir, install.strip)?;
+    unpack(&archive_path, &unpack_dir, install.strip)?;
 
-    install_files(&pkg_dir, &app.install_dir, &install.files)?;
+    install_files(&unpack_dir, &app.install_dir, &install.files)?;
+
+    fs::remove_dir_all(&unpack_dir)?;
 
     Ok(())
 }
