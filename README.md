@@ -75,6 +75,14 @@ packages:
 
 ## Commands
 
+### `clyde setup`
+
+1. If $prefix exists quit with an error message
+2. Create $prefix
+3. Clone the store in it
+4. Create $prefix/shell/activate script
+5. Tell the user to source $prefix/shell/activate from their env file
+
 ### `clyde install foobar[==$version]`
 
 1. Look for `foobar arch==$arch os==$os [version==$version]` in store DB.

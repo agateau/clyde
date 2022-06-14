@@ -3,9 +3,10 @@ use clap::{Args, Parser, Subcommand};
 
 use crate::app::App;
 use crate::install::install;
+use crate::setup::setup;
 use crate::show::show;
 
-/// A dumb application package manager
+/// A package manager for prebuilt applications
 #[derive(Debug, Parser)]
 #[clap(name = "clyde", version)]
 pub struct Cli {
@@ -18,6 +19,8 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Setup Clyde
+    Setup {},
     /// Install an application
     Install {
         /// Application name
@@ -50,6 +53,7 @@ impl Cli {
 
         let app = App::new(&prefix);
         match self.command {
+            Command::Setup {} => setup(&app),
             Command::Install { package_name } => install(&app, &package_name),
             Command::Remove { package_name } => {
                 println!("Removing {}", package_name);
