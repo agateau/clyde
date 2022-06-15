@@ -2,7 +2,101 @@
 
 Clyde is a package manager for prebuilt applications.
 
-## Clyde YAML format
+## Motivation
+
+You want to install the latest version of tools like ripgrep, fd or gh, but:
+
+- They are not available in your distribution, or the available versions are too old, and you don't want to mess up your system
+- You don't want to have to think about where to install them, add them to $PATH, make their man page available, make auto-completion work…
+- You don't want to remember how you installed them when it's time to update them
+
+Maybe you don't have root access on the machine where you need these tools, so installing system packages is not an option.
+
+Maybe you want to pin the version of one tool.
+
+Maybe you are concerned about supply-chain attacks? (see Security section)
+
+## Getting started
+
+1. Download a Clyde binary (Clyde can update itself, but it needs to be installed manually first)
+
+2. Run `clyde setup`
+
+3. Add the created activation script to your shell startup script
+
+4. Restart your shell
+
+You are now ready to use Clyde. Let's install ripgrep:
+
+```
+clyde install ripgrep
+```
+
+Check it works:
+
+```
+rg --help
+```
+
+Check you can read its man page:
+
+```
+man rg
+```
+
+## Commands
+
+### `clyde setup`
+
+Setup Clyde: install Clyde store, and create an activation script. All changes are done in  "Clyde prefix" (see "Folder hierarchy" section)
+
+### `clyde update`
+
+[ ] Update Clyde store.
+
+### `clyde install foobar[==$version]`
+
+1. [x] Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
+2. [x] If not found: exit with error.
+3. [ ] Look for `foobar [version==$version]` in installed DB.
+    if $installed_version matches $version
+        exit
+    else:
+        uninstall `foobar`
+4. [x] Download archive to temporary directory.
+5. [x] Check archive checksum.
+6. [x] Unpack archive.
+7. [x] Move files.
+8. [ ] Update installed DB.
+
+### `clyde remove foobar`
+
+1. [ ] Look for `foobar` in installed DB.
+2. [ ] If not installed: exit with error.
+3. [ ] Delete all binaries listed in foobar@version.
+4. [ ] Remove `foobar` from installed DB.
+
+### `clyde show foobar`
+
+Shows details about `foobar` package.
+
+## Security
+
+Is Clyde more secure than `curl <url> | bash`?
+
+Yes, but it still requires you to be careful.
+
+It is more secure in that the Clyde store contains the sha256 checksum of all archives, making it more complicated for an attacker to trick you into installing a corrupted archive.
+
+This means if an attacker takes over the GitHub account of an app developer and replace some release artifacts with others, Clyde will refuse to install them. It does not protect however from the case where the attacker releases a new version of the application. To protect against this you need to pin the version numbers.
+
+Clyde does not sandbox the applications.
+
+Clyde installs binaries produced by app developers, it does not rebuild them (unlike projects like [Homebrew](https://brew.sh)).
+
+## Internals
+
+### Clyde YAML format
 
 ```yaml
 name: foobar
@@ -40,7 +134,7 @@ installs:
       # macOS special instructions
 ```
 
-## Folder hierarchy
+### Folder hierarchy
 
 The default prefix is a `clyde` directory created in the cache directory. The location of this cache depends on your OS:
 - Linux: `$HOME/.cache/clyde` by default
@@ -72,39 +166,3 @@ packages:
 
 `$installed_version` is a copy of `version` field for the installed version.
 `$requested_version` is the version number specified by the user when they called `clyde install foobar==version`.
-
-## Commands
-
-### `clyde setup`
-
-1. If $prefix exists quit with an error message
-2. Create $prefix
-3. Clone the store in it
-4. Create $prefix/shell/activate script
-5. Tell the user to source $prefix/shell/activate from their env file
-
-### `clyde install foobar[==$version]`
-
-1. Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
-2. If not found: exit with error.
-3. Look for `foobar [version==$version]` in installed DB.
-    if $installed_version matches $version
-        exit
-    else:
-        uninstall `foobar`
-4. Download archive to temporary directory.
-5. Check archive checksum.
-6. Unpack archive.
-7. Move files.
-8. Update installed DB.
-
-### `clyde remove foobar`
-
-1. Look for `foobar` in installed DB.
-2. If not installed: exit with error.
-3. Delete all binaries listed in foobar@version.
-4. Remove `foobar` from installed DB.
-
-### `clyde show foobar`
-
-Shows details about `foobar` package.
