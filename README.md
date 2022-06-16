@@ -56,7 +56,7 @@ Setup Clyde: install Clyde store, and create an activation script. All changes a
 
 ### `clyde install foobar[==$version]`
 
-1. [x] Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
+1. [/] Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
 2. [x] If not found: exit with error.
 3. [ ] Look for `foobar [version==$version]` in installed DB.
     if $installed_version matches $version
@@ -67,7 +67,7 @@ Setup Clyde: install Clyde store, and create an activation script. All changes a
 5. [x] Check archive checksum.
 6. [x] Unpack archive.
 7. [x] Move files.
-8. [ ] Update installed DB.
+8. [x] Update installed DB.
 
 ### `clyde remove foobar`
 
@@ -153,16 +153,19 @@ Packages must follow these rules:
 
 Clyde store DB is checked out in $prefix/store.
 
-Install DB stored in $prefix/installed.yaml.
+### Installed DB
 
-`installed.yaml`:
+Installed DB is stored in $prefix/clyde.sqlite.
 
-```yaml
-packages:
-  - name: $name
-    installed_version: $installed_version
-    requested_version: $requested_version
+#### Tables
+
 ```
+installed_package:
+- *name*
+- installed_version
+- requested_version
 
-`$installed_version` is a copy of `version` field for the installed version.
-`$requested_version` is the version number specified by the user when they called `clyde install foobar==version`.
+installed_file:
+- *path*
+- package_name
+```

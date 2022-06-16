@@ -48,6 +48,9 @@ pub fn setup(app: &App) -> Result<()> {
 
     setup_store(&app.store_dir)?;
 
+    println!("Creating Clyde database");
+    app.get_database()?.create()?;
+
     create_activate_script(app)?;
 
     Ok(())
