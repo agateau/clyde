@@ -48,7 +48,7 @@ pub fn setup(app: &App) -> Result<()> {
 
     setup_store(&app.store_dir)?;
 
-    create_activate_script(&app)?;
+    create_activate_script(app)?;
 
     Ok(())
 }
