@@ -109,6 +109,8 @@ fn install_files(
 }
 
 pub fn install(app: &App, package_name: &str) -> Result<()> {
+    let mut db = app.get_database()?;
+
     let arch_os = ArchOs::current();
     let requested_version = VersionReq::STAR;
 
@@ -118,6 +120,12 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     let version = package
         .get_latest_version()
         .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
+
+    if let Some(installed_version) = db.get_package_version(package_name)? {
+        if &installed_version == version {
+            return Err(anyhow!("{} {} is already installed", package_name, version));
+        }
+    }
 
     let build = package
         .get_build(version, &arch_os)
@@ -145,7 +153,6 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     unpack(&archive_path, &unpack_dir, install.strip)?;
 
     let installed_files = install_files(&unpack_dir, &app.install_dir, &install.files)?;
-    let mut db = app.get_database()?;
     db.add_package(&package.name, version, &requested_version, &installed_files)?;
 
     fs::remove_dir_all(&unpack_dir)?;
