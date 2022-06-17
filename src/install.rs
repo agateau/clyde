@@ -146,12 +146,7 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
 
     let installed_files = install_files(&unpack_dir, &app.install_dir, &install.files)?;
     let mut db = app.get_database()?;
-    db.add_package(
-        &package.name,
-        version,
-        &requested_version,
-        &installed_files,
-    )?;
+    db.add_package(&package.name, version, &requested_version, &installed_files)?;
 
     fs::remove_dir_all(&unpack_dir)?;
 
@@ -161,41 +156,9 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fs::File;
-    use std::path::{Path, PathBuf};
-    use std::vec::Vec;
+    use std::path::PathBuf;
 
-    fn create_tree(root: &Path, files: &[&str]) {
-        for file in files {
-            let path = root.join(file);
-            fs::create_dir_all(&path.parent().unwrap()).unwrap();
-            File::create(&path).unwrap();
-        }
-    }
-
-    fn list_tree_internal(root: &Path, parent: &Path) -> Result<Vec<PathBuf>> {
-        let mut files = Vec::<PathBuf>::new();
-        for entry in fs::read_dir(&parent)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.is_dir() {
-                files.extend(list_tree_internal(&root, &path)?);
-            } else {
-                let rel_path = path.strip_prefix(&root)?;
-                files.push(rel_path.to_path_buf());
-            }
-        }
-        Ok(files)
-    }
-
-    fn list_tree(root: &Path) -> Result<Vec<String>> {
-        let file_vec = list_tree_internal(&root, &root)?;
-        let file_array = file_vec
-            .iter()
-            .map(|p| p.to_str().unwrap().to_string())
-            .collect();
-        Ok(file_array)
-    }
+    use crate::test_file_utils::{create_tree, list_tree};
 
     #[test]
     fn install_files_should_copy_files() {

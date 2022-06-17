@@ -71,10 +71,7 @@ Setup Clyde: install Clyde store, and create an activation script. All changes a
 
 ### `clyde remove foobar`
 
-1. [ ] Look for `foobar` in installed DB.
-2. [ ] If not installed: exit with error.
-3. [ ] Delete all binaries listed in foobar@version.
-4. [ ] Remove `foobar` from installed DB.
+Uninstalls the `foobar` package.
 
 ### `clyde show foobar`
 

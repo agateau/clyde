@@ -3,6 +3,7 @@ use clap::{Args, Parser, Subcommand};
 
 use crate::app::App;
 use crate::install::install;
+use crate::remove::remove;
 use crate::setup::setup;
 use crate::show::show;
 
@@ -55,10 +56,7 @@ impl Cli {
         match self.command {
             Command::Setup {} => setup(&app),
             Command::Install { package_name } => install(&app, &package_name),
-            Command::Remove { package_name } => {
-                println!("Removing {}", package_name);
-                Ok(())
-            }
+            Command::Remove { package_name } => remove(&app, &package_name),
             Command::Show { package_name } => show(&app, &package_name),
             Command::List {} => {
                 println!("Listing installed packages");
