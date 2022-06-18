@@ -5,7 +5,7 @@ use std::ffi::OsString;
 use std::fs::File;
 use std::path::Path;
 
-use semver::Version;
+use semver::{Version, VersionReq};
 
 use crate::arch_os::ArchOs;
 
@@ -115,6 +115,13 @@ impl Package {
         internal_package.to_package()
     }
 
+    pub fn get_version_matching(&self, requested_version: &VersionReq) -> Option<&Version> {
+        self.releases
+            .keys()
+            .rev()
+            .find(|&version| requested_version.matches(version))
+    }
+
     pub fn get_latest_version(&self) -> Option<&Version> {
         let entry = self.releases.iter().last()?;
         Some(entry.0)
@@ -145,9 +152,14 @@ impl Package {
 mod tests {
     use super::*;
 
+    fn create_package_from_yaml_str(yaml_str: &str) -> Result<Package> {
+        let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
+        internal_package.to_package()
+    }
+
     #[test]
     fn test_to_package() {
-        let internal_package: InternalPackage = serde_yaml::from_str(
+        let package = create_package_from_yaml_str(
             "
             name: test
             description: desc
@@ -163,12 +175,48 @@ mod tests {
         )
         .unwrap();
 
-        let package = internal_package.to_package().unwrap();
-
         let install = package
             .get_install(&Version::new(1, 2, 0), &ArchOs::current())
             .unwrap();
         assert!(install.files.get("bin/foo-1.2") == Some(&"bin/foo".to_string()));
         assert!(install.files.get("share") == Some(&"share".to_string()));
+    }
+
+    #[test]
+    fn test_get_version_matching() {
+        let package = create_package_from_yaml_str(
+            "
+            name: test
+            description: desc
+            releases:
+              2.0.0:
+                any:
+                  url: https://example.com
+                  sha256: 1234
+              1.2.1:
+                any:
+                  url: https://example.com
+                  sha256: 1234
+              1.2.0:
+                any:
+                  url: https://example.com
+                  sha256: 1234
+            installs: {}
+            ",
+        )
+        .unwrap();
+
+        let req300 = VersionReq::parse("3.0.0").unwrap();
+        let req121 = VersionReq::parse("1.2.1").unwrap();
+        let req12 = VersionReq::parse("1.2.*").unwrap();
+        let req2 = VersionReq::parse(">=2").unwrap();
+
+        let v121 = Version::new(1, 2, 1);
+        let v200 = Version::new(2, 0, 0);
+
+        assert!(package.get_version_matching(&req300) == None);
+        assert!(package.get_version_matching(&req121) == Some(&v121));
+        assert!(package.get_version_matching(&req12) == Some(&v121));
+        assert!(package.get_version_matching(&req2) == Some(&v200));
     }
 }

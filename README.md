@@ -54,20 +54,9 @@ Setup Clyde: install Clyde store, and create an activation script. All changes a
 
 [ ] Update Clyde store.
 
-### `clyde install foobar[==$version]`
+### `clyde install foobar[@version]`
 
-1. [/] Look for `foobar arch==$arch os==$os [version==$version]` in store DB.
-2. [x] If not found: exit with error.
-3. [ ] Look for `foobar [version==$version]` in installed DB.
-    if $installed_version matches $version
-        exit
-    else:
-        uninstall `foobar`
-4. [x] Download archive to temporary directory.
-5. [x] Check archive checksum.
-6. [x] Unpack archive.
-7. [x] Move files.
-8. [x] Update installed DB.
+Install `foobar` package, following the `@version` specifier if set.
 
 ### `clyde remove foobar`
 

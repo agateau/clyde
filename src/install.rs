@@ -11,6 +11,7 @@ use sha2::{digest::DynDigest, Sha256};
 
 use crate::app::App;
 use crate::arch_os::ArchOs;
+use crate::remove::remove;
 use crate::unpacker::get_unpacker;
 
 fn download(url: &str, dst_path: &Path) -> Result<()> {
@@ -108,24 +109,29 @@ fn install_files(
     Ok(files)
 }
 
-pub fn install(app: &App, package_name: &str) -> Result<()> {
+fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
+    let split = arg.split_once('@');
+    match split {
+        None => Ok((arg, VersionReq::STAR)),
+        Some((name, requested_str)) => {
+            let version = VersionReq::parse(requested_str)?;
+            Ok((name, version))
+        }
+    }
+}
+
+pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
     let mut db = app.get_database()?;
 
     let arch_os = ArchOs::current();
-    let requested_version = VersionReq::STAR;
+
+    let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
 
     let package = app.store.get_package(package_name)?;
-    println!("Installing {}", package_name);
 
     let version = package
-        .get_latest_version()
+        .get_version_matching(&requested_version)
         .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
-
-    if let Some(installed_version) = db.get_package_version(package_name)? {
-        if &installed_version == version {
-            return Err(anyhow!("{} {} is already installed", package_name, version));
-        }
-    }
 
     let build = package
         .get_build(version, &arch_os)
@@ -134,6 +140,15 @@ pub fn install(app: &App, package_name: &str) -> Result<()> {
     let install = package
         .get_install(version, &arch_os)
         .ok_or_else(|| anyhow!("No files instruction for {}", package_name))?;
+
+    if let Some(installed_version) = db.get_package_version(package_name)? {
+        if &installed_version == version {
+            return Err(anyhow!("{} {} is already installed", package_name, version));
+        }
+        // A different version is already installed, remove it first
+        remove(app, package_name)?;
+    }
+    println!("Installing {} {}...", package_name, version);
 
     let archive_name = build.get_archive_name()?;
     let archive_path = app.download_cache.get_path(&archive_name);
@@ -166,6 +181,19 @@ mod tests {
     use std::path::PathBuf;
 
     use crate::test_file_utils::{create_tree, list_tree};
+
+    #[test]
+    fn test_parse_package_name_arg() {
+        assert!(parse_package_name_arg("foo").unwrap() == ("foo", VersionReq::STAR));
+        assert!(
+            parse_package_name_arg("foo@1.2").unwrap()
+                == ("foo", VersionReq::parse("1.2").unwrap())
+        );
+        assert!(
+            parse_package_name_arg("foo@1.*").unwrap()
+                == ("foo", VersionReq::parse("1.*").unwrap())
+        );
+    }
 
     #[test]
     fn install_files_should_copy_files() {

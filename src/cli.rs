@@ -24,7 +24,7 @@ enum Command {
     Setup {},
     /// Install an application
     Install {
-        /// Application name
+        /// Application name, optionally suffixed with @version
         package_name: String,
     },
     /// Uninstall an application
