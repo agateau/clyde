@@ -75,13 +75,13 @@ impl Database {
         Ok(())
     }
 
-    pub fn remove_package(&mut self, package: &str) -> Result<()> {
+    pub fn remove_package(&self, package: &str) -> Result<()> {
         self.conn
             .execute("DELETE from installed_package WHERE name = ?", [&package])?;
         Ok(())
     }
 
-    pub fn get_package_files(&mut self, package: &str) -> Result<HashSet<PathBuf>> {
+    pub fn get_package_files(&self, package: &str) -> Result<HashSet<PathBuf>> {
         let mut stmt = self
             .conn
             .prepare("SELECT path FROM installed_file WHERE package_name = ?")?;

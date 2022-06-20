@@ -5,7 +5,7 @@ use crate::app::App;
 use anyhow::{anyhow, Result};
 
 pub fn remove(app: &App, package_name: &str) -> Result<()> {
-    let mut db = app.get_database()?;
+    let db = app.get_database()?;
 
     if db.get_package_version(package_name)?.is_none() {
         return Err(anyhow!("Package {} is not installed", package_name));
