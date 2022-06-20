@@ -18,8 +18,7 @@ pub struct App {
     pub tmp_dir: PathBuf,
     pub store_dir: PathBuf,
     pub store: Box<dyn Store>,
-
-    db_path: PathBuf,
+    pub database: Database,
 }
 
 impl App {
@@ -35,24 +34,29 @@ impl App {
         Err(anyhow!("Could not find a path for Clyde prefix"))
     }
 
-    pub fn new(prefix: &Path) -> App {
+    /// Creates the app. It takes a prefix which *must* exist. This ensures no command
+    /// can run if `clyde setup` has not been called.
+    pub fn new(prefix: &Path) -> Result<App> {
+        if !prefix.exists() {
+            return Err(anyhow!(
+                "Clyde prefix {:?} does not exist. Call `clyde setup` to create it.",
+                prefix
+            ));
+        }
         let store_dir = prefix.join("store");
         let store = GitStore::new(CLYDE_STORE_URL, &store_dir);
 
         let db_path = prefix.join("clyde.sqlite");
+        let database = Database::new_from_path(&db_path)?;
 
-        App {
+        Ok(App {
             download_cache: FileCache::new(Path::new("/tmp")),
             prefix: prefix.to_path_buf(),
             install_dir: prefix.join("inst"),
             tmp_dir: prefix.join("tmp"),
             store_dir,
             store: Box::new(store),
-            db_path,
-        }
-    }
-
-    pub fn get_database(&self) -> Result<Database> {
-        Database::new_from_path(&self.db_path)
+            database,
+        })
     }
 }

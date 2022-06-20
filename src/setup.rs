@@ -1,5 +1,6 @@
 use std::fs;
 use std::include_str;
+use std::path::Path;
 
 use anyhow::{anyhow, Result};
 
@@ -21,21 +22,23 @@ fn create_activate_script(app: &App) -> Result<()> {
     Ok(())
 }
 
-pub fn setup(app: &App) -> Result<()> {
-    if app.prefix.exists() {
+pub fn setup(prefix: &Path) -> Result<()> {
+    if prefix.exists() {
         return Err(anyhow!("Clyde prefix directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
-            app.prefix));
+            prefix));
     }
-    println!("Setting up Clyde in {:?}", app.prefix);
+    println!("Setting up Clyde in {:?}", prefix);
 
-    fs::create_dir_all(&app.prefix)?;
+    fs::create_dir_all(&prefix)?;
+
+    let app = App::new(prefix)?;
 
     app.store.setup()?;
 
     println!("Creating Clyde database");
-    app.get_database()?.create()?;
+    app.database.create()?;
 
-    create_activate_script(app)?;
+    create_activate_script(&app)?;
 
     Ok(())
 }

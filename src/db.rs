@@ -48,7 +48,7 @@ impl Database {
     }
 
     pub fn add_package(
-        &mut self,
+        &self,
         package: &str,
         installed_version: &Version,
         requested_version: &VersionReq,
@@ -57,7 +57,7 @@ impl Database {
         let installed_version_str = installed_version.to_string();
         let requested_version_str = requested_version.to_string();
 
-        let tx = self.conn.transaction()?;
+        let tx = self.conn.unchecked_transaction()?;
         tx.execute(
             "INSERT INTO installed_package(name, installed_version, requested_version)
                     VALUES(?, ?, ?)",
@@ -104,7 +104,7 @@ mod tests {
     #[test]
     fn add_package_adds_version_files() {
         // GIVEN a database
-        let mut db = Database::new_in_memory().unwrap();
+        let db = Database::new_in_memory().unwrap();
         db.create().unwrap();
 
         let package = "pkg";

@@ -121,7 +121,7 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
 }
 
 pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
-    let mut db = app.get_database()?;
+    let db = &app.database;
 
     let arch_os = ArchOs::current();
 

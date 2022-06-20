@@ -5,7 +5,7 @@ use crate::app::App;
 use anyhow::{anyhow, Result};
 
 pub fn remove(app: &App, package_name: &str) -> Result<()> {
-    let db = app.get_database()?;
+    let db = &app.database;
 
     if db.get_package_version(package_name)?.is_none() {
         return Err(anyhow!("Package {} is not installed", package_name));
@@ -39,8 +39,8 @@ mod tests {
     fn remove_should_only_remove_the_package_files() {
         // GIVEN a prefix with a `share/man/f1` file
         let dir = assert_fs::TempDir::new().unwrap();
-        let app = App::new(&dir);
-        let mut db = app.get_database().unwrap();
+        let app = App::new(&dir).unwrap();
+        let db = &app.database;
         db.create().unwrap();
         create_tree(&app.install_dir, &["share/man/f1"]);
 

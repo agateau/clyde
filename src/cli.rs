@@ -55,13 +55,24 @@ impl Cli {
     pub fn exec(self) -> Result<()> {
         let prefix = App::find_prefix()?;
 
-        let app = App::new(&prefix);
         match self.command {
-            Command::Setup {} => setup(&app),
-            Command::Update {} => update(&app),
-            Command::Install { package_name } => install(&app, &package_name),
-            Command::Remove { package_name } => remove(&app, &package_name),
-            Command::Show { package_name } => show(&app, &package_name),
+            Command::Setup {} => setup(&prefix),
+            Command::Update {} => {
+                let app = App::new(&prefix)?;
+                update(&app)
+            }
+            Command::Install { package_name } => {
+                let app = App::new(&prefix)?;
+                install(&app, &package_name)
+            }
+            Command::Remove { package_name } => {
+                let app = App::new(&prefix)?;
+                remove(&app, &package_name)
+            }
+            Command::Show { package_name } => {
+                let app = App::new(&prefix)?;
+                show(&app, &package_name)
+            }
             Command::List {} => {
                 println!("Listing installed packages");
                 Ok(())
