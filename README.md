@@ -52,7 +52,7 @@ Setup Clyde: install Clyde store, and create an activation script. All changes a
 
 ### `clyde update`
 
-[ ] Update Clyde store.
+Update Clyde store.
 
 ### `clyde install foobar[@version]`
 

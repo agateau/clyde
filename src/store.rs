@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
 use anyhow::{anyhow, Result};
 
@@ -35,6 +36,14 @@ impl GitStore {
 
 impl Store for GitStore {
     fn update(&self) -> Result<()> {
+        let mut cmd = Command::new("git");
+        cmd.arg("-C");
+        cmd.arg(self.dir.as_os_str());
+        cmd.arg("pull");
+        let status = cmd.status()?;
+        if !status.success() {
+            return Err(anyhow!("Failed to update"));
+        }
         Ok(())
     }
 

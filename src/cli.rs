@@ -6,6 +6,7 @@ use crate::install::install;
 use crate::remove::remove;
 use crate::setup::setup;
 use crate::show::show;
+use crate::update::update;
 
 /// A package manager for prebuilt applications
 #[derive(Debug, Parser)]
@@ -22,6 +23,8 @@ pub struct Cli {
 enum Command {
     /// Setup Clyde
     Setup {},
+    /// Update Clyde store
+    Update {},
     /// Install an application
     Install {
         /// Application name, optionally suffixed with @version
@@ -55,6 +58,7 @@ impl Cli {
         let app = App::new(&prefix);
         match self.command {
             Command::Setup {} => setup(&app),
+            Command::Update {} => update(&app),
             Command::Install { package_name } => install(&app, &package_name),
             Command::Remove { package_name } => remove(&app, &package_name),
             Command::Show { package_name } => show(&app, &package_name),

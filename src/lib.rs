@@ -11,3 +11,4 @@ pub mod show;
 pub mod store;
 pub mod test_file_utils;
 pub mod unpacker;
+pub mod update;
