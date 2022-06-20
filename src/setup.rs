@@ -1,25 +1,9 @@
 use std::fs;
 use std::include_str;
-use std::path::Path;
-use std::process::Command;
 
 use anyhow::{anyhow, Result};
 
 use crate::app::App;
-
-const CLYDE_STORE_URL: &str = "https://github.com/agateau/clyde-store";
-
-fn setup_store(store_dir: &Path) -> Result<()> {
-    let mut cmd = Command::new("git");
-    cmd.args(["clone", CLYDE_STORE_URL]);
-    cmd.arg(store_dir.as_os_str());
-
-    let status = cmd.status()?;
-    if !status.success() {
-        return Err(anyhow!("Failed to clone Clyde store"));
-    }
-    Ok(())
-}
 
 fn create_activate_script(app: &App) -> Result<()> {
     let install_dir = app.install_dir.to_str().unwrap();
@@ -46,7 +30,7 @@ pub fn setup(app: &App) -> Result<()> {
 
     fs::create_dir_all(&app.prefix)?;
 
-    setup_store(&app.store_dir)?;
+    app.store.setup()?;
 
     println!("Creating Clyde database");
     app.get_database()?.create()?;
