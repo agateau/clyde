@@ -1,0 +1,76 @@
+#!/bin/bash
+set -euo pipefail
+
+init_system() {
+    local out
+    out=$(uname)
+
+    case "$out" in
+    Linux)
+        OS_NAME=linux
+        EXE_NAME=$APP_NAME
+        ;;
+    Darwin)
+        OS_NAME=macos
+        EXE_NAME=$APP_NAME
+        ;;
+    MINGW*|MSYS*)
+        OS_NAME=windows
+        EXE_NAME=$APP_NAME.exe
+        ;;
+    *)
+        echo "error: unknown OS. uname printed '$out'"
+        exit 1
+        ;;
+    esac
+}
+
+init_checksum_cmd() {
+    CHECKSUM_CMD=$(which sha256sum 2> /dev/null || true)
+    if [ -n "$CHECKSUM_CMD" ] ; then
+        return
+    fi
+    local openssl_cmd=$(which openssl 2> /dev/null || true)
+    if [ -n "$openssl_cmd" ] ; then
+        CHECKSUM_CMD="$openssl_cmd sha256 -r"
+        return
+    fi
+    die "Neither sha256sum nor openssl are installed, can't compute sha256 sum"
+}
+
+cd $(dirname $0)/..
+
+APP_NAME=clyde
+DATA_FILES="README.md CHANGELOG.md LICENSE"
+
+init_system
+init_checksum_cmd
+echo "Checksum command: $CHECKSUM_CMD"
+
+# Let caller define VERSION through an environment variable
+if [ -z "${VERSION:-}" ] ; then
+    VERSION=$(cargo pkgid | sed 's/.*#//')
+    VERSION=$VERSION+$(git show --no-patch --format=%cd-%h --date=format:%Y%d%mT%H%M%S)
+fi
+
+ARTIFACTS_DIR=$PWD/artifacts
+ARCHIVE_DIR=$APP_NAME-$VERSION
+ARCHIVE_NAME=$APP_NAME-$VERSION-$OS_NAME.tar.xz
+
+rm -rf $ARTIFACTS_DIR
+mkdir -p $ARTIFACTS_DIR/$ARCHIVE_DIR
+
+echo "Copying and stripping binary"
+ls
+cp target/release/$EXE_NAME $ARTIFACTS_DIR/$ARCHIVE_DIR
+strip $ARTIFACTS_DIR/$ARCHIVE_DIR/$EXE_NAME
+
+echo "Copying data files"
+cp $DATA_FILES $ARTIFACTS_DIR/$ARCHIVE_DIR
+
+echo "Creating archive $ARTIFACTS_DIR/$ARCHIVE_NAME"
+cd $ARTIFACTS_DIR
+tar -cjf $ARCHIVE_NAME $ARCHIVE_DIR
+
+echo "Computing checksum"
+$CHECKSUM_CMD $ARCHIVE_NAME

@@ -180,18 +180,21 @@ mod tests {
     use super::*;
     use std::path::PathBuf;
 
-    use crate::test_file_utils::{create_tree, list_tree};
+    use crate::test_file_utils::{create_tree, list_tree, pathbufset_from_strings};
 
     #[test]
     fn test_parse_package_name_arg() {
-        assert!(parse_package_name_arg("foo").unwrap() == ("foo", VersionReq::STAR));
-        assert!(
-            parse_package_name_arg("foo@1.2").unwrap()
-                == ("foo", VersionReq::parse("1.2").unwrap())
+        assert_eq!(
+            parse_package_name_arg("foo").unwrap(),
+            ("foo", VersionReq::STAR)
         );
-        assert!(
-            parse_package_name_arg("foo@1.*").unwrap()
-                == ("foo", VersionReq::parse("1.*").unwrap())
+        assert_eq!(
+            parse_package_name_arg("foo@1.2").unwrap(),
+            ("foo", VersionReq::parse("1.2").unwrap())
+        );
+        assert_eq!(
+            parse_package_name_arg("foo@1.*").unwrap(),
+            ("foo", VersionReq::parse("1.*").unwrap())
         );
     }
 
@@ -211,14 +214,14 @@ mod tests {
         ]);
 
         let result = install_files(&pkg_dir, &inst_dir, &files);
-        assert!(
-            result.unwrap()
-                == HashSet::from([
-                    PathBuf::from("bin/foo"),
-                    PathBuf::from("share/doc/foo/README.md")
-                ])
+        assert_eq!(
+            result.unwrap(),
+            pathbufset_from_strings(&["bin/foo", "share/doc/foo/README.md"])
         );
-        assert!(list_tree(&inst_dir).unwrap() == vec!["bin/foo", "share/doc/foo/README.md"]);
+        assert_eq!(
+            list_tree(&inst_dir).unwrap(),
+            pathbufset_from_strings(&["bin/foo", "share/doc/foo/README.md"])
+        );
     }
 
     #[test]
@@ -239,9 +242,15 @@ mod tests {
         let result = install_files(&pkg_dir, &inst_dir, &files);
 
         // THEN the prefix contain both files
-        assert!(list_tree(&inst_dir).unwrap() == vec!["share/man/f1", "share/man/f2"]);
+        assert_eq!(
+            list_tree(&inst_dir).unwrap(),
+            pathbufset_from_strings(&["share/man/f1", "share/man/f2"])
+        );
 
         // AND install_files() returns the path to `share/man/f2`
-        assert!(result.unwrap() == HashSet::from([PathBuf::from("share/man/f2")]));
+        assert_eq!(
+            result.unwrap(),
+            HashSet::from([PathBuf::from("share/man/f2")])
+        );
     }
 }

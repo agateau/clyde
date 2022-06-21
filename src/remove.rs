@@ -28,8 +28,6 @@ pub fn remove(app: &App, package_name: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::collections::HashSet;
-    use std::path::PathBuf;
 
     use semver::{Version, VersionReq};
 
@@ -45,7 +43,7 @@ mod tests {
         create_tree(&app.install_dir, &["share/man/f1"]);
 
         // AND a package `p2` containing a `bin/b2` and a `share/man/f2` file
-        let package_files = HashSet::from([PathBuf::from("bin/b2"), PathBuf::from("share/man/f2")]);
+        let package_files = pathbufset_from_strings(&["bin/b2", "share/man/f2"]);
         create_tree_from_path_set(&app.install_dir, &package_files);
         db.add_package(
             "p2",
@@ -60,7 +58,8 @@ mod tests {
         assert!(result.is_ok(), "{:?}", result);
 
         // THEN only `share/man/f1` file remains
-        assert!(list_tree(&app.install_dir).unwrap() == vec!["share/man/f1"]);
+        let expected = pathbufset_from_strings(&["share/man/f1"]);
+        assert_eq!(list_tree(&app.install_dir).unwrap(), expected);
 
         // AND the package is no longer listed in the DB
         let result = db.get_package_files("p2").unwrap();

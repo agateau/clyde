@@ -1,0 +1,34 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+        - ubuntu-22.04
+        - macos-10.15
+        - windows-2019
+
+    runs-on: ${{ matrix.os }}
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build
+      run: ci/build-app
+
+    - name: Run static checks
+      run: ci/run-static-checks
+
+    - name: Run tests
+      run: ci/run-tests
+
+    - name: Create archive
+      run: ci/create-archive

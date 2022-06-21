@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+export RUST_BACKTRACE=1
+cargo test --verbose
