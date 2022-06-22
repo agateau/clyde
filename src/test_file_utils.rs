@@ -42,10 +42,5 @@ pub fn list_tree(root: &Path) -> Result<HashSet<PathBuf>> {
 }
 
 pub fn pathbufset_from_strings(strings: &[&str]) -> HashSet<PathBuf> {
-    let mut set = HashSet::<PathBuf>::new();
-    for string in strings {
-        let path = PathBuf::from(string);
-        set.insert(path);
-    }
-    set
+    strings.iter().map(PathBuf::from).collect()
 }
