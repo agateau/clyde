@@ -32,3 +32,11 @@ jobs:
 
     - name: Create archive
       run: ci/create-archive
+
+    - name: Upload
+      if: github.ref == 'refs/heads/master'
+      run: ci/upload-build clyde artifacts/*.xz
+      env:
+        UPLOAD_USERNAME: ${{ secrets.UPLOAD_USERNAME }}
+        UPLOAD_PRIVATE_KEY: ${{ secrets.UPLOAD_PRIVATE_KEY }}
+        UPLOAD_HOSTNAME: ${{ secrets.UPLOAD_HOSTNAME }}
