@@ -87,7 +87,8 @@ impl Store for GitStore {
         Package::from_file(&path)
     }
 
-    fn search(&self, query: &str) -> Result<Vec<SearchHit>> {
+    fn search(&self, query_: &str) -> Result<Vec<SearchHit>> {
+        let query = query_.to_lowercase();
         let mut name_hits = Vec::<SearchHit>::new();
         let mut description_hits = Vec::<SearchHit>::new();
 
@@ -102,9 +103,9 @@ impl Store for GitStore {
             }
             let package = Package::from_file(&path).expect("Skipping invalid package");
 
-            if package.name.contains(&query) {
+            if package.name.to_lowercase().contains(&query) {
                 name_hits.push(SearchHit::from_package(&package));
-            } else if package.description.contains(&query) {
+            } else if package.description.to_lowercase().contains(&query) {
                 description_hits.push(SearchHit::from_package(&package));
             }
         }
@@ -146,15 +147,15 @@ mod tests {
     fn search_should_find_packages() {
         let dir = assert_fs::TempDir::new().unwrap();
 
-        // GIVEN a store with 3 packages foo, bar and baz (whose description contains foo)
+        // GIVEN a store with 3 packages foo, bar and baz (whose description contains Foo)
         let store = GitStore::new("https://example.com", &dir);
 
         create_package_file(&dir, "foo");
         create_package_file(&dir, "bar");
-        create_package_file_with_desc(&dir, "baz", "Helper package for foo");
+        create_package_file_with_desc(&dir, "baz", "Helper package for Foo");
 
         // WHEN I search for bar
-        let results = store.search("foo").unwrap();
+        let results = store.search("fOo").unwrap();
 
         // THEN foo and baz should be returned
         let result_names: Vec<String> = results.iter().map(|x| x.name.clone()).collect();
