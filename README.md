@@ -66,6 +66,10 @@ Uninstalls the `foobar` package.
 
 Shows details about `foobar` package.
 
+### `clyde search foobar`
+
+Search Clyde store for a package matching "foobar" in its name or description.
+
 ## Security
 
 Is Clyde more secure than `curl <url> | bash`?

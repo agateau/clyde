@@ -4,6 +4,7 @@ use clap::{Args, Parser, Subcommand};
 use crate::app::App;
 use crate::install::install;
 use crate::remove::remove;
+use crate::search::search;
 use crate::setup::setup;
 use crate::show::show;
 use crate::update::update;
@@ -40,6 +41,11 @@ enum Command {
         /// Application name
         package_name: String,
     },
+    /// Search for available applications
+    Search {
+        /// Search query
+        query: String,
+    },
     /// List installed applications
     List {},
 }
@@ -72,6 +78,10 @@ impl Cli {
             Command::Show { package_name } => {
                 let app = App::new(&prefix)?;
                 show(&app, &package_name)
+            }
+            Command::Search { query } => {
+                let app = App::new(&prefix)?;
+                search(&app, &query)
             }
             Command::List {} => {
                 println!("Listing installed packages");

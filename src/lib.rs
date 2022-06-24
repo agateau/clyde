@@ -6,6 +6,7 @@ pub mod file_cache;
 pub mod install;
 pub mod package;
 pub mod remove;
+pub mod search;
 pub mod setup;
 pub mod show;
 pub mod store;

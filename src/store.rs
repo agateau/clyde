@@ -1,3 +1,5 @@
+use std::ffi::OsString;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -5,15 +7,31 @@ use anyhow::{anyhow, Result};
 
 use crate::package::Package;
 
+#[derive(Clone)]
+pub struct SearchHit {
+    pub name: String,
+    pub description: String,
+}
+
 pub trait Store {
     fn setup(&self) -> Result<()>;
     fn update(&self) -> Result<()>;
     fn get_package(&self, name: &str) -> Result<Package>;
+    fn search(&self, query: &str) -> Result<Vec<SearchHit>>;
 }
 
 pub struct GitStore {
     url: String,
     dir: PathBuf,
+}
+
+impl SearchHit {
+    fn from_package(package: &Package) -> SearchHit {
+        SearchHit {
+            name: package.name.clone(),
+            description: package.description.clone(),
+        }
+    }
 }
 
 impl GitStore {
@@ -67,5 +85,80 @@ impl Store for GitStore {
             .find_package_path(name)
             .ok_or_else(|| anyhow!("No such package: {}", name))?;
         Package::from_file(&path)
+    }
+
+    fn search(&self, query: &str) -> Result<Vec<SearchHit>> {
+        let mut name_hits = Vec::<SearchHit>::new();
+        let mut description_hits = Vec::<SearchHit>::new();
+
+        // This implementation is very inefficient, but it's good enough for now given the number
+        // of available packages. It should be revisited when the number of packages grow.
+        // A possible solution is to create a database table to store the name and descriptions of
+        // available packages.
+        for entry in fs::read_dir(&self.dir)? {
+            let path = entry?.path();
+            if path.extension() != Some(&OsString::from("yaml")) {
+                continue;
+            }
+            let package = Package::from_file(&path).expect("Skipping invalid package");
+
+            if package.name.contains(&query) {
+                name_hits.push(SearchHit::from_package(&package));
+            } else if package.description.contains(&query) {
+                description_hits.push(SearchHit::from_package(&package));
+            }
+        }
+
+        name_hits.extend_from_slice(&description_hits);
+        Ok(name_hits)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::vec::Vec;
+
+    fn create_package_file(dir: &Path, name: &str) {
+        create_package_file_with_desc(dir, name, &format!("The {} package", name));
+    }
+
+    fn create_package_file_with_desc(dir: &Path, name: &str, desc: &str) {
+        let path = dir.join(name.to_owned() + ".yaml");
+        fs::write(
+            path,
+            format!(
+                "
+        name: {name}
+        description: {desc}
+        releases: {{}}
+        installs: {{}}
+        ",
+                name = name,
+                desc = desc
+            ),
+        )
+        .unwrap();
+    }
+
+    #[test]
+    fn search_should_find_packages() {
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        // GIVEN a store with 3 packages foo, bar and baz (whose description contains foo)
+        let store = GitStore::new("https://example.com", &dir);
+
+        create_package_file(&dir, "foo");
+        create_package_file(&dir, "bar");
+        create_package_file_with_desc(&dir, "baz", "Helper package for foo");
+
+        // WHEN I search for bar
+        let results = store.search("foo").unwrap();
+
+        // THEN foo and baz should be returned
+        let result_names: Vec<String> = results.iter().map(|x| x.name.clone()).collect();
+
+        assert_eq!(result_names, vec!["foo", "baz"]);
     }
 }
