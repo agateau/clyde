@@ -4,6 +4,7 @@ pub mod cli;
 pub mod db;
 pub mod file_cache;
 pub mod install;
+pub mod list;
 pub mod package;
 pub mod remove;
 pub mod search;

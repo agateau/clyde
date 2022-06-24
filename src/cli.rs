@@ -3,6 +3,7 @@ use clap::{Args, Parser, Subcommand};
 
 use crate::app::App;
 use crate::install::install;
+use crate::list::list;
 use crate::remove::remove;
 use crate::search::search;
 use crate::setup::setup;
@@ -84,8 +85,8 @@ impl Cli {
                 search(&app, &query)
             }
             Command::List {} => {
-                println!("Listing installed packages");
-                Ok(())
+                let app = App::new(&prefix)?;
+                list(&app)
             }
         }
     }

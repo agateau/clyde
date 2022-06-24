@@ -10,6 +10,12 @@ pub struct Database {
     conn: Connection,
 }
 
+pub struct PackageInfo {
+    pub name: String,
+    pub installed_version: Version,
+    pub requested_version: VersionReq,
+}
+
 impl Database {
     pub fn new_from_path(db_path: &Path) -> Result<Database> {
         let conn = Connection::open(&db_path)?;
@@ -95,6 +101,25 @@ impl Database {
         }
         Ok(files)
     }
+
+    pub fn get_installed_packages(&self) -> Result<Vec<PackageInfo>> {
+        let mut packages: Vec<PackageInfo> = Vec::<PackageInfo>::new();
+        let mut stmt = self
+            .conn
+            .prepare("SELECT name, installed_version, requested_version FROM installed_package order by name")?;
+        let mut rows = stmt.query([])?;
+        while let Some(row) = rows.next()? {
+            let name: String = row.get(0)?;
+            let installed_version: String = row.get(1)?;
+            let requested_version: String = row.get(2)?;
+            packages.push(PackageInfo {
+                name,
+                installed_version: Version::parse(&installed_version)?,
+                requested_version: VersionReq::parse(&requested_version)?,
+            });
+        }
+        Ok(packages)
+    }
 }
 
 #[cfg(test)]
@@ -136,5 +161,28 @@ mod tests {
 
         // THEN it returns none
         assert!(result.unwrap() == None);
+    }
+
+    #[test]
+    fn get_installed_packages_should_return_packages_in_correct_order() {
+        // GIVEN a database
+        let db = Database::new_in_memory().unwrap();
+        db.create().unwrap();
+
+        // AND 4 packages
+        let installed_version = Version::parse("1.2.3").unwrap();
+        let files = HashSet::<PathBuf>::new();
+        for name in &["bob", "alice", "deborah", "carl"] {
+            db.add_package(&name, &installed_version, &VersionReq::STAR, &files)
+                .unwrap();
+        }
+
+        // WHEN get_installed_packages() is called
+        // THEN it succeeds
+        let packages = db.get_installed_packages().unwrap();
+
+        // AND it returns the packages in alphabetical order
+        let names: Vec<String> = packages.iter().map(|x| x.name.clone()).collect();
+        assert_eq!(names, &["alice", "bob", "carl", "deborah"]);
     }
 }
