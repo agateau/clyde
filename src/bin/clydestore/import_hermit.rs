@@ -3,7 +3,6 @@ use std::fs;
 use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
-use clap::Parser;
 
 use clyde::package::{Build, Install, InternalPackage};
 
@@ -116,16 +115,8 @@ fn create_installs(version: &str, value: &Value) -> HashMap<String, HashMap<Stri
     installs
 }
 
-#[derive(Debug, Parser)]
-#[clap(name = "clyde-hermitimporter", version)]
-pub struct Cli {
-    /// package file
-    package_file: String,
-}
-
-fn main() -> Result<()> {
-    let cli = Cli::parse();
-    let path = PathBuf::from(cli.package_file);
+pub fn import_hermit(package_file: &str) -> Result<()> {
+    let path = PathBuf::from(package_file);
 
     // Get name
     let name = path
@@ -165,5 +156,6 @@ fn main() -> Result<()> {
     let out = serde_yaml::to_string(&pkg).unwrap();
 
     println!("{}", out);
+
     Ok(())
 }
