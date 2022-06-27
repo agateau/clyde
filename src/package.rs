@@ -1,15 +1,15 @@
-use anyhow::{anyhow, Result};
-use serde::Deserialize;
 use std::collections::{BTreeMap, HashMap};
 use std::ffi::OsString;
 use std::fs::File;
 use std::path::Path;
 
+use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
+use serde::{Deserialize, Serialize};
 
 use crate::arch_os::ArchOs;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Build {
     pub url: String,
     pub sha256: String,
@@ -26,7 +26,7 @@ impl Build {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
     pub strip: u32,
     pub files: HashMap<String, String>,
@@ -65,10 +65,10 @@ pub struct Package {
     installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
 }
 
-/// Internal class, used to deserialize: this is then turned into Package, which has stronger
-/// typing
-#[derive(Debug, Deserialize)]
-struct InternalPackage {
+/// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
+/// Package, which has stronger typing
+#[derive(Debug, Deserialize, Serialize)]
+pub struct InternalPackage {
     pub name: String,
     pub description: String,
     pub releases: HashMap<String, HashMap<String, Build>>,
