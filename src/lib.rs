@@ -1,5 +1,6 @@
 pub mod app;
 pub mod arch_os;
+pub mod checksum;
 pub mod cli;
 pub mod db;
 pub mod file_cache;
