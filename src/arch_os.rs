@@ -2,7 +2,7 @@ use std::env::consts;
 
 use anyhow::{anyhow, Result};
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct ArchOs {
     pub arch: String,
     pub os: String,

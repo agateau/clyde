@@ -76,6 +76,35 @@ pub struct InternalPackage {
 }
 
 impl InternalPackage {
+    fn from_package(package: &Package) -> InternalPackage {
+        let mut releases = HashMap::<String, HashMap<String, Build>>::new();
+        for (version, release) in package.releases.iter() {
+            let version_str = version.to_string();
+            let release = release
+                .iter()
+                .map(|(arch_os, build)| (arch_os.to_str(), build.clone()))
+                .collect();
+            releases.insert(version_str, release);
+        }
+
+        let mut installs = HashMap::<String, HashMap<String, Install>>::new();
+        for (version, installs_for_arch_os) in package.installs.iter() {
+            let version_str = version.to_string();
+            let installs_for_arch_os = installs_for_arch_os
+                .iter()
+                .map(|(arch_os, install)| (arch_os.to_str(), install.clone()))
+                .collect();
+            installs.insert(version_str, installs_for_arch_os);
+        }
+
+        InternalPackage {
+            name: package.name.clone(),
+            description: package.description.clone(),
+            releases,
+            installs,
+        }
+    }
+
     fn to_package(&self) -> Result<Package> {
         let mut releases = BTreeMap::<Version, HashMap<ArchOs, Build>>::new();
         for (version_str, builds_for_arch_os) in self.releases.iter() {
@@ -113,6 +142,26 @@ impl Package {
         let file = File::open(path)?;
         let internal_package: InternalPackage = serde_yaml::from_reader(file)?;
         internal_package.to_package()
+    }
+
+    pub fn to_file(&self, path: &Path) -> Result<()> {
+        let internal_package = InternalPackage::from_package(self);
+        let file = File::create(path)?;
+        serde_yaml::to_writer(file, &internal_package)?;
+        Ok(())
+    }
+
+    /// Returns a clone of the package with the builds for version `version` replaced by
+    /// those from `release`
+    pub fn replace_release(&self, version: &Version, release: HashMap<ArchOs, Build>) -> Package {
+        let mut releases = self.releases.clone();
+        releases.insert(version.clone(), release);
+        Package {
+            name: self.name.clone(),
+            description: self.description.clone(),
+            releases,
+            installs: self.installs.clone(),
+        }
     }
 
     pub fn get_version_matching(&self, requested_version: &VersionReq) -> Option<&Version> {
