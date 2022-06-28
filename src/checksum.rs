@@ -6,17 +6,16 @@ use anyhow::{anyhow, Result};
 use hex;
 use sha2::{digest::DynDigest, Sha256};
 
-pub fn compute_checksum(path: &Path) -> Result<Box<[u8]>> {
+pub fn compute_checksum(path: &Path) -> Result<String> {
     let mut file = File::open(path)?;
     let mut hasher = Sha256::default();
     io::copy(&mut file, &mut hasher)?;
-    Ok(hasher.finalize_reset())
+    let checksum = hex::encode(hasher.finalize_reset());
+    Ok(checksum)
 }
 
 pub fn verify_checksum(path: &Path, expected: &str) -> Result<()> {
-    let result = compute_checksum(path)?;
-
-    let actual = hex::encode(result);
+    let actual = compute_checksum(path)?;
 
     if actual != expected {
         return Err(anyhow!(
