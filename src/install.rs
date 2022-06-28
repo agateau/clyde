@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use anyhow::{anyhow, Result};
 use semver::VersionReq;
@@ -9,23 +8,9 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
+use crate::download::download;
 use crate::remove::remove;
 use crate::unpacker::get_unpacker;
-
-fn download(url: &str, dst_path: &Path) -> Result<()> {
-    println!("Downloading {} to {:?}", url, dst_path);
-
-    let mut cmd = Command::new("curl");
-    cmd.args(["-L", "-o"]);
-    cmd.arg(dst_path.as_os_str());
-    cmd.arg(url);
-
-    let status = cmd.status()?;
-    if !status.success() {
-        return Err(anyhow!("Download failed"));
-    }
-    Ok(())
-}
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
     println!("Unpacking...");
