@@ -8,9 +8,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - ubuntu-20.04
-        - macos-10.15
-        - windows-2019
+          - ubuntu-20.04
+          - macos-10.15
+          - windows-2019
 
     runs-on: ${{ matrix.os }}
 
@@ -19,24 +19,49 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Build
-      run: ci/build-app
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
 
-    - name: Run static checks
-      run: ci/run-static-checks
+      - name: Build
+        run: ci/build-app
 
-    - name: Run tests
-      run: ci/run-tests
+      - name: Run static checks
+        run: ci/run-static-checks
 
-    - name: Create archive
-      run: ci/create-archive
+      - name: Run tests
+        run: ci/run-tests
 
-    - name: Upload
-      if: github.ref == 'refs/heads/master'
-      run: ci/upload-build clyde artifacts/*.xz
-      env:
-        UPLOAD_USERNAME: ${{ secrets.UPLOAD_USERNAME }}
-        UPLOAD_PRIVATE_KEY: ${{ secrets.UPLOAD_PRIVATE_KEY }}
-        UPLOAD_HOSTNAME: ${{ secrets.UPLOAD_HOSTNAME }}
+      - name: Create archive
+        run: ci/create-archive
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: artifacts
+          path: artifacts/*.xz
+
+  server-upload:
+    needs: build
+    runs-on: ubuntu-20.04
+    if: github.ref == 'refs/heads/master'
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: artifacts
+          path: artifacts
+
+      - name: Upload to builds.agateau.com
+        run: ci/upload-build clyde artifacts/*.xz
+        env:
+          UPLOAD_USERNAME: ${{ secrets.UPLOAD_USERNAME }}
+          UPLOAD_PRIVATE_KEY: ${{ secrets.UPLOAD_PRIVATE_KEY }}
+          UPLOAD_HOSTNAME: ${{ secrets.UPLOAD_HOSTNAME }}
