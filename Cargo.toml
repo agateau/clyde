@@ -17,6 +17,7 @@ hex = "0.4"
 semver = "1.0.10"
 directories = "4.0.1"
 rusqlite = { version = "0.27.0", features = ["bundled"] }
+zip = "0.6.2"
 
 [dev-dependencies]
 assert_fs = "1.0.1"

@@ -5,6 +5,8 @@ use std::process::Command;
 
 use anyhow::{anyhow, Result};
 
+use crate::zip_unpacker::ZipUnpacker;
+
 pub trait Unpacker {
     fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<()>;
 }
@@ -50,6 +52,9 @@ pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {
         .ok_or_else(|| anyhow!("Invalid file name in {}", archive.display()))?;
     if name.ends_with(".tar.gz") || name.ends_with(".tar.bz2") || name.ends_with(".tar.xz") {
         return Ok(Box::new(TarUnpacker::new(archive)));
+    }
+    if name.ends_with(".zip") {
+        return Ok(Box::new(ZipUnpacker::new(archive)));
     }
     Err(anyhow!("Unsupported format {}", archive.display()))
 }
