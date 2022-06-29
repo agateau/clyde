@@ -76,6 +76,7 @@ fn read_archive_templates(value: &Value) -> HashMap<String, String> {
             let source = replace_var(source, "os", os.hermit);
             for arch in SUPPORTED_ARCHS {
                 let source = replace_var(&source, "arch", arch.hermit);
+                let source = replace_var(&source, "xarch", arch.clyde);
                 let arch_os = format!("{}-{}", arch.clyde, os.clyde);
                 map.insert(arch_os, source);
             }
