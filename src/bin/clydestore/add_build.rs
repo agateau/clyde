@@ -24,12 +24,12 @@ fn compute_url_checksum(cache: &FileCache, url: &str) -> Result<String> {
 }
 
 pub fn add_build(path: &Path, version: &str, arch_os: &str, url: &str) -> Result<()> {
-    let cache = FileCache::new(&PathBuf::from("/tmp"));
-    let checksum = compute_url_checksum(&cache, url)?;
-
     let package = Package::from_file(path)?;
     let version = Version::parse(version)?;
     let arch_os = ArchOs::parse(arch_os)?;
+
+    let cache = FileCache::new(&PathBuf::from("/tmp"));
+    let checksum = compute_url_checksum(&cache, url)?;
 
     let mut release = match package.releases.get(&version) {
         Some(x) => x.clone(),
