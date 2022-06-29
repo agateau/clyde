@@ -8,7 +8,6 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
-use crate::download::download;
 use crate::remove::remove;
 use crate::unpacker::get_unpacker;
 
@@ -110,14 +109,7 @@ pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
     }
     println!("Installing {} {}...", package_name, version);
 
-    let archive_name = build.get_archive_name()?;
-    let archive_path = app.download_cache.get_path(&archive_name);
-
-    if archive_path.exists() {
-        println!("Already downloaded");
-    } else {
-        download(&build.url, &archive_path)?;
-    }
+    let archive_path = app.download_cache.download(&build.url)?;
 
     println!("Verifying checksum...");
     verify_checksum(&archive_path, &build.sha256)?;

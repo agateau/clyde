@@ -4,6 +4,8 @@ use std::path::PathBuf;
 
 use anyhow::{anyhow, Result};
 
+use clyde::checksum::compute_checksum;
+use clyde::file_cache::FileCache;
 use clyde::package::{Build, Install, InternalPackage};
 
 use serde_json::Value;
@@ -39,6 +41,11 @@ const SUPPORTED_OSES: &[Os] = &[
         hermit: "darwin",
     },
 ];
+
+fn compute_url_checksum(cache: &FileCache, url: &str) -> Result<String> {
+    let path = cache.download(url)?;
+    compute_checksum(&path)
+}
 
 fn read_versions(version_value: &Value) -> Vec<String> {
     let mut versions = Vec::<String>::new();
@@ -81,17 +88,18 @@ fn create_releases(
     versions: &[String],
     archive_templates: &HashMap<String, String>,
 ) -> HashMap<String, HashMap<String, Build>> {
+    let file_cache = FileCache::new(&PathBuf::from("/tmp"));
+
     // version => (ArchOs => Build)
     let mut map = HashMap::<String, HashMap<String, Build>>::new();
     for version in versions {
         let mut build_map = HashMap::<String, Build>::new();
         for (arch_os, template) in archive_templates.iter() {
             let url = replace_var(template, "version", version);
-            let build = Build {
-                url,
-                sha256: "".to_string(),
-            };
-            build_map.insert(arch_os.to_string(), build);
+            if let Ok(sha256) = compute_url_checksum(&file_cache, &url) {
+                let build = Build { url, sha256 };
+                build_map.insert(arch_os.to_string(), build);
+            }
         }
         map.insert(version.clone(), build_map);
     }

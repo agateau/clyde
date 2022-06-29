@@ -1,25 +1,16 @@
 use std::collections::HashMap;
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use semver::Version;
 
 use clyde::arch_os::ArchOs;
 use clyde::checksum::compute_checksum;
-use clyde::download::download;
 use clyde::file_cache::FileCache;
 use clyde::package::{Build, Package};
 
 fn compute_url_checksum(cache: &FileCache, url: &str) -> Result<String> {
-    let (_, name) = url
-        .rsplit_once('/')
-        .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
-
-    let path = cache.get_path(&OsString::from(name));
-
-    download(url, &path)?;
-
+    let path = cache.download(url)?;
     compute_checksum(&path)
 }
 
