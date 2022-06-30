@@ -2,20 +2,29 @@
 set -euo pipefail
 
 init_system() {
+    ARCH=$(uname -m)
+
+    ARCHIVE_EXT=tar.gz
+    ARCHIVE_CMD=tar
+    ARCHIVE_CMD_ARGS=czf
+
+    EXE_NAME=$APP_NAME
+
     local out
     out=$(uname)
 
     case "$out" in
     Linux)
         OS_NAME=linux
-        EXE_NAME=$APP_NAME
         ;;
     Darwin)
         OS_NAME=macos
-        EXE_NAME=$APP_NAME
         ;;
     MINGW*|MSYS*)
         OS_NAME=windows
+        ARCHIVE_EXT=zip
+        ARCHIVE_CMD=7z
+        ARCHIVE_CMD_ARGS=a
         EXE_NAME=$APP_NAME.exe
         ;;
     *)
@@ -55,7 +64,7 @@ fi
 
 ARTIFACTS_DIR=$PWD/artifacts
 ARCHIVE_DIR=$APP_NAME-$VERSION
-ARCHIVE_NAME=$APP_NAME-$VERSION-$OS_NAME.tar.xz
+ARCHIVE_NAME=$APP_NAME-$VERSION-$ARCH-$OS_NAME.$ARCHIVE_EXT
 
 rm -rf $ARTIFACTS_DIR
 mkdir -p $ARTIFACTS_DIR/$ARCHIVE_DIR
@@ -70,7 +79,7 @@ cp $DATA_FILES $ARTIFACTS_DIR/$ARCHIVE_DIR
 
 echo "Creating archive $ARTIFACTS_DIR/$ARCHIVE_NAME"
 cd $ARTIFACTS_DIR
-tar -cJf $ARCHIVE_NAME $ARCHIVE_DIR
+$ARCHIVE_CMD $ARCHIVE_CMD_ARGS $ARCHIVE_NAME $ARCHIVE_DIR
 
 echo "Computing checksum"
 $CHECKSUM_CMD $ARCHIVE_NAME

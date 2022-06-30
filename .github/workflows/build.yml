@@ -43,7 +43,9 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: artifacts
-          path: artifacts/*.xz
+          path: |
+            artifacts/*.gz
+            artifacts/*.zip
 
   server-upload:
     needs: build
@@ -60,7 +62,7 @@ jobs:
           path: artifacts
 
       - name: Upload to builds.agateau.com
-        run: ci/upload-build clyde artifacts/*.xz
+        run: ci/upload-build clyde artifacts/*.gz artifacts/*.zip
         env:
           UPLOAD_USERNAME: ${{ secrets.UPLOAD_USERNAME }}
           UPLOAD_PRIVATE_KEY: ${{ secrets.UPLOAD_PRIVATE_KEY }}
