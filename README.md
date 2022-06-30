@@ -6,25 +6,43 @@ Clyde is a package manager for prebuilt applications.
 
 You want to install the latest version of tools like ripgrep, fd or gh, but:
 
-- They are not available in your distribution, or the available versions are too old, and you don't want to mess up your system
+- They are not available in your distribution, or the available versions are too old, and you don't want to mess up your system.
 - You don't want to have to think about where to install them, add them to $PATH, make their man page available, make auto-completion work…
-- You don't want to remember how you installed them when it's time to update them
+- You don't want to remember how you installed them when it's time to update them.
 
-Maybe you don't have root access on the machine where you need these tools, so installing system packages is not an option.
+You don't have root access on the machine where you need these tools, so installing system packages is not an option.
 
-Maybe you want to pin the version of one tool.
+You want to pin the tool versions to create a reproducible platform.
 
-Maybe you are concerned about supply-chain attacks? (see Security section)
+You are concerned about supply-chain attacks? (see Security section)
+
+## Installation
+
+### Requirements
+
+For now Clyde requires these tools to be installed:
+
+- git: to download and update the Clyde store
+- curl: to download archives
+- tar: to unpack tar archives
+
+This requirement list might get smaller in the future if more features are implemented internally.
+
+### Installing Clyde
+
+To get started, you need to download the Clyde binary yourself: Clyde can update itself, but it needs to be installed manually first. You can either:
+
+- Get an archive from the [releases page](http://github.com/agateau/clyde/releases).
+
+- Build it yourself. Clyde is written in Rust, so if you have the Rust toolchain installed, then you can clone its source code and install it with `clyde install --path .`.
 
 ## Getting started
 
-1. Download a Clyde binary (Clyde can update itself, but it needs to be installed manually first)
+1. Run `clyde setup`.
 
-2. Run `clyde setup`
+2. Add the created activation script to your shell startup script.
 
-3. Add the created activation script to your shell startup script
-
-4. Restart your shell
+3. Restart your shell.
 
 You are now ready to use Clyde. Let's install ripgrep:
 
@@ -48,7 +66,7 @@ man rg
 
 ### `clyde setup`
 
-Setup Clyde: install Clyde store, and create an activation script. All changes are done in  "Clyde prefix" (see "Folder hierarchy" section)
+Setup Clyde: install Clyde store, and create an activation script. All changes are done in the "Clyde prefix" (see "Folder hierarchy" section)
 
 ### `clyde update`
 
