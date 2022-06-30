@@ -71,8 +71,8 @@ pub struct Package {
 pub struct InternalPackage {
     pub name: String,
     pub description: String,
-    pub releases: HashMap<String, HashMap<String, Build>>,
-    pub installs: HashMap<String, HashMap<String, Install>>,
+    pub releases: Option<HashMap<String, HashMap<String, Build>>>,
+    pub installs: Option<HashMap<String, HashMap<String, Install>>>,
 }
 
 impl InternalPackage {
@@ -100,32 +100,36 @@ impl InternalPackage {
         InternalPackage {
             name: package.name.clone(),
             description: package.description.clone(),
-            releases,
-            installs,
+            releases: Some(releases),
+            installs: Some(installs),
         }
     }
 
     fn to_package(&self) -> Result<Package> {
         let mut releases = BTreeMap::<Version, HashMap<ArchOs, Build>>::new();
-        for (version_str, builds_for_arch_os) in self.releases.iter() {
-            let version = Version::parse(version_str)?;
-            let builds_for_arch_os = builds_for_arch_os
-                .iter()
-                .map(|(arch_os, build)| (ArchOs::parse(arch_os).unwrap(), build.clone()))
-                .collect();
-            releases.insert(version, builds_for_arch_os);
+        if let Some(internal_releases) = &self.releases {
+            for (version_str, builds_for_arch_os) in internal_releases.iter() {
+                let version = Version::parse(version_str)?;
+                let builds_for_arch_os = builds_for_arch_os
+                    .iter()
+                    .map(|(arch_os, build)| (ArchOs::parse(arch_os).unwrap(), build.clone()))
+                    .collect();
+                releases.insert(version, builds_for_arch_os);
+            }
         }
 
         let mut installs = BTreeMap::<Version, HashMap<ArchOs, Install>>::new();
-        for (version_str, installs_for_arch_os) in self.installs.iter() {
-            let version = Version::parse(version_str)?;
-            let installs_for_arch_os = installs_for_arch_os
-                .iter()
-                .map(|(arch_os, install)| {
-                    (ArchOs::parse(arch_os).unwrap(), Install::expanded(install))
-                })
-                .collect();
-            installs.insert(version, installs_for_arch_os);
+        if let Some(internal_installs) = &self.installs {
+            for (version_str, installs_for_arch_os) in internal_installs.iter() {
+                let version = Version::parse(version_str)?;
+                let installs_for_arch_os = installs_for_arch_os
+                    .iter()
+                    .map(|(arch_os, install)| {
+                        (ArchOs::parse(arch_os).unwrap(), Install::expanded(install))
+                    })
+                    .collect();
+                installs.insert(version, installs_for_arch_os);
+            }
         }
 
         Ok(Package {

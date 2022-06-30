@@ -158,8 +158,8 @@ pub fn import_hermit(package_file: &str) -> Result<()> {
     let pkg = InternalPackage {
         name: name.to_string(),
         description,
-        releases,
-        installs,
+        releases: Some(releases),
+        installs: Some(installs),
     };
 
     let out = serde_yaml::to_string(&pkg).unwrap();
