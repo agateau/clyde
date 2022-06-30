@@ -8,6 +8,7 @@ pub fn show(app: &App, app_name: &str) -> Result<()> {
 
     println!("Name: {}", package.name);
     println!("Description: {}", package.description);
+    println!("Homepage: {}", package.homepage);
 
     if let Some(installed_version) = db.get_package_version(&package.name)? {
         println!("Installed version: {}", installed_version);

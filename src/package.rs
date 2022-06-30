@@ -60,6 +60,7 @@ impl Install {
 pub struct Package {
     pub name: String,
     pub description: String,
+    pub homepage: String,
     pub releases: BTreeMap<Version, HashMap<ArchOs, Build>>,
 
     installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
@@ -71,6 +72,7 @@ pub struct Package {
 pub struct InternalPackage {
     pub name: String,
     pub description: String,
+    pub homepage: String,
     pub releases: Option<HashMap<String, HashMap<String, Build>>>,
     pub installs: Option<HashMap<String, HashMap<String, Install>>>,
 }
@@ -100,6 +102,7 @@ impl InternalPackage {
         InternalPackage {
             name: package.name.clone(),
             description: package.description.clone(),
+            homepage: package.homepage.clone(),
             releases: Some(releases),
             installs: Some(installs),
         }
@@ -135,6 +138,7 @@ impl InternalPackage {
         Ok(Package {
             name: self.name.clone(),
             description: self.description.clone(),
+            homepage: self.homepage.clone(),
             releases,
             installs,
         })
@@ -163,6 +167,7 @@ impl Package {
         Package {
             name: self.name.clone(),
             description: self.description.clone(),
+            homepage: self.homepage.clone(),
             releases,
             installs: self.installs.clone(),
         }
@@ -216,6 +221,7 @@ mod tests {
             "
             name: test
             description: desc
+            homepage:
             releases: {}
             installs:
               1.2.0:
@@ -241,6 +247,7 @@ mod tests {
             "
             name: test
             description: desc
+            homepage:
             releases:
               2.0.0:
                 any:

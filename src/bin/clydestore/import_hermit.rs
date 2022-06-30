@@ -155,9 +155,16 @@ pub fn import_hermit(package_file: &str) -> Result<()> {
         .trim_matches('"')
         .to_string();
 
+    let homepage = value["homepage"]
+        .as_str()
+        .unwrap_or(&"".to_string())
+        .trim_matches('"')
+        .to_string();
+
     let pkg = InternalPackage {
         name: name.to_string(),
         description,
+        homepage,
         releases: Some(releases),
         installs: Some(installs),
     };

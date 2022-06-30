@@ -133,6 +133,7 @@ mod tests {
                 "
         name: {name}
         description: {desc}
+        homepage:
         releases: {{}}
         installs: {{}}
         ",
