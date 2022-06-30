@@ -59,7 +59,7 @@ echo "Checksum command: $CHECKSUM_CMD"
 # Let caller define VERSION through an environment variable
 if [ -z "${VERSION:-}" ] ; then
     VERSION=$(cargo pkgid | sed 's/.*#//')
-    VERSION=$VERSION+$(git show --no-patch --format=%cd-%h --date=format:%Y%d%mT%H%M%S)
+    VERSION=$VERSION+$(git show --no-patch --format=%cd-%h --date=format:%Y%m%dT%H%M%S)
 fi
 
 ARTIFACTS_DIR=$PWD/artifacts
