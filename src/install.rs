@@ -12,7 +12,7 @@ use crate::remove::remove;
 use crate::unpacker::get_unpacker;
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
-    println!("Unpacking...");
+    eprintln!("Unpacking...");
     let unpacker = get_unpacker(archive)?;
     unpacker.unpack(pkg_dir, strip)?;
     Ok(())
@@ -53,7 +53,7 @@ fn install_files(
     install_dir: &Path,
     file_map: &HashMap<String, String>,
 ) -> Result<HashSet<PathBuf>> {
-    println!("Installing files...");
+    eprintln!("Installing files...");
     let mut files = HashSet::<PathBuf>::new();
 
     fs::create_dir_all(&install_dir)?;
@@ -107,11 +107,11 @@ pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
         // A different version is already installed, remove it first
         remove(app, package_name)?;
     }
-    println!("Installing {} {}...", package_name, version);
+    eprintln!("Installing {} {}...", package_name, version);
 
     let archive_path = app.download_cache.download(&build.url)?;
 
-    println!("Verifying checksum...");
+    eprintln!("Verifying checksum...");
     verify_checksum(&archive_path, &build.sha256)?;
 
     let unpack_dir = app.tmp_dir.join(&package.name);

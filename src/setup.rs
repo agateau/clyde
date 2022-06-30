@@ -12,12 +12,12 @@ fn create_activate_script(app: &App) -> Result<()> {
 
     let scripts_dir = app.prefix.join("scripts");
     let script_path = scripts_dir.join("activate.sh");
-    println!("Creating activation script");
+    eprintln!("Creating activation script");
 
     fs::create_dir(&scripts_dir)?;
     fs::write(&script_path, &content)?;
 
-    println!("\nAll set! To activate your Clyde installation, add this line to your shell startup script:\n\n\
+    eprintln!("\nAll set! To activate your Clyde installation, add this line to your shell startup script:\n\n\
               . {script_path:?}");
     Ok(())
 }
@@ -27,7 +27,7 @@ pub fn setup(prefix: &Path) -> Result<()> {
         return Err(anyhow!("Clyde prefix directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
             prefix));
     }
-    println!("Setting up Clyde in {:?}", prefix);
+    eprintln!("Setting up Clyde in {:?}", prefix);
 
     fs::create_dir_all(&prefix)?;
 
@@ -35,7 +35,7 @@ pub fn setup(prefix: &Path) -> Result<()> {
 
     app.store.setup()?;
 
-    println!("Creating Clyde database");
+    eprintln!("Creating Clyde database");
     app.database.create()?;
 
     create_activate_script(&app)?;

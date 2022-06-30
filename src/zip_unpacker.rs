@@ -52,15 +52,8 @@ impl Unpacker for ZipUnpacker {
             let dst_path = dst_dir.join(&dst_sub_path);
 
             if (*file.name()).ends_with('/') {
-                println!("File {} extracted to \"{}\"", idx, dst_path.display());
                 fs::create_dir_all(&dst_path)?;
             } else {
-                println!(
-                    "File {} extracted to \"{}\" ({} bytes)",
-                    idx,
-                    dst_path.display(),
-                    file.size()
-                );
                 if let Some(parent) = dst_path.parent() {
                     if !parent.exists() {
                         fs::create_dir_all(&parent)?;

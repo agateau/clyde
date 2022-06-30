@@ -11,14 +11,14 @@ pub fn remove(app: &App, package_name: &str) -> Result<()> {
         return Err(anyhow!("Package {} is not installed", package_name));
     }
 
-    println!("Removing {}...", &package_name);
+    eprintln!("Removing {}...", &package_name);
 
     for file in db.get_package_files(package_name)? {
         let path = app.install_dir.join(file);
         if path.exists() {
             fs::remove_file(&path)?;
         } else {
-            println!("Warning: expected {:?} to exist, but it does not", &path);
+            eprintln!("Warning: expected {:?} to exist, but it does not", &path);
         }
     }
     db.remove_package(package_name)?;
