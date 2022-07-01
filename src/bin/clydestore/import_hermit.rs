@@ -157,7 +157,7 @@ pub fn import_hermit(package_file: &str) -> Result<()> {
 
     let homepage = value["homepage"]
         .as_str()
-        .unwrap_or(&"".to_string())
+        .unwrap_or("")
         .trim_matches('"')
         .to_string();
 
