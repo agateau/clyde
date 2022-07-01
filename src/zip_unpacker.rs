@@ -81,16 +81,7 @@ impl Unpacker for ZipUnpacker {
 mod tests {
     use super::*;
 
-    use std::include_bytes;
-
-    use crate::test_file_utils::{list_tree, pathbufset_from_strings};
-
-    // Zip content:
-    // hello/
-    // hello/bin/
-    // hello/bin/hello
-    // hello/README.md
-    const ZIP_BYTES: &[u8; 626] = include_bytes!("zip_unpacker_test_archive.zip");
+    use crate::test_file_utils::{create_test_zip_file, list_tree, pathbufset_from_strings};
 
     #[test]
     fn unpack_should_unpack_in_the_right_dir() {
@@ -98,7 +89,7 @@ mod tests {
 
         // GIVEN the test zip file
         let zip_path = dir.join("test.zip");
-        fs::write(&zip_path, ZIP_BYTES).unwrap();
+        create_test_zip_file(&zip_path);
 
         // AND an unpacker on this zip file
         let unpacker = ZipUnpacker::new(&zip_path);
@@ -124,7 +115,7 @@ mod tests {
         // hello/bin/hello
         // hello/README.md
         let zip_path = dir.join("test.zip");
-        fs::write(&zip_path, ZIP_BYTES).unwrap();
+        create_test_zip_file(&zip_path);
 
         // AND an unpacker on this zip file
         let unpacker = ZipUnpacker::new(&zip_path);

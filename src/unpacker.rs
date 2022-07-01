@@ -5,6 +5,7 @@ use std::process::Command;
 
 use anyhow::{anyhow, Result};
 
+use crate::exe_unpacker::ExeUnpacker;
 use crate::zip_unpacker::ZipUnpacker;
 
 pub trait Unpacker {
@@ -55,6 +56,9 @@ pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {
     }
     if name.ends_with(".zip") {
         return Ok(Box::new(ZipUnpacker::new(archive)));
+    }
+    if ExeUnpacker::supports(archive) {
+        return Ok(Box::new(ExeUnpacker::new(archive)));
     }
     Err(anyhow!("Unsupported format {}", archive.display()))
 }

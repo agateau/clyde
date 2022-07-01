@@ -4,6 +4,7 @@ pub mod checksum;
 pub mod cli;
 pub mod db;
 pub mod download;
+pub mod exe_unpacker;
 pub mod file_cache;
 pub mod install;
 pub mod list;
