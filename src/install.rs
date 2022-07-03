@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -51,7 +51,7 @@ fn install_file(
 fn install_files(
     pkg_dir: &Path,
     install_dir: &Path,
-    file_map: &HashMap<String, String>,
+    file_map: &BTreeMap<String, String>,
 ) -> Result<HashSet<PathBuf>> {
     eprintln!("Installing files...");
     let mut files = HashSet::<PathBuf>::new();
@@ -158,7 +158,7 @@ mod tests {
         let inst_dir = dir.join("inst");
         create_tree(&pkg_dir, &["bin/foo-1.2", "README.md"]);
 
-        let files: HashMap<String, String> = HashMap::from([
+        let files: BTreeMap<String, String> = BTreeMap::from([
             ("bin/foo-1.2".to_string(), "bin/foo".to_string()),
             (
                 "README.md".to_string(),
@@ -188,8 +188,8 @@ mod tests {
         let pkg_dir = dir.join("pkg");
         create_tree(&pkg_dir, &["share/man/f2"]);
 
-        let files: HashMap<String, String> =
-            HashMap::from([("share".to_string(), "share".to_string())]);
+        let files: BTreeMap<String, String> =
+            BTreeMap::from([("share".to_string(), "share".to_string())]);
 
         // WHEN install_files() is called
         let result = install_files(&pkg_dir, &inst_dir, &files);

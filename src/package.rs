@@ -29,7 +29,7 @@ impl Build {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
     pub strip: u32,
-    pub files: HashMap<String, String>,
+    pub files: BTreeMap<String, String>,
 }
 
 impl Install {
@@ -73,13 +73,13 @@ pub struct InternalPackage {
     pub name: String,
     pub description: String,
     pub homepage: String,
-    pub releases: Option<HashMap<String, HashMap<String, Build>>>,
-    pub installs: Option<HashMap<String, HashMap<String, Install>>>,
+    pub releases: Option<BTreeMap<String, BTreeMap<String, Build>>>,
+    pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
 }
 
 impl InternalPackage {
     fn from_package(package: &Package) -> InternalPackage {
-        let mut releases = HashMap::<String, HashMap<String, Build>>::new();
+        let mut releases = BTreeMap::<String, BTreeMap<String, Build>>::new();
         for (version, release) in package.releases.iter() {
             let version_str = version.to_string();
             let release = release
@@ -89,7 +89,7 @@ impl InternalPackage {
             releases.insert(version_str, release);
         }
 
-        let mut installs = HashMap::<String, HashMap<String, Install>>::new();
+        let mut installs = BTreeMap::<String, BTreeMap<String, Install>>::new();
         for (version, installs_for_arch_os) in package.installs.iter() {
             let version_str = version.to_string();
             let installs_for_arch_os = installs_for_arch_os
