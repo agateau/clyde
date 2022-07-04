@@ -9,6 +9,7 @@ use crate::search::search;
 use crate::setup::setup;
 use crate::show::show;
 use crate::update::update;
+use crate::upgrade::upgrade;
 
 /// A package manager for prebuilt applications
 #[derive(Debug, Parser)]
@@ -49,6 +50,8 @@ enum Command {
     },
     /// List installed applications
     List {},
+    /// Upgrade all installed applications, enforcing pinning
+    Upgrade {},
 }
 
 #[derive(Debug, Args)]
@@ -87,6 +90,10 @@ impl Cli {
             Command::List {} => {
                 let app = App::new(&prefix)?;
                 list(&app)
+            }
+            Command::Upgrade {} => {
+                let app = App::new(&prefix)?;
+                upgrade(&app)
             }
         }
     }

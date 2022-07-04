@@ -17,4 +17,5 @@ pub mod store;
 pub mod test_file_utils;
 pub mod unpacker;
 pub mod update;
+pub mod upgrade;
 pub mod zip_unpacker;

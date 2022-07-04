@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::PathBuf;
 
@@ -88,13 +88,13 @@ fn read_archive_templates(value: &Value) -> HashMap<String, String> {
 fn create_releases(
     versions: &[String],
     archive_templates: &HashMap<String, String>,
-) -> HashMap<String, HashMap<String, Build>> {
+) -> BTreeMap<String, BTreeMap<String, Build>> {
     let file_cache = FileCache::new(&PathBuf::from("/tmp"));
 
     // version => (ArchOs => Build)
-    let mut map = HashMap::<String, HashMap<String, Build>>::new();
+    let mut map = BTreeMap::<String, BTreeMap<String, Build>>::new();
     for version in versions {
-        let mut build_map = HashMap::<String, Build>::new();
+        let mut build_map = BTreeMap::<String, Build>::new();
         for (arch_os, template) in archive_templates.iter() {
             let url = replace_var(template, "version", version);
             if let Ok(sha256) = compute_url_checksum(&file_cache, &url) {
@@ -107,9 +107,9 @@ fn create_releases(
     map
 }
 
-fn create_installs(version: &str, value: &Value) -> HashMap<String, HashMap<String, Install>> {
+fn create_installs(version: &str, value: &Value) -> BTreeMap<String, BTreeMap<String, Install>> {
     let strip: u32 = value["strip"].as_u64().unwrap_or(0).try_into().unwrap();
-    let mut files = HashMap::<String, String>::new();
+    let mut files = BTreeMap::<String, String>::new();
 
     for binary_value in value["binaries"].as_array().unwrap() {
         let binary = binary_value.as_str().unwrap();
@@ -117,8 +117,8 @@ fn create_installs(version: &str, value: &Value) -> HashMap<String, HashMap<Stri
     }
     let install = Install { strip, files };
 
-    let mut installs = HashMap::<String, HashMap<String, Install>>::new();
-    let mut install_for_arch_os_map = HashMap::<String, Install>::new();
+    let mut installs = BTreeMap::<String, BTreeMap<String, Install>>::new();
+    let mut install_for_arch_os_map = BTreeMap::<String, Install>::new();
     install_for_arch_os_map.insert("any".to_string(), install);
     installs.insert(version.to_string(), install_for_arch_os_map);
     installs

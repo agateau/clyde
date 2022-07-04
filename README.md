@@ -74,7 +74,7 @@ Update Clyde store.
 
 ### `clyde install foobar[@version]`
 
-Install `foobar` package, following the `@version` specifier if set.
+Install `foobar` package, following the `@version` restriction if set.
 
 ### `clyde remove foobar`
 
@@ -87,6 +87,10 @@ Shows details about `foobar` package.
 ### `clyde search foobar`
 
 Search Clyde store for a package matching "foobar" in its name or description.
+
+### `clyde upgrade`
+
+Upgrade all packages to the latest version. If a package has been installed with an `@version` restriction, enforce it.
 
 ## Security
 

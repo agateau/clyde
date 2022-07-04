@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -51,7 +51,7 @@ fn install_file(
 fn install_files(
     pkg_dir: &Path,
     install_dir: &Path,
-    file_map: &HashMap<String, String>,
+    file_map: &BTreeMap<String, String>,
 ) -> Result<HashSet<PathBuf>> {
     eprintln!("Installing files...");
     let mut files = HashSet::<PathBuf>::new();
@@ -80,16 +80,23 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
 }
 
 pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
+    let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
+    install_with_package_and_requested_version(app, package_name, &requested_version)
+}
+
+pub fn install_with_package_and_requested_version(
+    app: &App,
+    package_name: &str,
+    requested_version: &VersionReq,
+) -> Result<()> {
     let db = &app.database;
 
     let arch_os = ArchOs::current();
 
-    let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-
     let package = app.store.get_package(package_name)?;
 
     let version = package
-        .get_version_matching(&requested_version)
+        .get_version_matching(requested_version)
         .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
 
     let build = package
@@ -121,7 +128,7 @@ pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
     unpack(&archive_path, &unpack_dir, install.strip)?;
 
     let installed_files = install_files(&unpack_dir, &app.install_dir, &install.files)?;
-    db.add_package(&package.name, version, &requested_version, &installed_files)?;
+    db.add_package(&package.name, version, requested_version, &installed_files)?;
 
     fs::remove_dir_all(&unpack_dir)?;
 
@@ -158,7 +165,7 @@ mod tests {
         let inst_dir = dir.join("inst");
         create_tree(&pkg_dir, &["bin/foo-1.2", "README.md"]);
 
-        let files: HashMap<String, String> = HashMap::from([
+        let files: BTreeMap<String, String> = BTreeMap::from([
             ("bin/foo-1.2".to_string(), "bin/foo".to_string()),
             (
                 "README.md".to_string(),
@@ -188,8 +195,8 @@ mod tests {
         let pkg_dir = dir.join("pkg");
         create_tree(&pkg_dir, &["share/man/f2"]);
 
-        let files: HashMap<String, String> =
-            HashMap::from([("share".to_string(), "share".to_string())]);
+        let files: BTreeMap<String, String> =
+            BTreeMap::from([("share".to_string(), "share".to_string())]);
 
         // WHEN install_files() is called
         let result = install_files(&pkg_dir, &inst_dir, &files);

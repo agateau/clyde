@@ -29,7 +29,7 @@ impl Build {
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
     pub strip: u32,
-    pub files: HashMap<String, String>,
+    pub files: BTreeMap<String, String>,
 }
 
 impl Install {
@@ -56,7 +56,7 @@ impl Install {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Package {
     pub name: String,
     pub description: String,
@@ -73,13 +73,13 @@ pub struct InternalPackage {
     pub name: String,
     pub description: String,
     pub homepage: String,
-    pub releases: Option<HashMap<String, HashMap<String, Build>>>,
-    pub installs: Option<HashMap<String, HashMap<String, Install>>>,
+    pub releases: Option<BTreeMap<String, BTreeMap<String, Build>>>,
+    pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
 }
 
 impl InternalPackage {
     fn from_package(package: &Package) -> InternalPackage {
-        let mut releases = HashMap::<String, HashMap<String, Build>>::new();
+        let mut releases = BTreeMap::<String, BTreeMap<String, Build>>::new();
         for (version, release) in package.releases.iter() {
             let version_str = version.to_string();
             let release = release
@@ -89,7 +89,7 @@ impl InternalPackage {
             releases.insert(version_str, release);
         }
 
-        let mut installs = HashMap::<String, HashMap<String, Install>>::new();
+        let mut installs = BTreeMap::<String, BTreeMap<String, Install>>::new();
         for (version, installs_for_arch_os) in package.installs.iter() {
             let version_str = version.to_string();
             let installs_for_arch_os = installs_for_arch_os
@@ -152,6 +152,11 @@ impl Package {
         internal_package.to_package()
     }
 
+    pub fn from_yaml_str(yaml_str: &str) -> Result<Package> {
+        let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
+        internal_package.to_package()
+    }
+
     pub fn to_file(&self, path: &Path) -> Result<()> {
         let internal_package = InternalPackage::from_package(self);
         let file = File::create(path)?;
@@ -210,14 +215,9 @@ impl Package {
 mod tests {
     use super::*;
 
-    fn create_package_from_yaml_str(yaml_str: &str) -> Result<Package> {
-        let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
-        internal_package.to_package()
-    }
-
     #[test]
     fn test_to_package() {
-        let package = create_package_from_yaml_str(
+        let package = Package::from_yaml_str(
             "
             name: test
             description: desc
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_get_version_matching() {
-        let package = create_package_from_yaml_str(
+        let package = Package::from_yaml_str(
             "
             name: test
             description: desc
