@@ -4,10 +4,10 @@ use clap::{Args, Parser, Subcommand};
 use crate::app::App;
 use crate::install::install;
 use crate::list::list;
-use crate::remove::remove;
 use crate::search::search;
 use crate::setup::setup;
 use crate::show::show;
+use crate::uninstall::uninstall;
 use crate::update::update;
 use crate::upgrade::upgrade;
 
@@ -33,8 +33,9 @@ enum Command {
         /// Application name, optionally suffixed with @version
         package_name: String,
     },
-    /// Uninstall an application
-    Remove {
+    /// Uninstall an application (alias: remove)
+    #[clap(alias("remove"))]
+    Uninstall {
         /// Application name
         package_name: String,
     },
@@ -75,9 +76,9 @@ impl Cli {
                 let app = App::new(&prefix)?;
                 install(&app, &package_name)
             }
-            Command::Remove { package_name } => {
+            Command::Uninstall { package_name } => {
                 let app = App::new(&prefix)?;
-                remove(&app, &package_name)
+                uninstall(&app, &package_name)
             }
             Command::Show { package_name } => {
                 let app = App::new(&prefix)?;

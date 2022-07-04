@@ -4,7 +4,7 @@ use crate::app::App;
 
 use anyhow::{anyhow, Result};
 
-pub fn remove(app: &App, package_name: &str) -> Result<()> {
+pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
     let db = &app.database;
 
     if db.get_package_version(package_name)?.is_none() {
@@ -34,7 +34,7 @@ mod tests {
     use crate::test_file_utils::*;
 
     #[test]
-    fn remove_should_only_remove_the_package_files() {
+    fn uninstall_should_only_remove_the_package_files() {
         // GIVEN a prefix with a `share/man/f1` file
         let dir = assert_fs::TempDir::new().unwrap();
         let app = App::new(&dir).unwrap();
@@ -53,8 +53,8 @@ mod tests {
         )
         .unwrap();
 
-        // WHEN remove() is called on `p2`
-        let result = remove(&app, "p2");
+        // WHEN uninstall() is called on `p2`
+        let result = uninstall(&app, "p2");
         assert!(result.is_ok(), "{:?}", result);
 
         // THEN only `share/man/f1` file remains

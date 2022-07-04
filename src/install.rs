@@ -8,7 +8,7 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
-use crate::remove::remove;
+use crate::uninstall::uninstall;
 use crate::unpacker::get_unpacker;
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
@@ -111,8 +111,8 @@ pub fn install_with_package_and_requested_version(
         if &installed_version == version {
             return Err(anyhow!("{} {} is already installed", package_name, version));
         }
-        // A different version is already installed, remove it first
-        remove(app, package_name)?;
+        // A different version is already installed, uninstall it first
+        uninstall(app, package_name)?;
     }
     eprintln!("Installing {} {}...", package_name, version);
 
