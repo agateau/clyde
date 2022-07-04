@@ -76,9 +76,9 @@ Update Clyde store.
 
 Install `foobar` package, following the `@version` restriction if set.
 
-### `clyde remove foobar`
+### `clyde uninstall foobar`
 
-Uninstalls the `foobar` package.
+Uninstalls the `foobar` package. Can also be called as `clyde remove foobar`.
 
 ### `clyde show foobar`
 
