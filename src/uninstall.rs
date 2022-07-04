@@ -7,11 +7,14 @@ use anyhow::{anyhow, Result};
 pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
     let db = &app.database;
 
-    if db.get_package_version(package_name)?.is_none() {
-        return Err(anyhow!("Package {} is not installed", package_name));
-    }
+    let installed_version = match db.get_package_version(package_name)? {
+        Some(x) => x,
+        None => {
+            return Err(anyhow!("Package {} is not installed", package_name));
+        }
+    };
 
-    eprintln!("Removing {}...", &package_name);
+    eprintln!("Removing {} {}...", &package_name, installed_version);
 
     for file in db.get_package_files(package_name)? {
         let path = app.install_dir.join(file);

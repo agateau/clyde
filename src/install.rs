@@ -107,13 +107,12 @@ pub fn install_with_package_and_requested_version(
         .get_install(version, &arch_os)
         .ok_or_else(|| anyhow!("No files instruction for {}", package_name))?;
 
-    if let Some(installed_version) = db.get_package_version(package_name)? {
-        if &installed_version == version {
+    let installed_version = match db.get_package_version(package_name)? {
+        Some(version) => {
             return Err(anyhow!("{} {} is already installed", package_name, version));
         }
-        // A different version is already installed, uninstall it first
-        uninstall(app, package_name)?;
-    }
+        x => x,
+    };
     eprintln!("Installing {} {}...", package_name, version);
 
     let archive_path = app.download_cache.download(&build.url)?;
@@ -126,6 +125,11 @@ pub fn install_with_package_and_requested_version(
         fs::remove_dir_all(&unpack_dir)?
     }
     unpack(&archive_path, &unpack_dir, install.strip)?;
+
+    if installed_version.is_some() {
+        // A different version is already installed, uninstall it first
+        uninstall(app, package_name)?;
+    }
 
     let installed_files = install_files(&unpack_dir, &app.install_dir, &install.files)?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
