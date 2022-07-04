@@ -80,16 +80,23 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
 }
 
 pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
+    let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
+    install_with_package_and_requested_version(app, package_name, &requested_version)
+}
+
+pub fn install_with_package_and_requested_version(
+    app: &App,
+    package_name: &str,
+    requested_version: &VersionReq,
+) -> Result<()> {
     let db = &app.database;
 
     let arch_os = ArchOs::current();
 
-    let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-
     let package = app.store.get_package(package_name)?;
 
     let version = package
-        .get_version_matching(&requested_version)
+        .get_version_matching(requested_version)
         .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
 
     let build = package
@@ -121,7 +128,7 @@ pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
     unpack(&archive_path, &unpack_dir, install.strip)?;
 
     let installed_files = install_files(&unpack_dir, &app.install_dir, &install.files)?;
-    db.add_package(&package.name, version, &requested_version, &installed_files)?;
+    db.add_package(&package.name, version, requested_version, &installed_files)?;
 
     fs::remove_dir_all(&unpack_dir)?;
 

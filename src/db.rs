@@ -10,6 +10,7 @@ pub struct Database {
     conn: Connection,
 }
 
+#[derive(Debug, PartialEq)]
 pub struct PackageInfo {
     pub name: String,
     pub installed_version: Version,

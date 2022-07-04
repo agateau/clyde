@@ -56,7 +56,7 @@ impl Install {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Package {
     pub name: String,
     pub description: String,
@@ -152,6 +152,11 @@ impl Package {
         internal_package.to_package()
     }
 
+    pub fn from_yaml_str(yaml_str: &str) -> Result<Package> {
+        let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
+        internal_package.to_package()
+    }
+
     pub fn to_file(&self, path: &Path) -> Result<()> {
         let internal_package = InternalPackage::from_package(self);
         let file = File::create(path)?;
@@ -210,14 +215,9 @@ impl Package {
 mod tests {
     use super::*;
 
-    fn create_package_from_yaml_str(yaml_str: &str) -> Result<Package> {
-        let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
-        internal_package.to_package()
-    }
-
     #[test]
     fn test_to_package() {
-        let package = create_package_from_yaml_str(
+        let package = Package::from_yaml_str(
             "
             name: test
             description: desc
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_get_version_matching() {
-        let package = create_package_from_yaml_str(
+        let package = Package::from_yaml_str(
             "
             name: test
             description: desc
