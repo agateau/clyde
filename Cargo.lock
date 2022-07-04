@@ -235,6 +235,7 @@ dependencies = [
  "goblin",
  "hcl-rs",
  "hex",
+ "lazy_static",
  "rusqlite",
  "semver",
  "serde",

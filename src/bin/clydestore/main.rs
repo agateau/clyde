@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::vec::Vec;
 
 use anyhow::Result;
 use clap::{Parser, Subcommand};
@@ -6,7 +7,10 @@ use clap::{Parser, Subcommand};
 pub mod add_build;
 pub mod import_hermit;
 
-use add_build::add_build;
+#[macro_use]
+extern crate lazy_static;
+
+use add_build::add_builds;
 use import_hermit::import_hermit;
 
 /// Helper commands to work with Clyde packages
@@ -25,8 +29,9 @@ enum Command {
     AddBuild {
         package_file: PathBuf,
         version: String,
-        arch_os: String,
-        url: String,
+        #[clap(short, long)]
+        arch_os: Option<String>,
+        urls: Vec<String>,
     },
 }
 
@@ -39,7 +44,7 @@ fn main() -> Result<()> {
             package_file,
             version,
             arch_os,
-            url,
-        } => add_build(&package_file, &version, &arch_os, &url),
+            urls,
+        } => add_builds(&package_file, &version, &arch_os, &urls),
     }
 }
