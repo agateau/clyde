@@ -102,9 +102,9 @@ Search Clyde store for a package matching "foobar" in its name or description.
 
 Upgrade all packages to the latest version. If a package has been installed with an `@version` restriction, enforce it.
 
-## Security
+## FAQ
 
-Is Clyde more secure than `curl <url> | bash`?
+### Is Clyde more secure than `curl <url> | bash`?
 
 Yes, but it still requires you to be careful.
 
@@ -114,7 +114,10 @@ This means if an attacker takes over the GitHub account of an app developer and 
 
 Clyde does not sandbox the applications.
 
-Clyde installs binaries produced by app developers, it does not rebuild them (unlike projects like [Homebrew](https://brew.sh)).
+### Are Clyde packages built by Clyde?
 
+No, Clyde installs binaries produced by app developers, it does not rebuild them (unlike projects like [Homebrew](https://brew.sh)).
 
+This means that there is no guarantee that a package will run on your machine, even if Clyde installs properly. This is especially true on old Linux installations: it is up to the app developer to provide binaries working on your system.
 
+If a package used to work but the newer version does not, then you can pin the install to the latest working version, using the `@version` syntax.
