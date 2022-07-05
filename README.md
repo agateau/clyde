@@ -76,6 +76,16 @@ Update Clyde store.
 
 Install `foobar` package, following the `@version` restriction if set.
 
+The `@version` syntax follows [Cargo's interpretation of Semantic Versioning][cargo-semver].
+
+This makes the syntax a bit surprising: `clyde install foobar@1.2.3` would not install a 2.0.0 version but it would install an 1.2.4 version or even an 1.3.0 version, because Cargo considers them to be compatible.
+
+To really pin a version you must use `foobar@=1.2.3`. To install the latest 1.2 version, use `'foobar@1.2.*'` or `foobar@~1.2`.
+
+This syntax may change in the future.
+
+[cargo-semver]: https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html
+
 ### `clyde uninstall foobar`
 
 Uninstalls the `foobar` package. Can also be called as `clyde remove foobar`.
