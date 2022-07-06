@@ -7,6 +7,7 @@ use anyhow::{anyhow, Result};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Build, Install, InternalPackage};
+use clyde::vars::expand_var;
 
 use serde_json::Value;
 
@@ -61,22 +62,16 @@ fn read_versions(version_value: &Value) -> Vec<String> {
     versions
 }
 
-/// Replace all instances of `${key}` with `value` in `src`
-fn replace_var(src: &str, key: &str, value: &str) -> String {
-    let from = format!("${{{}}}", key);
-    src.replace(&from, value)
-}
-
 /// Return a map of arch_os => url_templace
 fn read_archive_templates(value: &Value) -> HashMap<String, String> {
     let mut map = HashMap::<String, String>::new();
     for os in SUPPORTED_OSES {
         if let Some(entry) = value[&os.hermit].as_object() {
             let source = entry["source"].as_str().unwrap();
-            let source = replace_var(source, "os", os.hermit);
+            let source = expand_var(source, "os", os.hermit);
             for arch in SUPPORTED_ARCHS {
-                let source = replace_var(&source, "arch", arch.hermit);
-                let source = replace_var(&source, "xarch", arch.clyde);
+                let source = expand_var(&source, "arch", arch.hermit);
+                let source = expand_var(&source, "xarch", arch.clyde);
                 let arch_os = format!("{}-{}", arch.clyde, os.clyde);
                 map.insert(arch_os, source);
             }
@@ -96,7 +91,7 @@ fn create_releases(
     for version in versions {
         let mut build_map = BTreeMap::<String, Build>::new();
         for (arch_os, template) in archive_templates.iter() {
-            let url = replace_var(template, "version", version);
+            let url = expand_var(template, "version", version);
             if let Ok(sha256) = compute_url_checksum(&file_cache, &url) {
                 let build = Build { url, sha256 };
                 build_map.insert(arch_os.to_string(), build);

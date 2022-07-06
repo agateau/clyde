@@ -47,20 +47,32 @@ installs:
 
       # Ignore first level of directory
       strip: 1
+
       files:
-        # Copy bin/foo to bin/foo
+        # Copy "bin/foo" to "bin/foo":
         bin/foo: bin/foo
 
-        # This is the same as bin/bar: bin/bar
-        bin/bar:
+        # This can be simplified to:
+        bin/foo: bin/
+        # Note that for the destination to be interpreted as a directory, it
+        # *must* end with a '/'.
 
-        # If man is a directory, its content is copied recursively to
-        # share/man
+        # Or even simpler:
+        bin/foo:
+
+        # But if the package has a Windows version, then the executable will be
+        # called foo.exe, so for portability it's better to use the ${exe_ext}
+        # variable. It expands to ".exe" on Windows and "" on other OSes.
+        bin/foo${exe_ext}:
+
+        # In this example, assuming "man" is a directory, its content is copied
+        # recursively to "share/man"
         man: share/man
 
-        # If the destination ends with a '/', it is created as a directory.
-        # In this example README.md is copied to share/doc/foobar/README.md.
-        README.md: share/doc/foobar/
+        # To install documentation, you can use the ${doc_dir} variable, which
+        # expands to "share/doc/<package_name>/".
+        # In this example "README.md" is copied to "share/doc/foobar/README.md".
+        README.md: ${doc_dir}
     any-macos:
       # macOS special instructions
 ```

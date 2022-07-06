@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -10,6 +10,7 @@ use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
 use crate::uninstall::uninstall;
 use crate::unpacker::get_unpacker;
+use crate::vars::expand_vars;
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
     eprintln!("Unpacking...");
@@ -34,7 +35,11 @@ fn install_file_entry(
     src_path: &Path,
     install_dir: &Path,
     dst: &Path,
+    vars: &HashMap<String, String>,
 ) -> Result<()> {
+    let src_path = PathBuf::from(expand_vars(src_path.to_str().unwrap(), vars));
+    let dst = PathBuf::from(expand_vars(dst.to_str().unwrap(), vars));
+
     if src_path.is_dir() {
         for entry in fs::read_dir(src_path)? {
             let entry = entry?;
@@ -43,7 +48,7 @@ fn install_file_entry(
                 .file_name()
                 .ok_or_else(|| anyhow!("{:?} has no file name!", sub_src_path))?;
             let sub_dst = dst.join(dst_name);
-            install_file_entry(installed_files, &sub_src_path, install_dir, &sub_dst)?;
+            install_file_entry(installed_files, &sub_src_path, install_dir, &sub_dst, vars)?;
         }
     } else {
         // rel_dst_path is the destination path, relative to install_dir
@@ -54,14 +59,14 @@ fn install_file_entry(
                 .ok_or_else(|| anyhow!("{:?} has no file name!", src_path))?;
             dst.join(file_name)
         } else {
-            dst.to_path_buf()
+            dst
         };
 
         let dst_path = install_dir.join(&rel_dst_path);
 
         create_parent_dir(&dst_path)?;
 
-        fs::rename(src_path, &dst_path)
+        fs::rename(&src_path, &dst_path)
             .map_err(|err| anyhow!("Failed to move {:?} to {:?}: {}", &src_path, &dst_path, err))?;
 
         installed_files.insert(rel_dst_path);
@@ -75,6 +80,7 @@ fn install_files(
     pkg_dir: &Path,
     install_dir: &Path,
     file_map: &BTreeMap<String, String>,
+    vars: &HashMap<String, String>,
 ) -> Result<HashSet<PathBuf>> {
     eprintln!("Installing files...");
     let mut files = HashSet::<PathBuf>::new();
@@ -82,11 +88,13 @@ fn install_files(
     fs::create_dir_all(&install_dir)?;
     for (src, dst) in file_map.iter() {
         let src_path = pkg_dir.join(src);
-        if !src_path.exists() {
-            return Err(anyhow!("Source file {:?} does not exist", src_path));
-        }
-
-        install_file_entry(&mut files, &src_path, install_dir, &PathBuf::from(dst))?;
+        install_file_entry(
+            &mut files,
+            &src_path,
+            install_dir,
+            &PathBuf::from(dst),
+            vars,
+        )?;
     }
     Ok(files)
 }
@@ -100,6 +108,23 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
             Ok((name, version))
         }
     }
+}
+
+fn create_vars_map(package_name: &str) -> HashMap<String, String> {
+    let mut map = HashMap::<String, String>::new();
+
+    map.insert(
+        "exe_ext".into(),
+        if cfg!(windows) {
+            ".exe".into()
+        } else {
+            "".into()
+        },
+    );
+
+    map.insert("doc_dir".into(), format!("share/doc/{}/", package_name));
+
+    map
 }
 
 pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
@@ -154,7 +179,12 @@ pub fn install_with_package_and_requested_version(
         uninstall(app, package_name)?;
     }
 
-    let installed_files = install_files(&unpack_dir, &app.install_dir, &install.files)?;
+    let installed_files = install_files(
+        &unpack_dir,
+        &app.install_dir,
+        &install.files,
+        &create_vars_map(package_name),
+    )?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 
     fs::remove_dir_all(&unpack_dir)?;
@@ -197,7 +227,7 @@ mod tests {
             ("README.md".to_string(), "share/doc/foo/".to_string()),
         ]);
 
-        let result = install_files(&pkg_dir, &inst_dir, &files);
+        let result = install_files(&pkg_dir, &inst_dir, &files, &HashMap::new());
         assert_eq!(
             result.unwrap(),
             pathbufset_from_strings(&["bin/foo", "share/doc/foo/README.md"])
@@ -205,6 +235,33 @@ mod tests {
         assert_eq!(
             list_tree(&inst_dir).unwrap(),
             pathbufset_from_strings(&["bin/foo", "share/doc/foo/README.md"])
+        );
+    }
+
+    #[test]
+    fn install_files_should_expand_vars() {
+        let dir = assert_fs::TempDir::new().unwrap();
+        let pkg_dir = dir.join("pkg");
+        let inst_dir = dir.join("inst");
+        create_tree(&pkg_dir, &["bin/foo.exe", "README.md"]);
+
+        let files: BTreeMap<String, String> = BTreeMap::from([
+            ("bin/foo${exe_ext}".to_string(), "bin/".to_string()),
+            ("README.md".to_string(), "${doc_dir}".to_string()),
+        ]);
+
+        let vars = HashMap::from([
+            ("exe_ext".to_string(), ".exe".to_string()),
+            ("doc_dir".to_string(), "share/doc/foo/".to_string()),
+        ]);
+        let result = install_files(&pkg_dir, &inst_dir, &files, &vars);
+        assert_eq!(
+            result.unwrap(),
+            pathbufset_from_strings(&["bin/foo.exe", "share/doc/foo/README.md"])
+        );
+        assert_eq!(
+            list_tree(&inst_dir).unwrap(),
+            pathbufset_from_strings(&["bin/foo.exe", "share/doc/foo/README.md"])
         );
     }
 
@@ -223,7 +280,7 @@ mod tests {
             BTreeMap::from([("share".to_string(), "share".to_string())]);
 
         // WHEN install_files() is called
-        let result = install_files(&pkg_dir, &inst_dir, &files);
+        let result = install_files(&pkg_dir, &inst_dir, &files, &HashMap::new());
 
         // THEN the prefix contain both files
         assert_eq!(

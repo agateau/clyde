@@ -18,4 +18,5 @@ pub mod uninstall;
 pub mod unpacker;
 pub mod update;
 pub mod upgrade;
+pub mod vars;
 pub mod zip_unpacker;
