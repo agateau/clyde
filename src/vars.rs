@@ -1,5 +1,7 @@
 use std::collections::HashMap;
 
+pub type VarsMap = HashMap<String, String>;
+
 /// Replace all occurrences of `${key}` with `value` in `src`
 pub fn expand_var(src: &str, key: &str, value: &str) -> String {
     let from = format!("${{{}}}", key);
@@ -7,7 +9,7 @@ pub fn expand_var(src: &str, key: &str, value: &str) -> String {
 }
 
 /// Return a copy of `src` with all ${var} expanded
-pub fn expand_vars(src: &str, vars: &HashMap<String, String>) -> String {
+pub fn expand_vars(src: &str, vars: &VarsMap) -> String {
     let mut dst = src.to_string();
     for (name, value) in vars.iter() {
         dst = expand_var(&dst, name, value);
@@ -32,7 +34,7 @@ mod tests {
 
     #[test]
     fn test_expand_vars() {
-        let map = HashMap::from([
+        let map = VarsMap::from([
             ("exe".into(), ".exe".into()),
             ("dir".into(), "some/where".into()),
         ]);

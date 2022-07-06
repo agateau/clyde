@@ -10,7 +10,7 @@ use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
 use crate::uninstall::uninstall;
 use crate::unpacker::get_unpacker;
-use crate::vars::expand_vars;
+use crate::vars::{expand_vars, VarsMap};
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
     eprintln!("Unpacking...");
@@ -77,7 +77,7 @@ fn install_files(
     pkg_dir: &Path,
     install_dir: &Path,
     file_map: &BTreeMap<String, String>,
-    vars: &HashMap<String, String>,
+    vars: &VarsMap,
 ) -> Result<HashSet<PathBuf>> {
     eprintln!("Installing files...");
     let mut files = HashSet::<PathBuf>::new();
@@ -88,13 +88,7 @@ fn install_files(
         let dst = expand_vars(dst, vars);
 
         let src_path = pkg_dir.join(src);
-        install_file_entry(
-            &mut files,
-            &src_path,
-            install_dir,
-            &PathBuf::from(dst),
-            vars,
-        )?;
+        install_file_entry(&mut files, &src_path, install_dir, Path::new(&dst), vars)?;
     }
     Ok(files)
 }
@@ -110,8 +104,8 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
     }
 }
 
-fn create_vars_map(package_name: &str) -> HashMap<String, String> {
-    let mut map = HashMap::<String, String>::new();
+fn create_vars_map(package_name: &str) -> VarsMap {
+    let mut map = VarsMap::new();
 
     map.insert(
         "exe_ext".into(),
