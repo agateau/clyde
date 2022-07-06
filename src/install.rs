@@ -18,9 +18,19 @@ fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
     Ok(())
 }
 
-/// Install a group of files, for example one entry of the `files` mapping
-fn install_file_group(
-    files: &mut HashSet<PathBuf>,
+/// Create dir containing `path` and all its parents, if necessary
+fn create_parent_dir(path: &Path) -> Result<()> {
+    let dir = path.parent().unwrap();
+    fs::create_dir_all(&dir)
+        .map_err(|err| anyhow!("Failed to create directory {:?}: {}", &dir, err))?;
+    Ok(())
+}
+
+/// Install `src_path` in `install_dir/dst`. If `src_path` is a dir, install its content
+/// recursively.
+/// Add the installed files to `installed_files`.
+fn install_file_entry(
+    installed_files: &mut HashSet<PathBuf>,
     src_path: &Path,
     install_dir: &Path,
     dst: &Path,
@@ -33,23 +43,34 @@ fn install_file_group(
                 .file_name()
                 .ok_or_else(|| anyhow!("{:?} has no file name!", sub_src_path))?;
             let sub_dst = dst.join(dst_name);
-            install_file_group(files, &sub_src_path, install_dir, &sub_dst)?;
+            install_file_entry(installed_files, &sub_src_path, install_dir, &sub_dst)?;
         }
     } else {
-        let dst_path = install_dir.join(dst);
-        let dst_dir = dst_path.parent().unwrap();
-        fs::create_dir_all(&dst_dir)
-            .map_err(|err| anyhow!("Failed to create directory {:?}: {}", &dst_dir, err))?;
+        // rel_dst_path is the destination path, relative to install_dir
+        let rel_dst_path = if dst.to_str().unwrap().ends_with('/') {
+            // dst is a dir, turn it into a file
+            let file_name = src_path
+                .file_name()
+                .ok_or_else(|| anyhow!("{:?} has no file name!", src_path))?;
+            dst.join(file_name)
+        } else {
+            dst.to_path_buf()
+        };
+
+        let dst_path = install_dir.join(&rel_dst_path);
+
+        create_parent_dir(&dst_path)?;
 
         fs::rename(src_path, &dst_path)
             .map_err(|err| anyhow!("Failed to move {:?} to {:?}: {}", &src_path, &dst_path, err))?;
 
-        files.insert(dst.to_path_buf());
+        installed_files.insert(rel_dst_path);
     }
     Ok(())
 }
 
-/// Install all files from a `files` mapping
+/// Install all files from a `${arch_os}.files` mapping.
+/// Returns a set of the installed files.
 fn install_files(
     pkg_dir: &Path,
     install_dir: &Path,
@@ -65,7 +86,7 @@ fn install_files(
             return Err(anyhow!("Source file {:?} does not exist", src_path));
         }
 
-        install_file_group(&mut files, &src_path, install_dir, &PathBuf::from(dst))?;
+        install_file_entry(&mut files, &src_path, install_dir, &PathBuf::from(dst))?;
     }
     Ok(files)
 }
@@ -173,10 +194,7 @@ mod tests {
 
         let files: BTreeMap<String, String> = BTreeMap::from([
             ("bin/foo-1.2".to_string(), "bin/foo".to_string()),
-            (
-                "README.md".to_string(),
-                "share/doc/foo/README.md".to_string(),
-            ),
+            ("README.md".to_string(), "share/doc/foo/".to_string()),
         ]);
 
         let result = install_files(&pkg_dir, &inst_dir, &files);

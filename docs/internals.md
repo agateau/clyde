@@ -48,11 +48,19 @@ installs:
       # Ignore first level of directory
       strip: 1
       files:
+        # Copy bin/foo to bin/foo
         bin/foo: bin/foo
+
         # This is the same as bin/bar: bin/bar
         bin/bar:
+
+        # If man is a directory, its content is copied recursively to
+        # share/man
         man: share/man
-        README.md share/doc/foobar/README.md
+
+        # If the destination ends with a '/', it is created as a directory.
+        # In this example README.md is copied to share/doc/foobar/README.md.
+        README.md: share/doc/foobar/
     any-macos:
       # macOS special instructions
 ```
