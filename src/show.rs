@@ -2,7 +2,7 @@ use anyhow::Result;
 
 use crate::app::App;
 
-pub fn show(app: &App, app_name: &str) -> Result<()> {
+pub fn show(app: &App, app_name: &str, list: bool) -> Result<()> {
     let db = &app.database;
     let package = app.store.get_package(app_name)?;
 
@@ -18,6 +18,18 @@ pub fn show(app: &App, app_name: &str) -> Result<()> {
     println!("Available versions:");
     for version in package.releases.keys().rev() {
         println!("- {}", version);
+    }
+
+    if list {
+        println!();
+        println!("Installed files:");
+        let fileset = db.get_package_files(&package.name)?;
+        let mut files = Vec::from_iter(fileset);
+        files.sort();
+        for file in files {
+            let path = app.install_dir.join(file);
+            println!("- {}", path.display());
+        }
     }
     Ok(())
 }

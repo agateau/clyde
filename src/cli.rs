@@ -41,6 +41,9 @@ enum Command {
     },
     /// Show details about an application
     Show {
+        /// List application files
+        #[clap(short, long)]
+        list: bool,
         /// Application name
         package_name: String,
     },
@@ -80,9 +83,9 @@ impl Cli {
                 let app = App::new(&prefix)?;
                 uninstall(&app, &package_name)
             }
-            Command::Show { package_name } => {
+            Command::Show { package_name, list } => {
                 let app = App::new(&prefix)?;
-                show(&app, &package_name)
+                show(&app, &package_name, list)
             }
             Command::Search { query } => {
                 let app = App::new(&prefix)?;
