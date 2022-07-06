@@ -37,9 +37,6 @@ fn install_file_entry(
     dst: &Path,
     vars: &HashMap<String, String>,
 ) -> Result<()> {
-    let src_path = PathBuf::from(expand_vars(src_path.to_str().unwrap(), vars));
-    let dst = PathBuf::from(expand_vars(dst.to_str().unwrap(), vars));
-
     if src_path.is_dir() {
         for entry in fs::read_dir(src_path)? {
             let entry = entry?;
@@ -59,7 +56,7 @@ fn install_file_entry(
                 .ok_or_else(|| anyhow!("{:?} has no file name!", src_path))?;
             dst.join(file_name)
         } else {
-            dst
+            dst.to_path_buf()
         };
 
         let dst_path = install_dir.join(&rel_dst_path);
@@ -87,6 +84,9 @@ fn install_files(
 
     fs::create_dir_all(&install_dir)?;
     for (src, dst) in file_map.iter() {
+        let src = expand_vars(src, vars);
+        let dst = expand_vars(dst, vars);
+
         let src_path = pkg_dir.join(src);
         install_file_entry(
             &mut files,
