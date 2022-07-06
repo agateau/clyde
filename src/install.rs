@@ -18,7 +18,8 @@ fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
     Ok(())
 }
 
-fn install_file(
+/// Install a group of files, for example one entry of the `files` mapping
+fn install_file_group(
     files: &mut HashSet<PathBuf>,
     src_path: &Path,
     install_dir: &Path,
@@ -32,7 +33,7 @@ fn install_file(
                 .file_name()
                 .ok_or_else(|| anyhow!("{:?} has no file name!", sub_src_path))?;
             let sub_dst = dst.join(dst_name);
-            install_file(files, &sub_src_path, install_dir, &sub_dst)?;
+            install_file_group(files, &sub_src_path, install_dir, &sub_dst)?;
         }
     } else {
         let dst_path = install_dir.join(dst);
@@ -48,6 +49,7 @@ fn install_file(
     Ok(())
 }
 
+/// Install all files from a `files` mapping
 fn install_files(
     pkg_dir: &Path,
     install_dir: &Path,
@@ -63,7 +65,7 @@ fn install_files(
             return Err(anyhow!("Source file {:?} does not exist", src_path));
         }
 
-        install_file(&mut files, &src_path, install_dir, &PathBuf::from(dst))?;
+        install_file_group(&mut files, &src_path, install_dir, &PathBuf::from(dst))?;
     }
     Ok(files)
 }
