@@ -5,12 +5,14 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 pub mod add_build;
+pub mod check_package;
 pub mod import_hermit;
 
 #[macro_use]
 extern crate lazy_static;
 
 use add_build::add_builds;
+use check_package::check_package;
 use import_hermit::import_hermit;
 
 /// Helper tools to work with Clyde packages
@@ -33,6 +35,10 @@ enum Command {
         arch_os: Option<String>,
         urls: Vec<String>,
     },
+    /// Check the validity of a package file
+    Check {
+        package_file: PathBuf,
+    },
 }
 
 fn main() -> Result<()> {
@@ -46,5 +52,6 @@ fn main() -> Result<()> {
             arch_os,
             urls,
         } => add_builds(&package_file, &version, &arch_os, &urls),
+        Command::Check { package_file } => check_package(&package_file),
     }
 }
