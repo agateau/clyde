@@ -13,9 +13,9 @@ extern crate lazy_static;
 use add_build::add_builds;
 use import_hermit::import_hermit;
 
-/// Helper commands to work with Clyde packages
+/// Helper tools to work with Clyde packages
 #[derive(Debug, Parser)]
-#[clap(name = "clydestore", version)]
+#[clap(name = "clydetools", version)]
 pub struct Cli {
     #[clap(subcommand)]
     command: Command,
