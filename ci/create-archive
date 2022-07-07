@@ -37,7 +37,6 @@ echo "Checksum command: $CHECKSUM_CMD"
 
 APP_NAME=clyde
 DATA_FILES="README.md CHANGELOG.md LICENSE"
-EXE_NAME=${APP_NAME}${EXE_EXT}
 
 # Let caller define VERSION through an environment variable
 if [ -z "${VERSION:-}" ] ; then
@@ -55,9 +54,11 @@ EXE_DIR=target/${CARGO_BUILD_TARGET:-}/release
 rm -rf $ARTIFACTS_DIR
 mkdir -p $ARTIFACTS_DIR/$ARCHIVE_DIR
 
-echo "Copying and stripping binary"
-cp $EXE_DIR/$EXE_NAME $ARTIFACTS_DIR/$ARCHIVE_DIR
-strip $ARTIFACTS_DIR/$ARCHIVE_DIR/$EXE_NAME
+echo "Copying and stripping binaries"
+for name in clyde clydetools ; do
+    cp $EXE_DIR/${name}${EXE_EXT} $ARTIFACTS_DIR/$ARCHIVE_DIR
+    strip $ARTIFACTS_DIR/$ARCHIVE_DIR/${name}${EXE_EXT}
+done
 
 echo "Copying data files"
 cp $DATA_FILES $ARTIFACTS_DIR/$ARCHIVE_DIR
