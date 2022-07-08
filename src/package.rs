@@ -63,7 +63,7 @@ pub struct Package {
     pub homepage: String,
     pub releases: BTreeMap<Version, HashMap<ArchOs, Build>>,
 
-    installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
+    pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
 }
 
 /// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
