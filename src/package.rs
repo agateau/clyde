@@ -69,7 +69,7 @@ pub struct Package {
 /// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
 /// Package, which has stronger typing
 #[derive(Debug, Deserialize, Serialize)]
-pub struct InternalPackage {
+struct InternalPackage {
     pub name: String,
     pub description: String,
     pub homepage: String,
