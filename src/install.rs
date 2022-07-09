@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use semver::VersionReq;
 
 use crate::app::App;
@@ -22,8 +22,7 @@ fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
 /// Create dir containing `path` and all its parents, if necessary
 fn create_parent_dir(path: &Path) -> Result<()> {
     let dir = path.parent().unwrap();
-    fs::create_dir_all(&dir)
-        .map_err(|err| anyhow!("Failed to create directory {:?}: {}", &dir, err))?;
+    fs::create_dir_all(&dir).with_context(|| format!("Failed to create directory {:?}", &dir))?;
     Ok(())
 }
 
@@ -64,7 +63,7 @@ fn install_file_entry(
         create_parent_dir(&dst_path)?;
 
         fs::rename(&src_path, &dst_path)
-            .map_err(|err| anyhow!("Failed to move {:?} to {:?}: {}", &src_path, &dst_path, err))?;
+            .with_context(|| format!("Failed to move {:?} to {:?}", &src_path, &dst_path))?;
 
         installed_files.insert(rel_dst_path);
     }
@@ -98,7 +97,9 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
     match split {
         None => Ok((arg, VersionReq::STAR)),
         Some((name, requested_str)) => {
-            let version = VersionReq::parse(requested_str)?;
+            let version = VersionReq::parse(requested_str).with_context(|| {
+                format!("Failed to parse requested version ('{requested_str}')")
+            })?;
             Ok((name, version))
         }
     }
@@ -139,11 +140,13 @@ pub fn install_with_package_and_requested_version(
 
     let version = package
         .get_version_matching(requested_version)
-        .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
+        .ok_or_else(|| {
+            anyhow!("No version matching '{requested_version}' available for {package_name}")
+        })?;
 
     let build = package
         .get_build(version, &arch_os)
-        .ok_or_else(|| anyhow!("No build available for {}", package_name))?;
+        .ok_or_else(|| anyhow!("No {arch_os} build available for {package_name} {version}"))?;
 
     let install = package
         .get_install(version, &arch_os)

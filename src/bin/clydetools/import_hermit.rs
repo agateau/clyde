@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use semver::Version;
 
 use clyde::arch_os::ArchOs;
@@ -133,7 +133,7 @@ pub fn import_hermit(package_file: &str) -> Result<()> {
     // Parse HCL
     let input = fs::read_to_string(&path)?;
     let value: Value =
-        hcl::from_str(&input).map_err(|x| anyhow!("Failed to parse {:?}:\n{}", path, x))?;
+        hcl::from_str(&input).with_context(|| format!("Failed to parse {:?}", path))?;
 
     let versions = read_versions(&value["version"]);
 

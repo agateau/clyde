@@ -2,7 +2,7 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Context, Result};
 use zip::ZipArchive;
 
 use crate::unpacker::Unpacker;
@@ -32,10 +32,10 @@ fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {
 impl Unpacker for ZipUnpacker {
     fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<()> {
         let archive_file = fs::File::open(&self.archive_path)
-            .map_err(|x| anyhow!("Error with {:?}: {}", self.archive_path, x))?;
+            .with_context(|| format!("Failed to open {:?}", self.archive_path))?;
 
         let mut archive = ZipArchive::new(archive_file)
-            .map_err(|x| anyhow!("Failed to open {:?}: {}", self.archive_path, x))?;
+            .with_context(|| format!("Failed to read {:?}", self.archive_path))?;
 
         for idx in 0..archive.len() {
             let mut file = archive.by_index(idx)?;

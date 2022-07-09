@@ -1,4 +1,5 @@
 use std::env::consts;
+use std::fmt;
 
 use anyhow::{anyhow, Result};
 
@@ -6,6 +7,12 @@ use anyhow::{anyhow, Result};
 pub struct ArchOs {
     pub arch: String,
     pub os: String,
+}
+
+impl fmt::Display for ArchOs {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}-{}", self.arch, self.os)
+    }
 }
 
 impl ArchOs {

@@ -2,7 +2,7 @@ use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Context, Result};
 use goblin::{self, Hint};
 
 use crate::unpacker::Unpacker;
@@ -52,10 +52,10 @@ impl Unpacker for ExeUnpacker {
         fs::create_dir_all(&dst_path.parent().unwrap())?;
 
         let mut src_file = File::open(&self.archive_path)
-            .map_err(|x| anyhow!("Error with {:?}: {}", self.archive_path, x))?;
+            .with_context(|| format!("Error with {:?}", self.archive_path))?;
 
         let mut dst_file =
-            File::create(&dst_path).map_err(|x| anyhow!("Can't create {:?}: {}", dst_path, x))?;
+            File::create(&dst_path).with_context(|| format!("Can't create {:?}", dst_path))?;
 
         io::copy(&mut src_file, &mut dst_file)?;
 
