@@ -3,6 +3,8 @@ use std::fmt;
 
 use anyhow::{anyhow, Result};
 
+pub const ANY: &str = "any";
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct ArchOs {
     pub arch: String,
@@ -24,8 +26,8 @@ impl ArchOs {
     }
 
     pub fn parse(text: &str) -> Result<ArchOs> {
-        if text == "any" {
-            return Ok(ArchOs::new("any", "any"));
+        if text == ANY {
+            return Ok(ArchOs::new(ANY, ANY));
         }
 
         let mut iter = text.split('-');

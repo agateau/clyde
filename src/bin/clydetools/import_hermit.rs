@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Context, Result};
 use semver::Version;
 
-use clyde::arch_os::ArchOs;
+use clyde::arch_os::{ArchOs, ANY};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Build, Install, Package};
@@ -115,7 +115,7 @@ fn create_installs(version: &str, value: &Value) -> BTreeMap<Version, HashMap<Ar
 
     let mut installs = BTreeMap::<Version, HashMap<ArchOs, Install>>::new();
     let mut install_for_arch_os_map = HashMap::<ArchOs, Install>::new();
-    install_for_arch_os_map.insert(ArchOs::new("any", "any"), install);
+    install_for_arch_os_map.insert(ArchOs::new(ANY, ANY), install);
     installs.insert(Version::parse(version).unwrap(), install_for_arch_os_map);
     installs
 }

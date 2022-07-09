@@ -7,7 +7,7 @@ use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::arch_os::ArchOs;
+use crate::arch_os::{ArchOs, ANY};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Build {
@@ -198,16 +198,36 @@ impl Package {
     /// Return files definition for wanted_version
     /// Uses the highest version which is less or equal to wanted_version
     pub fn get_install(&self, wanted_version: &Version, arch_os: &ArchOs) -> Option<&Install> {
+        let install = self.get_install_internal(wanted_version, arch_os);
+        if install.is_some() {
+            return install;
+        }
+        if arch_os.arch != ANY {
+            let arch_os = ArchOs::new(ANY, &arch_os.os);
+            let install = self.get_install_internal(wanted_version, &arch_os);
+            if install.is_some() {
+                return install;
+            }
+        }
+        if arch_os.os != ANY {
+            // Probably less useful than the previous check, but you never know
+            let arch_os = ArchOs::new(&arch_os.arch, ANY);
+            let install = self.get_install_internal(wanted_version, &arch_os);
+            if install.is_some() {
+                return install;
+            }
+        }
+        self.get_install_internal(wanted_version, &ArchOs::new(ANY, ANY))
+    }
+
+    fn get_install_internal(&self, wanted_version: &Version, arch_os: &ArchOs) -> Option<&Install> {
         let entry = self
             .installs
             .iter()
             .rev()
             .find(|(version, _)| *version <= wanted_version)?;
         let installs_for_arch_os = entry.1;
-        if let Some(install) = installs_for_arch_os.get(arch_os) {
-            return Some(install);
-        }
-        installs_for_arch_os.get(&ArchOs::new("any", "any"))
+        installs_for_arch_os.get(arch_os)
     }
 }
 
@@ -278,5 +298,37 @@ mod tests {
         assert!(package.get_version_matching(&req121) == Some(&v121));
         assert!(package.get_version_matching(&req12) == Some(&v121));
         assert!(package.get_version_matching(&req2) == Some(&v200));
+    }
+
+    #[test]
+    fn get_install_should_use_the_any_arch_specific_os_install() {
+        // GIVEN a package with any and any-macos installs
+        let package = Package::from_yaml_str(
+            "
+            name: test
+            description: desc
+            homepage:
+            releases: {}
+            installs:
+              1.0.0:
+                any:
+                  strip: 1
+                  files:
+                    foo:
+                any-macos:
+                  strip: 3
+                  files:
+                    foo:
+            ",
+        )
+        .unwrap();
+
+        // WHEN installing on macos
+        let install = package
+            .get_install(&Version::new(1, 0, 0), &ArchOs::new("x86_64", "macos"))
+            .unwrap();
+
+        // THEN the any-macos install is used
+        assert_eq!(install.strip, 3);
     }
 }
