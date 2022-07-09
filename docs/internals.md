@@ -88,7 +88,7 @@ The default prefix is a `clyde` directory created in the cache directory. The lo
 - Windows: `{FOLDERID_LocalAppData}/clyde/cache`
 - macOS: `$HOME/Library/Caches/clyde`
 
-The prefix can be defined using the `$CLYDE_PREFIX` environment variable.
+The prefix can be defined using the `$CLYDE_HOME` environment variable.
 
 Packages are all installed in $prefix/inst.
 

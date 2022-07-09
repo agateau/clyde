@@ -67,36 +67,36 @@ struct GlobalOpts {
 
 impl Cli {
     pub fn exec(self) -> Result<()> {
-        let prefix = App::find_prefix()?;
+        let home = App::find_home()?;
 
         match self.command {
-            Command::Setup {} => setup(&prefix),
+            Command::Setup {} => setup(&home),
             Command::Update {} => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 update(&app)
             }
             Command::Install { package_name } => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 install(&app, &package_name)
             }
             Command::Uninstall { package_name } => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 uninstall(&app, &package_name)
             }
             Command::Show { package_name, list } => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 show(&app, &package_name, list)
             }
             Command::Search { query } => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 search(&app, &query)
             }
             Command::List {} => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 list(&app)
             }
             Command::Upgrade {} => {
-                let app = App::new(&prefix)?;
+                let app = App::new(&home)?;
                 upgrade(&app)
             }
         }

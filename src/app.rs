@@ -13,7 +13,7 @@ const CLYDE_STORE_URL: &str = "https://github.com/agateau/clyde-store";
 
 pub struct App {
     pub download_cache: FileCache,
-    pub prefix: PathBuf,
+    pub home: PathBuf,
     pub install_dir: PathBuf,
     pub tmp_dir: PathBuf,
     pub store_dir: PathBuf,
@@ -22,38 +22,38 @@ pub struct App {
 }
 
 impl App {
-    pub fn find_prefix() -> Result<PathBuf> {
-        if let Some(prefix) = env::var_os("CLYDE_PREFIX") {
-            return Ok(Path::new(&prefix).to_path_buf());
+    pub fn find_home() -> Result<PathBuf> {
+        if let Some(home) = env::var_os("CLYDE_HOME") {
+            return Ok(Path::new(&home).to_path_buf());
         }
 
         if let Some(prefix_path) = ProjectDirs::from("", "", "clyde") {
             return Ok(prefix_path.cache_dir().to_path_buf());
         }
 
-        Err(anyhow!("Could not find a path for Clyde prefix"))
+        Err(anyhow!("Could not Clyde directory"))
     }
 
-    /// Creates the app. It takes a prefix which *must* exist. This ensures no command
+    /// Creates the app. It takes a home which *must* exist. This ensures no command
     /// can run if `clyde setup` has not been called.
-    pub fn new(prefix: &Path) -> Result<App> {
-        if !prefix.exists() {
+    pub fn new(home: &Path) -> Result<App> {
+        if !home.exists() {
             return Err(anyhow!(
-                "Clyde prefix {:?} does not exist. Call `clyde setup` to create it.",
-                prefix
+                "Clyde home {:?} does not exist. Call `clyde setup` to create it.",
+                home
             ));
         }
-        let store_dir = prefix.join("store");
+        let store_dir = home.join("store");
         let store = GitStore::new(CLYDE_STORE_URL, &store_dir);
 
-        let db_path = prefix.join("clyde.sqlite");
+        let db_path = home.join("clyde.sqlite");
         let database = Database::new_from_path(&db_path)?;
 
         Ok(App {
             download_cache: FileCache::new(Path::new("/tmp")),
-            prefix: prefix.to_path_buf(),
-            install_dir: prefix.join("inst"),
-            tmp_dir: prefix.join("tmp"),
+            home: home.to_path_buf(),
+            install_dir: home.join("inst"),
+            tmp_dir: home.join("tmp"),
             store_dir,
             store: Box::new(store),
             database,

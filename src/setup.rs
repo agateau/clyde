@@ -10,7 +10,7 @@ fn create_activate_script(app: &App) -> Result<()> {
     let install_dir = app.install_dir.to_str().unwrap();
     let content = format!(include_str!("activate.sh.tmpl"), install_dir = install_dir);
 
-    let scripts_dir = app.prefix.join("scripts");
+    let scripts_dir = app.home.join("scripts");
     let script_path = scripts_dir.join("activate.sh");
     eprintln!("Creating activation script");
 
@@ -22,16 +22,16 @@ fn create_activate_script(app: &App) -> Result<()> {
     Ok(())
 }
 
-pub fn setup(prefix: &Path) -> Result<()> {
-    if prefix.exists() {
-        return Err(anyhow!("Clyde prefix directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
-            prefix));
+pub fn setup(home: &Path) -> Result<()> {
+    if home.exists() {
+        return Err(anyhow!("Clyde directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
+            home));
     }
-    eprintln!("Setting up Clyde in {:?}", prefix);
+    eprintln!("Setting up Clyde in {:?}", home);
 
-    fs::create_dir_all(&prefix)?;
+    fs::create_dir_all(&home)?;
 
-    let app = App::new(prefix)?;
+    let app = App::new(home)?;
 
     app.store.setup()?;
 
