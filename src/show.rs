@@ -16,8 +16,11 @@ pub fn show(app: &App, app_name: &str, list: bool) -> Result<()> {
 
     println!();
     println!("Available versions:");
-    for version in package.releases.keys().rev() {
-        println!("- {}", version);
+    for (version, builds) in package.releases.iter().rev() {
+        let mut arch_os_list = Vec::from_iter(builds.keys().map(|x| format!("{x}")));
+        arch_os_list.sort();
+        let arch_os_str = arch_os_list.join(", ");
+        println!("- {version} ({arch_os_str})");
     }
 
     if list {
