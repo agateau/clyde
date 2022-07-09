@@ -24,6 +24,7 @@ pub struct App {
 impl App {
     pub fn find_home() -> Result<PathBuf> {
         if let Some(home) = env::var_os("CLYDE_HOME") {
+            println!("Using {home:?} as Clyde home");
             return Ok(Path::new(&home).to_path_buf());
         }
 
