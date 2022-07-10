@@ -1,10 +1,11 @@
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::slice::Iter;
 
 use anyhow::{anyhow, Result};
 use semver::Version;
 
+use clyde::app::App;
 use clyde::arch_os::ArchOs;
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
@@ -82,12 +83,12 @@ fn add_build(
 }
 
 pub fn add_builds(
+    app: &App,
     path: &Path,
     version: &str,
     arch_os: &Option<String>,
     urls: &Vec<String>,
 ) -> Result<()> {
-    let cache = FileCache::new(&PathBuf::from("/tmp"));
     let package = Package::from_file(path)?;
 
     let version = Version::parse(version)?;
@@ -99,7 +100,7 @@ pub fn add_builds(
     if let Some(arch_os) = arch_os {
         let url = urls.first().unwrap();
         let arch_os = ArchOs::parse(arch_os)?;
-        add_build(&cache, &mut release, &arch_os, url)?;
+        add_build(&app.download_cache, &mut release, &arch_os, url)?;
     } else {
         for url in urls {
             let (_, name) = url
@@ -107,7 +108,7 @@ pub fn add_builds(
                 .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
 
             if let Some(arch_os) = extract_arch_os(&name.to_ascii_lowercase()) {
-                if add_build(&cache, &mut release, &arch_os, url).is_err() {
+                if add_build(&app.download_cache, &mut release, &arch_os, url).is_err() {
                     eprintln!("Can't add {:?} build from {}", arch_os, url);
                 }
             } else {
