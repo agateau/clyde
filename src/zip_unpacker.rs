@@ -26,7 +26,10 @@ fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {
     let prefix = path.iter().next()?;
 
     let path = path.strip_prefix(prefix).ok()?;
-    Some(path.to_owned())
+    if path == Path::new("") {
+        return None;
+    }
+    apply_strip(path, strip - 1)
 }
 
 impl Unpacker for ZipUnpacker {
@@ -89,6 +92,19 @@ mod tests {
     use crate::test_file_utils::{create_test_zip_file, list_tree, pathbufset_from_strings};
 
     #[test]
+    fn apply_strip_should_strip_1() {
+        assert_eq!(
+            apply_strip(Path::new("foo/bar"), 1),
+            Some(PathBuf::from("bar"))
+        );
+    }
+
+    #[test]
+    fn apply_strip_should_return_none_when_stripping_too_much() {
+        assert_eq!(apply_strip(Path::new("foo/bar"), 2), None);
+    }
+
+    #[test]
     fn unpack_should_unpack_in_the_right_dir() {
         let dir = assert_fs::TempDir::new().unwrap();
 
@@ -133,6 +149,32 @@ mod tests {
         assert_eq!(
             list_tree(&dst_dir).unwrap(),
             pathbufset_from_strings(&["bin/hello", "README.md"])
+        );
+    }
+
+    #[test]
+    fn unpack_should_ignore_files_outside_the_strip() {
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        // GIVEN a zip file with the following content:
+        // hello/
+        // hello/bin/
+        // hello/bin/hello
+        // hello/README.md
+        let zip_path = dir.join("test.zip");
+        create_test_zip_file(&zip_path);
+
+        // AND an unpacker on this zip file
+        let unpacker = ZipUnpacker::new(&zip_path);
+
+        // WHEN unpack() is called in a subdir of `dir` with a strip of 2
+        let dst_dir = dir.join("sub");
+        unpacker.unpack(&dst_dir, 2).unwrap();
+
+        // THEN the zip file is unpacked as expected
+        assert_eq!(
+            list_tree(&dst_dir).unwrap(),
+            pathbufset_from_strings(&["hello"])
         );
     }
 }
