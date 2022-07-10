@@ -52,15 +52,20 @@ impl Unpacker for ZipUnpacker {
             let dst_path = dst_dir.join(&dst_sub_path);
 
             if (*file.name()).ends_with('/') {
-                fs::create_dir_all(&dst_path)?;
+                fs::create_dir_all(&dst_path)
+                    .with_context(|| format!("Failed to create directory {dst_path:?}"))?;
             } else {
                 if let Some(parent) = dst_path.parent() {
                     if !parent.exists() {
-                        fs::create_dir_all(&parent)?;
+                        fs::create_dir_all(&parent)
+                            .with_context(|| format!("Failed to create directory {parent:?}"))?;
                     }
                 }
-                let mut dst_file = fs::File::create(&dst_path)?;
-                io::copy(&mut file, &mut dst_file)?;
+                let mut dst_file = fs::File::create(&dst_path)
+                    .with_context(|| format!("Failed to create file {dst_path:?}"))?;
+                io::copy(&mut file, &mut dst_file).with_context(|| {
+                    format!("Failed to write {:?} to {dst_path:?}", file.name())
+                })?;
             }
 
             // Get and Set permissions
