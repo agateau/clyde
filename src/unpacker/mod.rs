@@ -21,10 +21,10 @@ pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {
         .ok_or_else(|| anyhow!("Can't find file name in {}", archive.display()))?
         .to_str()
         .ok_or_else(|| anyhow!("Invalid file name in {}", archive.display()))?;
-    if name.ends_with(".tar.gz") || name.ends_with(".tar.bz2") || name.ends_with(".tar.xz") {
+    if TarUnpacker::supports(name) {
         return Ok(Box::new(TarUnpacker::new(archive)));
     }
-    if name.ends_with(".zip") {
+    if ZipUnpacker::supports(name) {
         return Ok(Box::new(ZipUnpacker::new(archive)));
     }
     if ExeUnpacker::supports(archive) {

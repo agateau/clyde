@@ -17,6 +17,10 @@ impl ZipUnpacker {
             archive_path: archive.to_path_buf(),
         }
     }
+
+    pub fn supports(name: &str) -> bool {
+        name.ends_with(".zip")
+    }
 }
 
 fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {

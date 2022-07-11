@@ -16,6 +16,14 @@ impl TarUnpacker {
             archive: archive.to_path_buf(),
         }
     }
+
+    pub fn supports(name: &str) -> bool {
+        name.ends_with(".tar.gz")
+            || name.ends_with(".tar.bz2")
+            || name.ends_with(".tar.xz")
+            || name.ends_with(".tgz")
+            || name.ends_with("tbz2")
+    }
 }
 
 impl Unpacker for TarUnpacker {
