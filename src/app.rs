@@ -25,7 +25,7 @@ pub struct App {
 impl App {
     pub fn find_home() -> Result<PathBuf> {
         if let Some(home) = env::var_os("CLYDE_HOME") {
-            println!("Using {home:?} as Clyde home");
+            println!("Using {home:?} as Clyde home directory");
             return Ok(Path::new(&home).to_path_buf());
         }
 
@@ -33,7 +33,7 @@ impl App {
             return Ok(prefix_path.cache_dir().to_path_buf());
         }
 
-        Err(anyhow!("Could not Clyde directory"))
+        Err(anyhow!("Could not find Clyde home directory"))
     }
 
     /// Creates the app. It takes a home which *must* exist. This ensures no command
