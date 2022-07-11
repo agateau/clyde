@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 use anyhow::{anyhow, Context, Result};
@@ -64,7 +64,8 @@ fn check_can_install(package_path: &Path, version: &Version) -> Result<()> {
     }
 }
 
-pub fn check_package(path: &Path) -> Result<()> {
+/// The bool indicates if a build was available
+fn check_package(path: &Path) -> Result<bool> {
     let package = Package::from_file(path)?;
 
     check_has_releases(&package)?;
@@ -74,8 +75,43 @@ pub fn check_package(path: &Path) -> Result<()> {
         Some(x) => x,
         None => {
             println!("No builds available for {}", ArchOs::current());
-            return Ok(());
+            return Ok(false);
         }
     };
-    check_can_install(path, &version)
+    check_can_install(path, &version)?;
+    Ok(true)
+}
+
+fn print_summary_line(header: &str, packages: &[&str]) {
+    let joined = packages.join(", ");
+    println!("{}: {}", header, joined);
+}
+
+pub fn check_packages(paths: &Vec<PathBuf>) -> Result<()> {
+    let mut ok_packages = Vec::<&str>::new();
+    let mut no_build_packages = Vec::<&str>::new();
+    let mut failed_packages = Vec::<&str>::new();
+
+    for path in paths {
+        let name = path.file_stem().unwrap().to_str().unwrap();
+        println!("\n# Checking {name}");
+        match check_package(path) {
+            Ok(true) => ok_packages.push(name),
+            Ok(false) => no_build_packages.push(name),
+            Err(_) => failed_packages.push(name),
+        };
+    }
+
+    println!("\n# Summary");
+    print_summary_line("OK      ", &ok_packages);
+    print_summary_line("NO BUILD", &no_build_packages);
+    print_summary_line("FAIL    ", &failed_packages);
+
+    if !failed_packages.is_empty() {
+        return Err(anyhow!(
+            "{} package(s) failed to build",
+            failed_packages.len()
+        ));
+    }
+    Ok(())
 }

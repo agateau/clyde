@@ -14,7 +14,7 @@ extern crate lazy_static;
 use clyde::app::App;
 
 use add_build::add_builds;
-use check_package::check_package;
+use check_package::check_packages;
 use import_hermit::import_hermit;
 
 /// Helper tools to work with Clyde packages
@@ -37,9 +37,9 @@ enum Command {
         arch_os: Option<String>,
         urls: Vec<String>,
     },
-    /// Check the validity of a package file
+    /// Check the validity of packages
     Check {
-        package_file: PathBuf,
+        package_files: Vec<PathBuf>,
     },
 }
 
@@ -62,6 +62,6 @@ fn main() -> Result<()> {
             add_builds(&app, &package_file, &version, &arch_os, &urls)
         }
         // Check can run without an existing Clyde home: it creates a temporary one to test the package
-        Command::Check { package_file } => check_package(&package_file),
+        Command::Check { package_files } => check_packages(&package_files),
     }
 }
