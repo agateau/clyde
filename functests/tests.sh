@@ -7,11 +7,11 @@ rm -rf $CLYDE_HOME
 
 cargo build
 
-CLYDE_CMD="target/debug/clyde"
+CLYDE_CMD="cargo run --bin clyde"
 
 $CLYDE_CMD setup
 $CLYDE_CMD update
-$CLYDE_CMD install gh@=2.11.3
+$CLYDE_CMD install gh@=2.13.0
 $CLYDE_CMD show gh
 $CLYDE_CMD remove gh
 $CLYDE_CMD install gh

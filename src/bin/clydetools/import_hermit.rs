@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use anyhow::{anyhow, Context, Result};
 use semver::Version;
 
+use clyde::app::App;
 use clyde::arch_os::{ArchOs, ANY};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
@@ -82,18 +83,17 @@ fn read_archive_templates(value: &Value) -> HashMap<ArchOs, String> {
 }
 
 fn create_releases(
+    cache: &FileCache,
     versions: &[String],
     archive_templates: &HashMap<ArchOs, String>,
 ) -> BTreeMap<Version, HashMap<ArchOs, Build>> {
-    let file_cache = FileCache::new(&PathBuf::from("/tmp"));
-
     let mut map = BTreeMap::<Version, HashMap<ArchOs, Build>>::new();
     for version_str in versions {
         let version = Version::parse(version_str).unwrap();
         let mut build_map = HashMap::<ArchOs, Build>::new();
         for (arch_os, template) in archive_templates.iter() {
             let url = expand_var(template, "version", version_str);
-            if let Ok(sha256) = compute_url_checksum(&file_cache, &url) {
+            if let Ok(sha256) = compute_url_checksum(cache, &url) {
                 let build = Build { url, sha256 };
                 build_map.insert(arch_os.clone(), build);
             }
@@ -120,7 +120,7 @@ fn create_installs(version: &str, value: &Value) -> BTreeMap<Version, HashMap<Ar
     installs
 }
 
-pub fn import_hermit(package_file: &str) -> Result<()> {
+pub fn import_hermit(app: &App, package_file: &str) -> Result<()> {
     let path = PathBuf::from(package_file);
 
     // Get name
@@ -139,7 +139,7 @@ pub fn import_hermit(package_file: &str) -> Result<()> {
 
     let archive_templates = read_archive_templates(&value);
 
-    let releases = create_releases(&versions, &archive_templates);
+    let releases = create_releases(&app.download_cache, &versions, &archive_templates);
 
     let first_version = &versions[0];
     let installs = create_installs(first_version, &value);

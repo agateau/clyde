@@ -1,5 +1,6 @@
 use std::boxed::Box;
 use std::env;
+use std::fs;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
@@ -50,8 +51,11 @@ impl App {
         let db_path = home.join("clyde.sqlite");
         let database = Database::new_from_path(&db_path)?;
 
+        let download_dir = home.join("download");
+        fs::create_dir_all(&download_dir)?;
+
         Ok(App {
-            download_cache: FileCache::new(Path::new("/tmp")),
+            download_cache: FileCache::new(&download_dir),
             home: home.to_path_buf(),
             install_dir: home.join("inst"),
             tmp_dir: home.join("tmp"),
