@@ -46,16 +46,22 @@ enum Command {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let home = App::find_home()?;
-    let app = App::new(&home)?;
 
     match cli.command {
-        Command::ImportHermit { package_file } => import_hermit(&app, &package_file),
+        Command::ImportHermit { package_file } => {
+            let app = App::new(&home)?;
+            import_hermit(&app, &package_file)
+        }
         Command::AddBuild {
             package_file,
             version,
             arch_os,
             urls,
-        } => add_builds(&app, &package_file, &version, &arch_os, &urls),
+        } => {
+            let app = App::new(&home)?;
+            add_builds(&app, &package_file, &version, &arch_os, &urls)
+        }
+        // Check can run without an existing Clyde home: it creates a temporary one to test the package
         Command::Check { package_file } => check_package(&package_file),
     }
 }
