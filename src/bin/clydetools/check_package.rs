@@ -108,10 +108,7 @@ pub fn check_packages(paths: &Vec<PathBuf>) -> Result<()> {
     print_summary_line("FAIL    ", &failed_packages);
 
     if !failed_packages.is_empty() {
-        return Err(anyhow!(
-            "{} package(s) failed to build",
-            failed_packages.len()
-        ));
+        return Err(anyhow!("{} package(s) failed", failed_packages.len()));
     }
     Ok(())
 }
