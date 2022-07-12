@@ -152,12 +152,10 @@ pub fn install_with_package_and_requested_version(
         .get_install(version, &arch_os)
         .ok_or_else(|| anyhow!("No files instruction for {}", package_name))?;
 
-    let installed_version = match db.get_package_version(package_name)? {
-        Some(version) => {
-            return Err(anyhow!("{} {} is already installed", package_name, version));
-        }
-        x => x,
-    };
+    let installed_version = db.get_package_version(package_name)?;
+    if installed_version == Some(version.clone()) {
+        return Err(anyhow!("{} {} is already installed", package_name, version));
+    }
     eprintln!("Installing {} {}...", package_name, version);
 
     let archive_path = app.download_cache.download(&build.url)?;
