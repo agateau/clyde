@@ -2,39 +2,41 @@
 
 Clyde is a package manager for prebuilt applications.
 
+It works on Linux, macOS and Windows.
+
 ## Motivation
 
 You want to install the latest version of tools like ripgrep, fd or gh, but:
 
 - They are not available in your distribution, or the available versions are too old, and you don't want to mess up your system.
-- You don't want to have to think about where to install them, add them to $PATH, make their man page available, make auto-completion work…
+- You don't want to have to think about where to install them, add them to $PATH or make their man pages available.
 - You don't want to remember how you installed them when it's time to update them.
 
 You don't have root access on the machine where you need these tools, so installing system packages is not an option.
 
 You want to pin the tool versions to create a reproducible platform.
 
-You are concerned about supply-chain attacks? (see Security section)
+You are concerned about supply-chain attacks (see Security section).
 
 ## Installation
 
-### Requirements
+### Installing Clyde
 
-For now Clyde requires these tools to be installed:
+To get started, you need to download the Clyde binary yourself: Clyde can update itself, but it needs to be installed manually first. You can either:
+
+- ~Get an archive from the [releases page](http://github.com/agateau/clyde/releases)~ (no release yet)
+
+- Get a master build from <https://builds.agateau.com/clyde>.
+
+- Build it yourself. Clyde is written in Rust, so if you have the Rust toolchain installed, then you can clone its source code and install it with `clyde install --path .`.
+
+Next, make sure these tools are installed:
 
 - git: to download and update the Clyde store
 - curl: to download archives
 - tar: to unpack tar archives
 
 This requirement list might get smaller in the future if more features are implemented internally.
-
-### Installing Clyde
-
-To get started, you need to download the Clyde binary yourself: Clyde can update itself, but it needs to be installed manually first. You can either:
-
-- Get an archive from the [releases page](http://github.com/agateau/clyde/releases).
-
-- Build it yourself. Clyde is written in Rust, so if you have the Rust toolchain installed, then you can clone its source code and install it with `clyde install --path .`.
 
 ## Getting started
 
@@ -118,6 +120,10 @@ Clyde does not sandbox the applications.
 
 No, Clyde installs binaries produced by app developers, it does not rebuild them (unlike projects like [Homebrew](https://brew.sh)).
 
-This means that there is no guarantee that a package will run on your machine, even if Clyde installs properly. This is especially true on old Linux installations: it is up to the app developer to provide binaries working on your system.
+This means that there is no guarantee that a package will run on your machine, even if Clyde installs it properly. This is especially true on old Linux installations: it is up to the app developer to provide binaries working on your system.
 
 If a package used to work but the newer version does not, then you can pin the install to the latest working version, using the `@version` syntax.
+
+### Where are Clyde packages stored?
+
+Clyde packages are stored in the [Clyde Store repository][store-repo]. `clyde setup` clones this repository on your machine. `clyde update` pulls the latest changes from it.
