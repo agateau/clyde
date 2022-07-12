@@ -64,10 +64,23 @@ fn check_can_install(package_path: &Path, version: &Version) -> Result<()> {
     }
 }
 
+fn check_package_name(package: &Package, path: &Path) -> Result<()> {
+    let name = path.file_stem().unwrap().to_str().unwrap();
+    if package.name != name {
+        return Err(anyhow!(
+            "Package name ({}) must be the package file name without extension ({})",
+            package.name,
+            name
+        ));
+    }
+    Ok(())
+}
+
 /// The bool indicates if a build was available
 fn check_package(path: &Path) -> Result<bool> {
     let package = Package::from_file(path)?;
 
+    check_package_name(&package, path)?;
     check_has_releases(&package)?;
     check_has_installs(&package)?;
 
@@ -98,7 +111,10 @@ pub fn check_packages(paths: &Vec<PathBuf>) -> Result<()> {
         match check_package(path) {
             Ok(true) => ok_packages.push(name),
             Ok(false) => no_build_packages.push(name),
-            Err(_) => failed_packages.push(name),
+            Err(message) => {
+                println!("Error: {message}");
+                failed_packages.push(name)
+            }
         };
     }
 
