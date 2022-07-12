@@ -124,6 +124,16 @@ This means that there is no guarantee that a package will run on your machine, e
 
 If a package used to work but the newer version does not, then you can pin the install to the latest working version, using the `@version` syntax.
 
-### Where are Clyde packages stored?
+### Where is the list of Clyde packages stored?
 
-Clyde packages are stored in the [Clyde Store repository][store-repo]. `clyde setup` clones this repository on your machine. `clyde update` pulls the latest changes from it.
+Clyde packages are defined in the [Clyde Store repository][store-repo]. `clyde setup` clones this repository on your machine. `clyde update` pulls the latest changes from it.
+
+### How do I request a new package?
+
+File an issue on the [Clyde store repository][store-repo].
+
+### How do I add a new package?
+
+Follow the [Creating a package documentation](docs/creating-a-package.md).
+
+[store-repo]: https://github.com/agateau/clyde-store
