@@ -42,7 +42,7 @@ installs:
   # 1.3.4 would use the 1.3.0 files entries. Installing 1.2.4 would use the
   # 1.2.0 entries.
   "1.2.0":
-    any:
+    any-any:
       # instructions for all arch-os
 
       # Ignore first level of directory
@@ -79,29 +79,27 @@ installs:
 
 ## Clyde store
 
-Clyde package files are stored in the Clyde store, a git repository hosted at <https://github.com/agateau/clyde-store>. The `clyde setup` commands checkouts this repository inside Clyde prefix (see section below).
+Clyde package files are stored in the Clyde store, a git repository hosted at <https://github.com/agateau/clyde-store>. The `clyde setup` commands checkouts this repository inside Clyde home (see section below).
 
 ## Folder hierarchy
 
-The default prefix is a `clyde` directory created in the cache directory. The location of this cache depends on your OS:
-- Linux: `$HOME/.cache/clyde` by default
-- Windows: `{FOLDERID_LocalAppData}/clyde/cache`
+The default location for Clyde home is created in your user cache directory. The exact default location depends on your OS:
+- Linux: `$HOME/.cache/clyde`
+- Windows: `$LOCALAPPDATA/clyde/cache`
 - macOS: `$HOME/Library/Caches/clyde`
 
-The prefix can be defined using the `$CLYDE_HOME` environment variable.
+The home location can be overridden using the `$CLYDE_HOME` environment variable.
 
-Packages are all installed in $prefix/inst.
+Packages are all installed in $CLYDE_HOME/inst.
 
 Packages must follow these rules:
-- install binaries in $prefix/inst/bin
-- install man pages in $prefix/inst/share/man
-- install bash completion files in $prefix/inst/share/completion/bash
-- install zsh completion files in $prefix/inst/share/completion/zsh
+- install binaries in $CLYDE_HOME/inst/bin
+- install man pages in $CLYDE_HOME/inst/share/man
 
-Clyde store is checked out in $prefix/store.
+Clyde store is checked out in $CLYDE_HOME/store.
 
-## Installed DB
+## Installed files database
 
-Clyde stores information about the installed packages in an SQLite database. The database path is $prefix/clyde.sqlite.
+Clyde stores information about the installed packages in an SQLite database. The database path is $CLYDE_HOME/clyde.sqlite.
 
 The tables are defined in the [create_db.sql file](../src/create_db.sql).

@@ -134,6 +134,6 @@ File an issue on the [Clyde store repository][store-repo].
 
 ### How do I add a new package?
 
-Follow the [Creating a package documentation](docs/creating-a-package.md).
+Follow the [creating a package documentation](docs/creating-a-package.md).
 
 [store-repo]: https://github.com/agateau/clyde-store
