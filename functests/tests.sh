@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# SPDX-FileCopyrightText: 2022 Aurélien Gâteau <mail@agateau.com>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
 set -exuo pipefail
 
 export CLYDE_HOME=/tmp/test-clyde
