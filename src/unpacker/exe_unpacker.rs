@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Aurélien Gâteau <mail@agateau.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::fs::{self, File};
 use std::io;
 use std::path::{Path, PathBuf};

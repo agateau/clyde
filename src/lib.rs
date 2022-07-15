@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Aurélien Gâteau <mail@agateau.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 pub mod app;
 pub mod arch_os;
 pub mod checksum;

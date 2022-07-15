@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2022 Aurélien Gâteau <mail@agateau.com>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 use std::collections::{BTreeMap, HashMap};
 use std::fs;
 use std::path::PathBuf;
