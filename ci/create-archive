@@ -28,6 +28,18 @@ init_checksum_cmd() {
     die "Neither sha256sum nor openssl are installed, can't compute sha256 sum"
 }
 
+define_version() {
+    local cargo_version=$(cargo pkgid | sed 's/.*#//')
+    local git_version=$(git describe)
+    if [ "$git_version" = "$cargo_version" ] ; then
+        # Looks like we are on a tag, just use $cargo_version
+        VERSION=$cargo_version
+    else
+        # Not a tag, append date and commit hash
+        VERSION=$cargo_version+$(git show --no-patch --format=%cd-%h --date=format:%Y%m%dT%H%M%S)
+    fi
+}
+
 cd $(dirname $0)/..
 
 init_system_vars
@@ -38,11 +50,7 @@ echo "Checksum command: $CHECKSUM_CMD"
 APP_NAME=clyde
 DATA_FILES="README.md CHANGELOG.md LICENSE"
 
-# Let caller define VERSION through an environment variable
-if [ -z "${VERSION:-}" ] ; then
-    VERSION=$(cargo pkgid | sed 's/.*#//')
-    VERSION=$VERSION+$(git show --no-patch --format=%cd-%h --date=format:%Y%m%dT%H%M%S)
-fi
+define_version
 
 ARTIFACTS_DIR=$PWD/artifacts
 ARCHIVE_DIR=$APP_NAME-$VERSION
