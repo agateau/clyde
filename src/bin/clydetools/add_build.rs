@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::slice::Iter;
 
@@ -45,6 +45,7 @@ lazy_static! {
         ("win32", OS_WINDOWS),
         ("win", OS_WINDOWS),
     ];
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi"]);
 }
 
 fn compute_url_checksum(cache: &FileCache, url: &str) -> Result<String> {
@@ -66,6 +67,14 @@ fn extract_arch_os(name: &str) -> Option<ArchOs> {
     let arch = find_in_iter(ARCH_VEC.iter(), name)?;
     let os = find_in_iter(OS_VEC.iter(), name)?;
     Some(ArchOs::new(arch, os))
+}
+
+fn is_supported_name(name: &str) -> bool {
+    let ext = match name.rsplit_once('.') {
+        Some((_, ext)) => ext,
+        None => return true,
+    };
+    !UNSUPPORTED_EXTS.contains(ext)
 }
 
 fn add_build(
@@ -111,7 +120,13 @@ pub fn add_builds(
                 .rsplit_once('/')
                 .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
 
-            if let Some(arch_os) = extract_arch_os(&name.to_ascii_lowercase()) {
+            let name = name.to_ascii_lowercase();
+            if !is_supported_name(&name) {
+                eprintln!("Skipping {url}, unsupported extension");
+                continue;
+            }
+
+            if let Some(arch_os) = extract_arch_os(&name) {
                 if add_build(&app.download_cache, &mut release, &arch_os, url).is_err() {
                     eprintln!("Can't add {:?} build from {}", arch_os, url);
                 }
@@ -151,5 +166,18 @@ mod tests {
             Some(ArchOs::new(ARCH_X86_64, OS_MACOS)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
+    }
+
+    #[test]
+    fn test_is_supported_name() {
+        assert!(is_supported_name("foo.tar.gz"));
+        assert!(is_supported_name("foo.zip"));
+        assert!(is_supported_name("foo.exe"));
+        assert!(is_supported_name("foo.gz"));
+        assert!(is_supported_name("foo-x86_64-linux"));
+
+        assert!(!is_supported_name("foo.deb"));
+        assert!(!is_supported_name("foo.rpm"));
+        assert!(!is_supported_name("foo.msi"));
     }
 }
