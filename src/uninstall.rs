@@ -2,11 +2,23 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::env;
+use std::ffi::OsString;
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use crate::app::App;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
+
+fn prepend_underscore(path: &Path) -> PathBuf {
+    let mut dst_file_name = OsString::from("_");
+    dst_file_name.push(
+        path.file_name()
+            .unwrap_or_else(|| panic!("{path:?} should have a file name")),
+    );
+    path.with_file_name(dst_file_name)
+}
 
 pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
     let db = &app.database;
@@ -20,12 +32,26 @@ pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
 
     eprintln!("Removing {} {}...", &package_name, installed_version);
 
+    let current_exe_path = env::current_exe().context("Can't find path to current executable")?;
+
     for file in db.get_package_files(package_name)? {
         let path = app.install_dir.join(file);
-        if path.exists() {
-            fs::remove_file(&path)?;
-        } else {
+        if !path.exists() {
             eprintln!("Warning: expected {:?} to exist, but it does not", &path);
+            continue;
+        }
+        if cfg!(windows) && path == current_exe_path {
+            // Uninstalling Clyde itself is tricky on Windows, because we want to remove clyde.exe,
+            // but it's currently running and Windows does not allow removing a running executable.
+            // It is however possible to rename a running executable, so we rename it to _clyde.exe
+            // and leave it there.
+            // In the future it would be a good idea to look into really removing it.
+            let dst_path = prepend_underscore(&path);
+            eprintln!("Moving {path:?} to {dst_path:?}");
+            fs::rename(&path, &dst_path)
+                .with_context(|| format!("Failed to move {path:?} to {dst_path:?}"))?;
+        } else {
+            fs::remove_file(&path).with_context(|| format!("Failed to remove {path:?}"))?;
         }
     }
     db.remove_package(package_name)?;

@@ -62,7 +62,8 @@ mod self_upgrade {
         // WHEN a new version of Clyde is available
         create_clyde_yaml(&store_dir, "0.2.0").unwrap();
 
-        // AND the user runs `clyde install clyde`
+        // AND the user runs `clyde install clyde`, using the installed clyde executable, meaning
+        // the executable has to replace itself
         let mut cmd = Command::new(clyde_home.join("inst").join("bin").join("clyde"));
         cmd.env("CLYDE_HOME", clyde_home.path());
         cmd.args(["install", "clyde"]);
