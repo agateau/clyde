@@ -33,7 +33,6 @@ To get started, you need to download the Clyde binary yourself: Clyde can update
 Next, make sure these tools are installed:
 
 - git: to download and update the Clyde store
-- curl: to download archives
 - tar: to unpack tar archives
 
 This requirement list might get smaller in the future if more features are implemented internally.
