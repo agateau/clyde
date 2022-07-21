@@ -35,6 +35,8 @@ lazy_static! {
         ("386", ARCH_X86),
         ("aarch64", ARCH_AARCH64),
         ("arm64", ARCH_AARCH64),
+        ("32bit", ARCH_X86),
+        ("64bit", ARCH_X86_64),
     ];
     static ref OS_VEC: Vec<MatchingPair> = vec![
         ("linux", OS_LINUX),
