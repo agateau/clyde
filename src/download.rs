@@ -2,15 +2,15 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::fs::{self, File};
-use std::io::{self, Write};
-use std::path::Path;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, Seek, SeekFrom, Write};
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::ClientBuilder;
-use reqwest::Url;
+use reqwest::{header, StatusCode, Url};
 
 const FILE_PREFIX: &str = "file://";
 
@@ -19,6 +19,7 @@ const PROGRESS_BAR_TEMPLATE: &str =
 
 struct ProgressWriter<W: Write> {
     writer: W,
+    start_size: u64,
     downloaded: u64,
     bar: ProgressBar,
 }
@@ -27,8 +28,8 @@ impl<W> ProgressWriter<W>
 where
     W: Write,
 {
-    fn new(writer: W, total_size: u64) -> Self {
-        let bar = ProgressBar::new(total_size);
+    fn new(writer: W, start_size: u64, total_size: u64) -> Self {
+        let bar = ProgressBar::new(start_size + total_size);
         bar.set_style(
             ProgressStyle::default_bar()
                 .template(PROGRESS_BAR_TEMPLATE)
@@ -36,13 +37,14 @@ where
         );
         Self {
             writer,
+            start_size,
             downloaded: 0,
             bar,
         }
     }
 
     fn print_progress(&mut self) {
-        self.bar.set_position(self.downloaded);
+        self.bar.set_position(self.start_size + self.downloaded);
     }
 }
 
@@ -77,22 +79,55 @@ pub fn download(url_str: &str, dst_path: &Path) -> Result<()> {
     }
 }
 
+fn create_partial_path_name(path: &Path) -> Result<PathBuf> {
+    let name = path
+        .file_name()
+        .ok_or_else(|| anyhow!("{path:?} has no filename"))?;
+    let mut name = name.to_os_string();
+    name.push(".partial");
+    Ok(path.with_file_name(name))
+}
+
 fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
     eprintln!("Downloading {url_str} to {dst_path:?}");
-    let mut file = File::create(dst_path)?;
+    // Prepare partial file
+    let partial_path = create_partial_path_name(dst_path)?;
+    let mut file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(&partial_path)
+        .with_context(|| format!("Could not create {partial_path:?}"))?;
+    file.seek(SeekFrom::End(0))?;
+    let mut partial_size = file.stream_position().unwrap_or(0);
 
+    // Send request
     let url = Url::parse(url_str)?;
-
     let client_builder = ClientBuilder::new().timeout(Duration::from_secs(3));
     let client = client_builder.build()?;
 
-    let mut response = client.get(url).send()?.error_for_status()?;
+    let request = client
+        .get(url)
+        .header(header::RANGE, format!("bytes={partial_size}-"))
+        .send()?;
+    let mut response = request.error_for_status()?;
+
+    // Download
+    if partial_size > 0 && response.status() == StatusCode::OK {
+        // Server does not support ranges (otherwise status() would be
+        // StatusCode::PARTIAL_CONTENT). Reset partial file.
+        eprintln!("Server does not support ranges. Restarting download.");
+        file.seek(SeekFrom::Start(0))?;
+        partial_size = 0;
+    }
     if let Some(total_size) = response.content_length() {
-        let mut writer = ProgressWriter::new(&mut file, total_size);
+        let mut writer = ProgressWriter::new(&mut file, partial_size, total_size);
         response.copy_to(&mut writer)?;
     } else {
         response.copy_to(&mut file)?;
     }
+
+    // Done
+    fs::rename(partial_path, dst_path)?;
 
     Ok(())
 }
@@ -107,7 +142,7 @@ fn file_download(url_str: &str, dst_path: &Path) -> Result<()> {
     let total_size = fs::metadata(path_str)?.len();
 
     let mut dst_file = File::create(dst_path)?;
-    let mut writer = ProgressWriter::new(&mut dst_file, total_size);
+    let mut writer = ProgressWriter::new(&mut dst_file, 0, total_size);
 
     io::copy(&mut file, &mut writer)?;
     Ok(())
