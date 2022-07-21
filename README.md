@@ -136,3 +136,23 @@ File an issue on the [Clyde store repository][store-repo].
 Follow the [creating a package documentation](docs/creating-a-package.md).
 
 [store-repo]: https://github.com/agateau/clyde-store
+
+## Similar projects
+
+There are other projects similar to Clyde. This section lists some of them, and the ways they differ from Clyde:
+
+- [Homebrew](https://brew.sh/):
+    - Binaries are built by Homebrew, not by application developers (not necessarily a bad thing, just a different approach).
+    - No Windows support.
+    - Unreliable support for fixed versions.
+
+- [Hermit](https://cashapp.github.io/hermit/):
+    - No package integrity checks.
+    - No Windows support.
+    - No man page integration.
+
+- [Huber](https://github.com/innobead/huber):
+    - No package integrity checks.
+    - Only for GitHub projects.
+    - No man page integration.
+    - Default package list is hard-coded in the application.
