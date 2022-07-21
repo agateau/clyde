@@ -4,7 +4,7 @@
 
 use std::fs::{self, File};
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::time::Duration;
 
 use anyhow::{anyhow, Result};
@@ -77,9 +77,19 @@ pub fn download(url_str: &str, dst_path: &Path) -> Result<()> {
     }
 }
 
+fn create_partial_path_name(path: &Path) -> Result<PathBuf> {
+    let name = path
+        .file_name()
+        .ok_or_else(|| anyhow!("{path:?} has no filename"))?;
+    let mut name = name.to_os_string();
+    name.push(".partial");
+    Ok(path.with_file_name(name))
+}
+
 fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
     eprintln!("Downloading {url_str} to {dst_path:?}");
-    let mut file = File::create(dst_path)?;
+    let partial_path = create_partial_path_name(dst_path)?;
+    let mut file = File::create(&partial_path)?;
 
     let url = Url::parse(url_str)?;
 
@@ -93,6 +103,7 @@ fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
     } else {
         response.copy_to(&mut file)?;
     }
+    fs::rename(partial_path, dst_path)?;
 
     Ok(())
 }
