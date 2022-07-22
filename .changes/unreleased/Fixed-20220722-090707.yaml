@@ -1,0 +1,4 @@
+kind: Fixed
+body: When uninstalling packages containing symbolic links, such as node16, Clyde
+  would sometimes fail to delete the package symbolic links.
+time: 2022-07-22T09:07:07.690001514+02:00
