@@ -50,7 +50,7 @@ jobs:
   server-upload:
     needs: build
     runs-on: ubuntu-20.04
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - uses: actions/checkout@v2
