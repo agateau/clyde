@@ -4,6 +4,7 @@
 
 use std::ffi::OsString;
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -65,7 +66,16 @@ impl Store for GitStore {
         cmd.args(["clone", &self.url]);
         cmd.arg(self.dir.as_os_str());
 
-        let status = cmd.status()?;
+        let status = match cmd.status() {
+            Ok(x) => x,
+            Err(err) => {
+                if err.kind() == io::ErrorKind::NotFound {
+                    return Err(anyhow!("Failed to clone Clyde store: git is not installed"));
+                } else {
+                    return Err(err.into());
+                }
+            }
+        };
         if !status.success() {
             return Err(anyhow!("Failed to clone Clyde store"));
         }

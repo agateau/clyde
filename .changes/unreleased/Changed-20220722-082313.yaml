@@ -1,0 +1,3 @@
+kind: Changed
+body: Clyde now shows a more helpful message if git or tar is not available.
+time: 2022-07-22T08:23:13.736049566+02:00
