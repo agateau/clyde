@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::fs;
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -42,7 +43,20 @@ impl Unpacker for TarUnpacker {
         }
         cmd.arg("-xf");
         cmd.arg(self.archive.canonicalize()?);
-        let status = cmd.status()?;
+        let status = match cmd.status() {
+            Ok(x) => x,
+            Err(err) => {
+                if err.kind() == io::ErrorKind::NotFound {
+                    return Err(anyhow!(
+                        "Failed to unpack {}: tar is not installed",
+                        self.archive.display()
+                    ));
+                } else {
+                    return Err(err.into());
+                }
+            }
+        };
+
         if !status.success() {
             return Err(anyhow!("Error unpacking {}", self.archive.display()));
         }
