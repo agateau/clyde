@@ -29,15 +29,19 @@ init_checksum_cmd() {
 }
 
 define_version() {
-    local cargo_version=$(cargo pkgid | sed 's/.*#//')
-    local git_version=$(git describe)
-    if [ "$git_version" = "$cargo_version" ] ; then
-        # Looks like we are on a tag, just use $cargo_version
-        VERSION=$cargo_version
-    else
-        # Not a tag, append date and commit hash
-        VERSION=$cargo_version+$(git show --no-patch --format=%cd-%h --date=format:%Y%m%dT%H%M%S)
-    fi
+    local describe=$(git describe)
+    echo "git describe: $describe"
+    case "$describe" in
+        *-*-g*)
+            echo "Building a snapshot"
+            VERSION=${describe//-*/}+$(git show --no-patch --format=%cd-%h --date=format:%Y%m%dT%H%M%S)
+            ;;
+        *)
+            echo "Building from a tag"
+            VERSION=$describe
+            ;;
+    esac
+    echo "VERSION=$VERSION"
 }
 
 cd $(dirname $0)/..
