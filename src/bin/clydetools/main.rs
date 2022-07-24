@@ -10,7 +10,6 @@ use clap::{Parser, Subcommand};
 
 pub mod add_build;
 pub mod check_package;
-pub mod import_hermit;
 
 #[macro_use]
 extern crate lazy_static;
@@ -19,7 +18,6 @@ use clyde::app::App;
 
 use add_build::add_builds;
 use check_package::check_packages;
-use import_hermit::import_hermit;
 
 /// Helper tools to work with Clyde packages
 #[derive(Debug, Parser)]
@@ -31,9 +29,6 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
-    ImportHermit {
-        package_file: String,
-    },
     AddBuild {
         package_file: PathBuf,
         version: String,
@@ -42,9 +37,7 @@ enum Command {
         urls: Vec<String>,
     },
     /// Check the validity of packages
-    Check {
-        package_files: Vec<PathBuf>,
-    },
+    Check { package_files: Vec<PathBuf> },
 }
 
 fn main() -> Result<()> {
@@ -52,10 +45,6 @@ fn main() -> Result<()> {
     let home = App::find_home()?;
 
     match cli.command {
-        Command::ImportHermit { package_file } => {
-            let app = App::new(&home)?;
-            import_hermit(&app, &package_file)
-        }
         Command::AddBuild {
             package_file,
             version,
