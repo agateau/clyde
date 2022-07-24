@@ -113,6 +113,9 @@ pub fn add_builds(
     };
 
     if let Some(arch_os) = arch_os {
+        if urls.len() > 1 {
+            return Err(anyhow!("When using --arch-os, only one URL can be passed"));
+        }
         let url = urls.first().unwrap();
         let arch_os = ArchOs::parse(arch_os)?;
         add_build(&app.download_cache, &mut release, &arch_os, url)?;

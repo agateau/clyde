@@ -15,9 +15,8 @@ use crate::uninstall::uninstall;
 use crate::update::update;
 use crate::upgrade::upgrade;
 
-/// A package manager for prebuilt applications
 #[derive(Debug, Parser)]
-#[clap(name = "clyde", version)]
+#[clap(name = "clyde", version, about)]
 pub struct Cli {
     #[clap(flatten)]
     global_opts: GlobalOpts,
@@ -35,6 +34,9 @@ enum Command {
     /// Install an application
     Install {
         /// Application name, optionally suffixed with @version
+        ///
+        /// @version must follow Cargo's interpretation of Semantic Versioning:
+        /// <https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html>
         package_name: String,
     },
     /// Uninstall an application (alias: remove)
@@ -45,7 +47,7 @@ enum Command {
     },
     /// Show details about an application
     Show {
-        /// List application files
+        /// List application files instead of showing information
         #[clap(short, long)]
         list: bool,
         /// Application name

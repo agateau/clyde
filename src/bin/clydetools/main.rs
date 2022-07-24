@@ -19,7 +19,7 @@ use clyde::app::App;
 use add_build::add_builds;
 use check_package::check_packages;
 
-/// Helper tools to work with Clyde packages
+/// Helper tools for Clyde package authors. These commands are not useful to use Clyde.
 #[derive(Debug, Parser)]
 #[clap(name = "clydetools", version)]
 pub struct Cli {
@@ -29,15 +29,30 @@ pub struct Cli {
 
 #[derive(Debug, Subcommand)]
 enum Command {
+    /// Add builds to a package
     AddBuild {
+        /// Path to the package YAML file
         package_file: PathBuf,
+        /// Version of the builds.
+        ///
+        /// If the YAML file does not already contain this version, it will be added.
         version: String,
         #[clap(short, long)]
+        /// arch-os double
+        ///
+        /// If not set, add-build tries to deduce it from the archive names. If
+        /// set, then only one URL can be passed.
         arch_os: Option<String>,
+        /// URLs of the build archives
         urls: Vec<String>,
     },
-    /// Check the validity of packages
-    Check { package_files: Vec<PathBuf> },
+    /// Check the validity of packages: checks the YAML files has all the required entries, and
+    /// check the latest build installs (if it can be installed on the running machine)
+    Check {
+        /// Path to the package YAML files
+        #[clap(required = true)]
+        package_files: Vec<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
