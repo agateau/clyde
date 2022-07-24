@@ -20,6 +20,11 @@ fn prepend_underscore(path: &Path) -> PathBuf {
     path.with_file_name(dst_file_name)
 }
 
+/// Like Path::exists(), but returns true if the argument is a broken symbolic link
+fn path_exists(path: &Path) -> bool {
+    path.is_symlink() || path.exists()
+}
+
 pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
     let db = &app.database;
 
@@ -36,7 +41,7 @@ pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
 
     for file in db.get_package_files(package_name)? {
         let path = app.install_dir.join(file);
-        if !path.exists() {
+        if !path_exists(&path) {
             eprintln!("Warning: expected {:?} to exist, but it does not", &path);
             continue;
         }
@@ -61,6 +66,9 @@ pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[cfg(unix)]
+    use std::os::unix::fs::symlink;
 
     use semver::{Version, VersionReq};
 
@@ -97,5 +105,65 @@ mod tests {
         // AND the package is no longer listed in the DB
         let result = db.get_package_files("p2").unwrap();
         assert!(result.is_empty());
+    }
+
+    #[test]
+    #[cfg(unix)]
+    /// A broken symbolic link can happen during uninstallation if the link target is deleted
+    /// before the link is. Since we can't define the order in which files are removed, in
+    /// this test we use a package containing a truly broken symbolic link.
+    fn uninstall_should_uninstall_broken_symbolic_links() {
+        // GIVEN a Clyde home with a package containing a broken symbolic link
+        let dir = assert_fs::TempDir::new().unwrap();
+        let app = App::new(&dir).unwrap();
+        let db = &app.database;
+        db.create().unwrap();
+
+        let bin_dir = app.install_dir.join("bin");
+        let symbolic_link = bin_dir.join("foo");
+        fs::create_dir_all(&bin_dir).unwrap();
+        symlink(bin_dir.join("foo-real"), &symbolic_link).unwrap();
+        assert!(symbolic_link.is_symlink());
+
+        db.add_package(
+            "foo",
+            &Version::new(1, 0, 0),
+            &VersionReq::STAR,
+            &pathbufset_from_strings(&["bin/foo"]),
+        )
+        .unwrap();
+
+        // WHEN uninstall() is called
+        let result = uninstall(&app, "foo");
+
+        // THEN it succeeds
+        assert!(result.is_ok(), "{:?}", result);
+
+        // AND the symbolic link is removed
+        assert!(!symbolic_link.is_symlink());
+    }
+
+    #[test]
+    fn test_path_exists() {
+        let dir = assert_fs::TempDir::new().unwrap();
+        let existing_file = dir.join("existing");
+        let non_existing_file = dir.join("non_existing");
+
+        fs::write(&existing_file, "").unwrap();
+
+        assert!(path_exists(&existing_file));
+        assert!(!path_exists(&non_existing_file));
+
+        #[cfg(unix)]
+        {
+            let valid_symlink = dir.join("real_symlink");
+            let broken_symlink = dir.join("non_existing_symlink");
+
+            symlink(&existing_file, &valid_symlink).unwrap();
+            symlink(&non_existing_file, &broken_symlink).unwrap();
+
+            assert!(path_exists(&valid_symlink));
+            assert!(path_exists(&broken_symlink));
+        }
     }
 }
