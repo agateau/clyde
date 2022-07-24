@@ -147,6 +147,7 @@ There are other projects similar to Clyde. This section lists some of them, and 
     - Unreliable support for fixed versions.
 
 - [Hermit](https://cashapp.github.io/hermit/):
+    - More geared maintaining a set of tools to build a project.
     - No package integrity checks.
     - No Windows support.
     - No man page integration.
