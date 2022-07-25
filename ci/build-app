@@ -1,12 +1,31 @@
 #!/bin/bash
 set -euo pipefail
 
+CROSS_VERSION=0.2.4
+
 . $(dirname $0)/functions.sh
 
 init_system_vars
 
+setup_cross() {
+    CARGO_CMD=$(command -v cross || true)
+    if [ -z "$CARGO_CMD" ] ; then
+        echo "Installing cross $CROSS_VERSION"
+        cargo install cross --version $CROSS_VERSION
+    fi
+    CARGO_CMD=$(command -v cross || true)
+    if [ -z "$CARGO_CMD" ] ; then
+        die "Failed to install cross"
+    fi
+    echo "Using cross: CARGO_CMD=$CARGO_CMD"
+}
+
 if [ "$OS_NAME" = "linux" ]; then
     export RUSTFLAGS='-C target-feature=+crt-static'
+    rustup target add $CARGO_BUILD_TARGET
+    setup_cross
+else
+    CARGO_CMD=cargo
 fi
 
-cargo build --verbose --release
+$CARGO_CMD build --verbose --release
