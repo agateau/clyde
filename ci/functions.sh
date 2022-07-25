@@ -16,7 +16,7 @@ init_system_vars() {
     case "$out" in
     Linux)
         OS_NAME=linux
-        export CARGO_BUILD_TARGET="$ARCH-unknown-linux-gnu"
+        export CARGO_BUILD_TARGET="$ARCH-unknown-linux-musl"
         ;;
     Darwin)
         OS_NAME=macos
