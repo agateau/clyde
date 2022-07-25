@@ -89,7 +89,7 @@ fn create_partial_path_name(path: &Path) -> Result<PathBuf> {
 }
 
 fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
-    eprintln!("Downloading {url_str} to {dst_path:?}");
+    eprintln!("Downloading archive");
     // Prepare partial file
     let partial_path = create_partial_path_name(dst_path)?;
     let mut file = OpenOptions::new()

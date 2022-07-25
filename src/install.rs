@@ -17,7 +17,7 @@ use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
-    eprintln!("Unpacking...");
+    eprintln!("Unpacking");
     let unpacker = get_unpacker(archive)?;
     unpacker.unpack(pkg_dir, strip)?;
     Ok(())
@@ -82,7 +82,7 @@ fn install_files(
     file_map: &BTreeMap<String, String>,
     vars: &VarsMap,
 ) -> Result<HashSet<PathBuf>> {
-    eprintln!("Installing files...");
+    eprintln!("Installing files");
     let mut files = HashSet::<PathBuf>::new();
 
     fs::create_dir_all(&install_dir)?;
@@ -160,11 +160,11 @@ pub fn install_with_package_and_requested_version(
     if installed_version == Some(version.clone()) {
         return Err(anyhow!("{} {} is already installed", package_name, version));
     }
-    eprintln!("Installing {} {}...", package_name, version);
+    eprintln!("Installing {} {}", package_name, version);
 
     let archive_path = app.download_cache.download(&build.url)?;
 
-    eprintln!("Verifying checksum...");
+    eprintln!("Verifying archive integrity");
     verify_checksum(&archive_path, &build.sha256)?;
 
     let unpack_dir = app.tmp_dir.join(&package.name);
