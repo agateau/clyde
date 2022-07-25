@@ -35,7 +35,7 @@ pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
         }
     };
 
-    eprintln!("Removing {} {}...", &package_name, installed_version);
+    eprintln!("Removing {} {}", &package_name, installed_version);
 
     let current_exe_path = env::current_exe().context("Can't find path to current executable")?;
 
