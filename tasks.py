@@ -114,8 +114,8 @@ def prepare_release3(c):
     erun(f"git commit -m 'Prepare {VERSION}'")
     erun("git push -u origin prep-release")
 
-    erun("cargo publish --dry-run")
-    erun("cargo package --list")
+    erun("cargo publish --dry-run --allow-dirty")
+    erun("cargo package --list --allow-dirty")
 
 
 @task
