@@ -21,9 +21,11 @@ from urllib import request
 from invoke import task, run
 
 
-VERSION = os.environ["VERSION"]
-
 ARTIFACTS_DIR = Path("artifacts")
+
+
+def get_version():
+    return os.environ["VERSION"]
 
 
 def create_request(url: str, headers: Dict[str, str]) -> request.Request:
@@ -42,13 +44,13 @@ def http_get(url: str, headers: Dict[str, str]) -> HTTPResponse:
 def erun(*args, **kwargs):
     """Like run, but with echo on"""
     kwargs["echo"] = True
-    run(*args, **kwargs)
+    return run(*args, **kwargs)
 
 
 def cerun(c, *args, **kwargs):
     """Like Context.run, but with echo on"""
     kwargs["echo"] = True
-    c.run(*args, **kwargs)
+    return c.run(*args, **kwargs)
 
 
 def ask(msg: str) -> str:
@@ -64,10 +66,25 @@ def is_ok(msg: str) -> bool:
 
 
 @task
+def create_pr(c):
+    """Create a pull-request and mark it as auto-mergeable"""
+    result = cerun(c, "gh pr create --fill")
+    if not result:
+        sys.exit(1)
+    url = result.stderr.split("\n")[-1]
+    print(f"Pull request URL: {url}")
+    if not url.startswith("https://github.com"):
+        print("Invalid URL")
+        sys.exit(1)
+    cerun(c, f"gh pr merge --auto -dm {url}")
+
+
+@task
 def update_version(c):
+    version = get_version()
     path = Path("Cargo.toml")
     text = path.read_text()
-    text, count = re.subn(r"^version = .*", f"version = \"{VERSION}\"", text,
+    text, count = re.subn(r"^version = .*", f"version = \"{version}\"", text,
                           flags=re.MULTILINE)
     assert count == 0 or count == 1
     path.write_text(text)
@@ -75,7 +92,8 @@ def update_version(c):
 
 @task
 def prepare_release(c):
-    run(f"gh issue list -m {VERSION}", pty=True)
+    version = get_version()
+    run(f"gh issue list -m {version}", pty=True)
     run("gh pr list", pty=True)
     if not is_ok("Continue?"):
         sys.exit(1)
@@ -91,12 +109,13 @@ def prepare_release(c):
 
 @task
 def prepare_release2(c):
+    version = get_version()
     erun("git checkout -b prep-release")
 
     update_version(c)
 
-    erun(f"changie batch {VERSION}")
-    print(f"Review/edit changelog (.changes/{VERSION}.md)")
+    erun(f"changie batch {version}")
+    print(f"Review/edit changelog (.changes/{version}.md)")
     if not is_ok("Looks good?"):
         sys.exit(1)
     erun("changie merge")
@@ -110,27 +129,28 @@ def prepare_release2(c):
 
 @task
 def prepare_release3(c):
-    erun("git add Cargo.toml CHANGELOG.md .changes")
-    erun(f"git commit -m 'Prepare {VERSION}'")
+    version = get_version()
+    erun("git add Cargo.toml Cargo.lock CHANGELOG.md .changes")
+    erun(f"git commit -m 'Prepare {version}'")
     erun("git push -u origin prep-release")
 
     erun("cargo publish --dry-run --allow-dirty")
     erun("cargo package --list --allow-dirty")
+    create_pr(c)
 
 
 @task
 def tag(c):
+    version = get_version()
     erun("git checkout main")
-    erun("git merge --no-ff prep-release")
-    erun(f"git tag -a {VERSION} -m 'Releasing version {VERSION}'")
-
-    if not is_ok("Push tag?"):
+    erun("git pull")
+    if not is_ok("Create tag?"):
         sys.exit(1)
+
+    erun(f"git tag -a {version} -m 'Releasing version {version}'")
 
     erun("git push")
     erun("git push --tags")
-    erun("git push -d origin prep-release")
-    erun("git branch -d prep-release")
 
 
 def get_artifact_list() -> List[Path]:
@@ -148,14 +168,16 @@ def download_artifacts(c):
 
 @task
 def publish(c):
+    version = get_version()
     files_str = " ".join(str(x) for x in get_artifact_list())
-    erun(f"gh release create {VERSION} -F.changes/{VERSION}.md {files_str}")
+    erun(f"gh release create {version} -F.changes/{version}.md {files_str}")
     erun("cargo publish")
 
 
 @task
 def update_store(c):
-    tag_url = f"https://api.github.com/repos/agateau/clyde/releases/tags/{VERSION}"
+    version = get_version()
+    tag_url = f"https://api.github.com/repos/agateau/clyde/releases/tags/{version}"
     print(f"Fetching release info from {tag_url}")
     response = http_get(tag_url, dict())
     dct = json.load(response)
@@ -166,18 +188,8 @@ def update_store(c):
         cerun(c, "git pull")
         cerun(c, "git checkout -b update-clyde")
         urls_str = " ".join(archives_url)
-        cerun(c, f"clydetools add-build clyde.yaml {VERSION} {urls_str}")
+        cerun(c, f"clydetools add-build clyde.yaml {version} {urls_str}")
         cerun(c, "git add clyde.yaml")
-        cerun(c, f"git commit -m 'Update clyde to {VERSION}'")
+        cerun(c, f"git commit -m 'Update clyde to {version}'")
         cerun(c, "git push -u origin update-clyde")
-
-
-@task
-def finish_update_store(c):
-    with c.cd("../clyde-store"):
-        cerun(c, "git checkout main")
-        cerun(c, "git pull")
-        cerun(c, "git merge --no-ff update-clyde")
-        cerun(c, "git push")
-        cerun(c, "git push -d origin update-clyde")
-        cerun(c, "git branch -d update-clyde")
+        create_pr(c)
