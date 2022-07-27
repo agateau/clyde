@@ -4,6 +4,8 @@ Clyde is a package manager for prebuilt applications.
 
 It works on Linux, macOS and Windows.
 
+[Clyde demo](https://user-images.githubusercontent.com/3575/181382294-df105634-537e-4dab-906a-650107a73500.webm)
+
 ## Motivation
 
 You want to install the latest version of tools like ripgrep, fd or fzf, but:
