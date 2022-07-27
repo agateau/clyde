@@ -6,7 +6,7 @@ It works on Linux, macOS and Windows.
 
 ## Motivation
 
-You want to install the latest version of tools like ripgrep, fd or gh, but:
+You want to install the latest version of tools like ripgrep, fd or fzf, but:
 
 - They are not available in your distribution, or the available versions are too old, and you don't want to mess up your system.
 - You don't want to have to think about where to install them, add them to $PATH or make their man pages available.
@@ -22,13 +22,13 @@ You are concerned about supply-chain attacks (see Security section).
 
 ### Installing Clyde
 
-To get started, you need to download the Clyde binary yourself: Clyde can update itself, but it needs to be installed manually first. You can either:
+To get started, you need to download the Clyde binary yourself. Clyde can update itself, but it needs to be installed manually first. You can either:
 
-- ~Get an archive from the [releases page](http://github.com/agateau/clyde/releases)~ (no release yet)
+- Get an archive from the [releases page](http://github.com/agateau/clyde/releases).
 
-- Get a master build from <https://builds.agateau.com/clyde>.
+- Get a main build from <https://builds.agateau.com/clyde>.
 
-- Build it yourself. Clyde is written in Rust, so if you have the Rust toolchain installed, then you can clone its source code and install it with `clyde install --path .`.
+- Build it yourself. Clyde is written in Rust, so if you have the Rust tool-chain installed, then you can clone its source code and install it with `clyde install --path .`.
 
 Next, make sure these tools are installed:
 
@@ -38,6 +38,8 @@ Next, make sure these tools are installed:
 This requirement list might get smaller in the future if more features are implemented internally.
 
 ## Getting started
+
+Assuming the `clyde` binary is in your PATH.
 
 1. Run `clyde setup`.
 
@@ -63,23 +65,31 @@ Check you can read its man page:
 man rg
 ```
 
+4. To ensure you always run the latest version of Clyde, install it with itself!
+
+```
+clyde install clyde
+```
+
 ## Commands
 
 ### `clyde setup`
 
-Setup Clyde: install Clyde store, and create an activation script. All changes are done in the "Clyde prefix" (see "Folder hierarchy" section)
+Setup Clyde: setup the Clyde store, and creates an activation script. All changes are done in the "Clyde prefix" (see "Folder hierarchy" section).
+
+The Clyde store contains the list of all packages Clyde can install.
 
 ### `clyde update`
 
-Update Clyde store.
+Updates Clyde store so that Clyde is aware of the availability of new packages or new versions of existing packages.
 
 ### `clyde install foobar[@version]`
 
-Install `foobar` package, following the `@version` restriction if set.
+Installs `foobar` package, following the `@version` restriction if set.
 
 The `@version` syntax follows [Cargo's interpretation of Semantic Versioning][cargo-semver].
 
-This makes the syntax a bit surprising: `clyde install foobar@1.2.3` would not install a 2.0.0 version but it would install an 1.2.4 version or even an 1.3.0 version, because Cargo considers them to be compatible.
+This makes the syntax a bit surprising: `clyde install foobar@1.2.3` can install an 1.2.4 version or even an 1.3.0 version, because Cargo considers them to be compatible.
 
 To really pin a version you must use `foobar@=1.2.3`. To install the latest 1.2 version, use `'foobar@1.2.*'` or `foobar@~1.2`.
 
@@ -97,11 +107,11 @@ Shows details about `foobar` package.
 
 ### `clyde search foobar`
 
-Search Clyde store for a package matching "foobar" in its name or description.
+Searches Clyde store for a package matching "foobar" in its name or description.
 
 ### `clyde upgrade`
 
-Upgrade all packages to the latest version. If a package has been installed with an `@version` restriction, enforce it.
+Upgrades all packages to the latest version. If a package has been installed with an `@version` restriction, enforces it.
 
 ## FAQ
 
@@ -109,9 +119,9 @@ Upgrade all packages to the latest version. If a package has been installed with
 
 Yes, but it still requires you to be careful.
 
-It is more secure in that the Clyde store contains the sha256 checksum of all archives, making it more complicated for an attacker to trick you into installing a corrupted archive.
+It is more secure in that Clyde checks the integrity of all downloaded archives (The Clyde store contains the sha256 checksum of all known archives), making it more complicated for an attacker to trick you into installing a corrupted archive.
 
-This means if an attacker takes over the GitHub account of an app developer and replace some release artifacts with others, Clyde will refuse to install them. It does not protect however from the case where the attacker releases a new version of the application. To protect against this you need to pin the version numbers.
+This means if an attacker takes over the GitHub account of an app developer and replaces some release artifacts with others, Clyde will refuse to install them. It does not protect however from the case where the attacker releases a new version of the application. To protect against this you need to pin the version numbers.
 
 Clyde does not sandbox the applications.
 
@@ -144,7 +154,7 @@ There are other projects similar to Clyde. This section lists some of them, and 
 - [Homebrew](https://brew.sh/):
     - Binaries are built by Homebrew, not by application developers (not necessarily a bad thing, just a different approach).
     - No Windows support.
-    - Unreliable support for fixed versions.
+    - Unreliable support for pinned versions.
 
 - [Hermit](https://cashapp.github.io/hermit/):
     - More geared maintaining a set of tools to build a project.
