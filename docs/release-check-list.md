@@ -19,7 +19,12 @@
 
 ## Publish
 
+- [ ] Download artifacts
+
     invoke download-artifacts
+
+- [ ] Publish
+
     invoke publish
 
 ## Post publish
@@ -28,9 +33,7 @@
 
     invoke update-store
 
-- [ ] Merge when CI is happy
-
-    invoke finish-update-store
+- [ ] Report tasks and checklist changes
 
 - [ ] Bump version to x.y.z+1-alpha.1
 
