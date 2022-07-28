@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 - 2022-07-28
+
+### Fixed
+
+- Fixed bug which caused `./clyde install clyde` to fail (#58).
+
 ## 0.2.0 - 2022-07-26
 
 ### Added
