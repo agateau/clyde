@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::collections::HashSet;
+use std::env;
 use std::fs::{self, File};
 use std::path::{Path, PathBuf};
 
@@ -14,6 +15,38 @@ use anyhow::Result;
 // hello/bin/hello
 // hello/README.md
 const ZIP_BYTES: &[u8; 626] = include_bytes!("zip_unpacker_test_archive.zip");
+
+/// Saves the current working directory and restores it when dropped
+pub struct CwdSaver {
+    old_dir: PathBuf,
+}
+
+impl CwdSaver {
+    pub fn new() -> Self {
+        CwdSaver {
+            old_dir: env::current_dir().expect("Failed to get current dir"),
+        }
+    }
+
+    /// Convenience function to save the working directory and change to another one
+    pub fn cd(dir: &Path) -> Self {
+        let saver = CwdSaver::new();
+        env::set_current_dir(dir).unwrap_or_else(|x| panic!("Failed to cd to {dir:?}: {x}"));
+        saver
+    }
+}
+
+impl Default for CwdSaver {
+    fn default() -> Self {
+        CwdSaver::new()
+    }
+}
+
+impl Drop for CwdSaver {
+    fn drop(&mut self) {
+        env::set_current_dir(&self.old_dir).expect("Failed to restore current dir");
+    }
+}
 
 pub fn create_tree(root: &Path, files: &[&str]) {
     for file in files {

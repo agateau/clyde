@@ -48,9 +48,13 @@ impl GitStore {
     }
 
     fn find_package_path(&self, name: &str) -> Option<PathBuf> {
-        let direct_path = PathBuf::from(name);
-        if direct_path.is_file() {
-            return Some(direct_path);
+        if name.ends_with(".yaml") {
+            let direct_path = PathBuf::from(name);
+            return if direct_path.is_file() {
+                Some(direct_path)
+            } else {
+                None
+            };
         }
         let store_path = self.dir.join(name.to_owned() + ".yaml");
         if store_path.is_file() {
@@ -135,6 +139,8 @@ mod tests {
 
     use std::vec::Vec;
 
+    use crate::test_file_utils::CwdSaver;
+
     fn create_package_file(dir: &Path, name: &str) {
         create_package_file_with_desc(dir, name, &format!("The {} package", name));
     }
@@ -176,5 +182,24 @@ mod tests {
         let result_names: Vec<String> = results.iter().map(|x| x.name.clone()).collect();
 
         assert_eq!(result_names, vec!["foo", "baz"]);
+    }
+
+    #[test]
+    fn find_package_path_should_not_try_to_read_files_without_yaml_extensions() {
+        // GIVEN an empty store
+        let dir = assert_fs::TempDir::new().unwrap();
+        let store_dir = dir.join("store");
+        let store = GitStore::new("https://example.com", &store_dir);
+
+        // AND a file called foo in the current dir
+        fs::write(dir.join("foo"), "").unwrap();
+        let _cwd_saver = CwdSaver::cd(&dir);
+        assert!(PathBuf::from("foo").exists());
+
+        // WHEN find_package_path("foo") is called
+        let path = store.find_package_path("foo");
+
+        // THEN it should return None
+        assert_eq!(path, None);
     }
 }
