@@ -12,12 +12,12 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
+use crate::ui::Ui;
 use crate::uninstall::uninstall;
 use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
-    eprintln!("Unpacking");
     let unpacker = get_unpacker(archive)?;
     unpacker.unpack(pkg_dir, strip)?;
     Ok(())
@@ -82,7 +82,6 @@ fn install_files(
     file_map: &BTreeMap<String, String>,
     vars: &VarsMap,
 ) -> Result<HashSet<PathBuf>> {
-    eprintln!("Installing files");
     let mut files = HashSet::<PathBuf>::new();
 
     fs::create_dir_all(&install_dir)?;
@@ -126,13 +125,14 @@ fn create_vars_map(package_name: &str) -> VarsMap {
     map
 }
 
-pub fn install(app: &App, package_name_arg: &str) -> Result<()> {
+pub fn install(app: &App, ui: &Ui, package_name_arg: &str) -> Result<()> {
     let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-    install_with_package_and_requested_version(app, package_name, &requested_version)
+    install_with_package_and_requested_version(app, ui, package_name, &requested_version)
 }
 
 pub fn install_with_package_and_requested_version(
     app: &App,
+    ui: &Ui,
     package_name: &str,
     requested_version: &VersionReq,
 ) -> Result<()> {
@@ -160,24 +160,28 @@ pub fn install_with_package_and_requested_version(
     if installed_version == Some(version.clone()) {
         return Err(anyhow!("{} {} is already installed", package_name, version));
     }
-    eprintln!("Installing {} {}", package_name, version);
+    ui.info(&format!("Installing {} {}", package_name, version));
 
-    let archive_path = app.download_cache.download(&build.url)?;
+    let ui = ui.nest();
+    let archive_path = app.download_cache.download(&ui, &build.url)?;
 
-    eprintln!("Verifying archive integrity");
+    ui.info("Verifying archive integrity");
     verify_checksum(&archive_path, &build.sha256)?;
 
     let unpack_dir = app.tmp_dir.join(&package.name);
     if unpack_dir.exists() {
         fs::remove_dir_all(&unpack_dir)?
     }
+
+    ui.info("Unpacking archive");
     unpack(&archive_path, &unpack_dir, install.strip)?;
 
     if installed_version.is_some() {
         // A different version is already installed, uninstall it first
-        uninstall(app, package_name)?;
+        uninstall(app, &ui, package_name)?;
     }
 
+    ui.info("Installing files");
     let installed_files = install_files(
         &unpack_dir,
         &app.install_dir,

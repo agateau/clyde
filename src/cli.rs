@@ -11,6 +11,7 @@ use crate::list::list;
 use crate::search::search;
 use crate::setup::setup;
 use crate::show::show;
+use crate::ui::Ui;
 use crate::uninstall::uninstall;
 use crate::update::update;
 use crate::upgrade::upgrade;
@@ -73,21 +74,22 @@ struct GlobalOpts {
 
 impl Cli {
     pub fn exec(self) -> Result<()> {
-        let home = App::find_home()?;
+        let ui = Ui::default();
+        let home = App::find_home(&ui)?;
 
         match self.command {
-            Command::Setup {} => setup(&home),
+            Command::Setup {} => setup(&ui, &home),
             Command::Update {} => {
                 let app = App::new(&home)?;
-                update(&app)
+                update(&app, &ui)
             }
             Command::Install { package_name } => {
                 let app = App::new(&home)?;
-                install(&app, &package_name)
+                install(&app, &ui, &package_name)
             }
             Command::Uninstall { package_name } => {
                 let app = App::new(&home)?;
-                uninstall(&app, &package_name)
+                uninstall(&app, &ui, &package_name)
             }
             Command::Show { package_name, list } => {
                 let app = App::new(&home)?;
@@ -103,7 +105,7 @@ impl Cli {
             }
             Command::Upgrade {} => {
                 let app = App::new(&home)?;
-                upgrade(&app)
+                upgrade(&app, &ui)
             }
         }
     }

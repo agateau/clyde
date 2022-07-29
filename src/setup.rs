@@ -12,6 +12,7 @@ use anyhow::{anyhow, Result};
 use shell_words::quote;
 
 use crate::app::App;
+use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
 
@@ -47,13 +48,13 @@ fn shell_path_from_path(path: &Path) -> Result<String> {
     Ok(quote(cygpath_output.trim()).to_string())
 }
 
-fn create_activate_script(app: &App) -> Result<()> {
+fn create_activate_script(ui: &Ui, app: &App) -> Result<()> {
     let install_dir = shell_path_from_path(&app.install_dir)?;
     let content = SH_INIT.replace("@INSTALL_DIR@", &install_dir);
 
     let scripts_dir = app.home.join("scripts");
     let script_path = scripts_dir.join("activate.sh");
-    eprintln!("Creating activation script");
+    ui.info("Creating activation script");
 
     fs::create_dir(&scripts_dir)?;
     fs::write(&script_path, &content)?;
@@ -64,12 +65,12 @@ fn create_activate_script(app: &App) -> Result<()> {
     Ok(())
 }
 
-pub fn setup(home: &Path) -> Result<()> {
+pub fn setup(ui: &Ui, home: &Path) -> Result<()> {
     if home.exists() {
         return Err(anyhow!("Clyde directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
             home));
     }
-    eprintln!("Setting up Clyde in {:?}", home);
+    ui.info(&format!("Setting up Clyde in {:?}", home));
 
     fs::create_dir_all(&home)?;
 
@@ -77,10 +78,10 @@ pub fn setup(home: &Path) -> Result<()> {
 
     app.store.setup()?;
 
-    eprintln!("Creating Clyde database");
+    ui.info("Creating Clyde database");
     app.database.create()?;
 
-    create_activate_script(&app)?;
+    create_activate_script(ui, &app)?;
 
     Ok(())
 }

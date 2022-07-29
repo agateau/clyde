@@ -8,6 +8,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::app::App;
+use crate::ui::Ui;
 
 use anyhow::{anyhow, Context, Result};
 
@@ -25,7 +26,7 @@ fn path_exists(path: &Path) -> bool {
     path.is_symlink() || path.exists()
 }
 
-pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
+pub fn uninstall(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
     let db = &app.database;
 
     let installed_version = match db.get_package_version(package_name)? {
@@ -35,14 +36,15 @@ pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
         }
     };
 
-    eprintln!("Removing {} {}", &package_name, installed_version);
+    ui.info(&format!("Removing {} {}", &package_name, installed_version));
+    let ui = ui.nest();
 
     let current_exe_path = env::current_exe().context("Can't find path to current executable")?;
 
     for file in db.get_package_files(package_name)? {
         let path = app.install_dir.join(file);
         if !path_exists(&path) {
-            eprintln!("Warning: expected {:?} to exist, but it does not", &path);
+            ui.warn(&format!("Expected {:?} to exist, but it does not", &path));
             continue;
         }
         if cfg!(windows) && path == current_exe_path {
@@ -52,7 +54,7 @@ pub fn uninstall(app: &App, package_name: &str) -> Result<()> {
             // and leave it there.
             // In the future it would be a good idea to look into really removing it.
             let dst_path = prepend_underscore(&path);
-            eprintln!("Moving {path:?} to {dst_path:?}");
+            ui.info("Moving {path:?} to {dst_path:?}");
             fs::rename(&path, &dst_path)
                 .with_context(|| format!("Failed to move {path:?} to {dst_path:?}"))?;
         } else {
@@ -95,7 +97,7 @@ mod tests {
         .unwrap();
 
         // WHEN uninstall() is called on `p2`
-        let result = uninstall(&app, "p2");
+        let result = uninstall(&app, &Ui::default(), "p2");
         assert!(result.is_ok(), "{:?}", result);
 
         // THEN only `share/man/f1` file remains
@@ -134,7 +136,7 @@ mod tests {
         .unwrap();
 
         // WHEN uninstall() is called
-        let result = uninstall(&app, "foo");
+        let result = uninstall(&app, &Ui::default(), "foo");
 
         // THEN it succeeds
         assert!(result.is_ok(), "{:?}", result);

@@ -13,6 +13,7 @@ use directories::ProjectDirs;
 use crate::db::Database;
 use crate::file_cache::FileCache;
 use crate::store::{GitStore, Store};
+use crate::ui::Ui;
 
 const CLYDE_STORE_URL: &str = "https://github.com/agateau/clyde-store";
 
@@ -27,9 +28,9 @@ pub struct App {
 }
 
 impl App {
-    pub fn find_home() -> Result<PathBuf> {
+    pub fn find_home(ui: &Ui) -> Result<PathBuf> {
         if let Some(home) = env::var_os("CLYDE_HOME") {
-            println!("Using {home:?} as Clyde home directory");
+            ui.info(&format!("Using {home:?} as Clyde home directory"));
             return Ok(Path::new(&home).to_path_buf());
         }
 

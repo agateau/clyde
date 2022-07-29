@@ -12,6 +12,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::ClientBuilder;
 use reqwest::{header, StatusCode, Url};
 
+use crate::ui::Ui;
+
 const FILE_PREFIX: &str = "file://";
 
 const PROGRESS_BAR_TEMPLATE: &str =
@@ -69,11 +71,11 @@ impl<W: Write> Write for ProgressWriter<W> {
     }
 }
 
-pub fn download(url_str: &str, dst_path: &Path) -> Result<()> {
+pub fn download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     if url_str.starts_with("http://") || url_str.starts_with("https://") {
-        https_download(url_str, dst_path)
+        https_download(ui, url_str, dst_path)
     } else if url_str.starts_with(FILE_PREFIX) {
-        file_download(url_str, dst_path)
+        file_download(ui, url_str, dst_path)
     } else {
         Err(anyhow!("Unspported URL protocol: {url_str}"))
     }
@@ -88,8 +90,8 @@ fn create_partial_path_name(path: &Path) -> Result<PathBuf> {
     Ok(path.with_file_name(name))
 }
 
-fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
-    eprintln!("Downloading archive");
+fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
+    ui.info("Downloading archive");
     // Prepare partial file
     let partial_path = create_partial_path_name(dst_path)?;
     let mut file = OpenOptions::new()
@@ -115,7 +117,7 @@ fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
     if partial_size > 0 && response.status() == StatusCode::OK {
         // Server does not support ranges (otherwise status() would be
         // StatusCode::PARTIAL_CONTENT). Reset partial file.
-        eprintln!("Server does not support ranges. Restarting download.");
+        ui.info("Server does not support ranges. Restarting download.");
         file.seek(SeekFrom::Start(0))?;
         partial_size = 0;
     }
@@ -133,8 +135,8 @@ fn https_download(url_str: &str, dst_path: &Path) -> Result<()> {
 }
 
 // This one is mainly useful for tests
-fn file_download(url_str: &str, dst_path: &Path) -> Result<()> {
-    eprintln!("Copying {url_str} to {dst_path:?}");
+fn file_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
+    ui.info(&format!("Copying {url_str} to {dst_path:?}"));
     let path_str = url_str
         .strip_prefix(FILE_PREFIX)
         .unwrap_or_else(|| panic!("File URL ({url_str}) does not start with {FILE_PREFIX}"));
