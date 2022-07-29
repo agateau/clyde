@@ -18,6 +18,7 @@ use clyde::package::{Build, Package};
 const ARCH_X86_64: &str = "x86_64";
 const ARCH_X86: &str = "x86";
 const ARCH_AARCH64: &str = "aarch64";
+const ARCH_ANY: &str = "any";
 
 const OS_LINUX: &str = "linux";
 const OS_MACOS: &str = "macos";
@@ -33,10 +34,12 @@ lazy_static! {
         ("x64", ARCH_X86_64),
         ("x86", ARCH_X86),
         ("386", ARCH_X86),
+        ("686", ARCH_X86),
         ("aarch64", ARCH_AARCH64),
         ("arm64", ARCH_AARCH64),
         ("32bit", ARCH_X86),
         ("64bit", ARCH_X86_64),
+        ("universal", ARCH_ANY),
     ];
     static ref OS_VEC: Vec<MatchingPair> = vec![
         ("linux", OS_LINUX),
@@ -47,7 +50,7 @@ lazy_static! {
         ("win32", OS_WINDOWS),
         ("win", OS_WINDOWS),
     ];
-    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi"]);
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "dmg"]);
 }
 
 fn compute_url_checksum(cache: &FileCache, url: &str) -> Result<String> {
@@ -169,6 +172,14 @@ mod tests {
         check_extract_arch_os(
             "node-v16.16.0-darwin-x64.tar.gz",
             Some(ArchOs::new(ARCH_X86_64, OS_MACOS)),
+        );
+        check_extract_arch_os(
+            "bat-v0.21.0-i686-pc-windows-msvc.zip",
+            Some(ArchOs::new(ARCH_X86, OS_WINDOWS)),
+        );
+        check_extract_arch_os(
+            "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
+            Some(ArchOs::new(ARCH_ANY, OS_MACOS)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }
