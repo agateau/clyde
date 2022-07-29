@@ -33,9 +33,12 @@
 
     invoke update-store
 
-- [ ] Report tasks and checklist changes
+- [ ] Wait for store CI to be happy
 
-- [ ] Bump version to x.y.z+1-alpha.1
+- [ ] Toot / Tweet
 
 - [ ] Write blog post
 
+- [ ] Report tasks and checklist changes
+
+- [ ] Bump version to x.y.z+1-alpha.1

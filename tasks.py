@@ -68,15 +68,24 @@ def is_ok(msg: str) -> bool:
 @task
 def create_pr(c):
     """Create a pull-request and mark it as auto-mergeable"""
-    result = cerun(c, "gh pr create --fill")
-    if not result:
+    def extract_pr_id(text):
+        match = re.search(r"/pull/(\d+)", text)
+        if not match:
+            print(f"Can't find pull request ID from:\n'''\n{text}\n'''")
+            sys.exit(1)
+        return match.group(1)
+
+    result = cerun(c, "gh pr create --fill", warn=True)
+    if result:
+        pr_id = extract_pr_id(result.stdout)
+    elif "a pull request for branch" in result.stderr:
+        # PR already opened, PR ID is in stderr
+        pr_id = extract_pr_id(result.stderr)
+    else:
         sys.exit(1)
-    url = result.stderr.split("\n")[-1]
-    print(f"Pull request URL: {url}")
-    if not url.startswith("https://github.com"):
-        print("Invalid URL")
-        sys.exit(1)
-    cerun(c, f"gh pr merge --auto -dm {url}")
+
+    print(f"Pull request ID: {pr_id}")
+    cerun(c, f"gh pr merge --auto -dm {pr_id}")
 
 
 @task
