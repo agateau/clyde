@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use semver::Version;
 
 use clyde::app::App;
-use clyde::arch_os::ArchOs;
+use clyde::arch_os::{ArchOs, ANY};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Build, Package};
@@ -18,7 +18,6 @@ use clyde::package::{Build, Package};
 const ARCH_X86_64: &str = "x86_64";
 const ARCH_X86: &str = "x86";
 const ARCH_AARCH64: &str = "aarch64";
-const ARCH_ANY: &str = "any";
 
 const OS_LINUX: &str = "linux";
 const OS_MACOS: &str = "macos";
@@ -39,7 +38,7 @@ lazy_static! {
         ("arm64", ARCH_AARCH64),
         ("32bit", ARCH_X86),
         ("64bit", ARCH_X86_64),
-        ("universal", ARCH_ANY),
+        ("universal", ANY),
     ];
     static ref OS_VEC: Vec<MatchingPair> = vec![
         ("linux", OS_LINUX),
@@ -105,7 +104,7 @@ pub fn add_builds(
     path: &Path,
     version: &str,
     arch_os: &Option<String>,
-    urls: &Vec<String>,
+    urls: &[String],
 ) -> Result<()> {
     let package = Package::from_file(path)?;
 
@@ -179,7 +178,7 @@ mod tests {
         );
         check_extract_arch_os(
             "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
-            Some(ArchOs::new(ARCH_ANY, OS_MACOS)),
+            Some(ArchOs::new(ANY, OS_MACOS)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }

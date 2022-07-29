@@ -104,7 +104,7 @@ fn print_summary_line(header: &str, packages: &[&str]) {
     println!("{}: {}", header, joined);
 }
 
-pub fn check_packages(paths: &Vec<PathBuf>) -> Result<()> {
+pub fn check_packages(paths: &[PathBuf]) -> Result<()> {
     let mut ok_packages = Vec::<&str>::new();
     let mut no_build_packages = Vec::<&str>::new();
     let mut failed_packages = Vec::<&str>::new();
