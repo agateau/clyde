@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand};
 
 pub mod add_build;
 pub mod check_package;
+pub mod gh_update;
 
 #[macro_use]
 extern crate lazy_static;
@@ -17,8 +18,9 @@ extern crate lazy_static;
 use clyde::app::App;
 use clyde::ui::Ui;
 
-use add_build::add_builds;
+use add_build::add_builds_cmd;
 use check_package::check_packages;
+use gh_update::gh_update;
 
 /// Helper tools for Clyde package authors. These commands are not useful to use Clyde.
 #[derive(Debug, Parser)]
@@ -54,6 +56,13 @@ enum Command {
         #[clap(required = true)]
         package_files: Vec<PathBuf>,
     },
+    /// Update GitHub-hosted packages: uses GitHub REST API to check for new versions and calls
+    /// add-build on them.
+    GhUpdate {
+        /// Path to the package YAML files
+        #[clap(required = true)]
+        package_files: Vec<PathBuf>,
+    },
 }
 
 fn main() -> Result<()> {
@@ -69,9 +78,13 @@ fn main() -> Result<()> {
             urls,
         } => {
             let app = App::new(&home)?;
-            add_builds(&app, &ui, &package_file, &version, &arch_os, &urls)
+            add_builds_cmd(&app, &ui, &package_file, &version, &arch_os, &urls)
         }
         // Check can run without an existing Clyde home: it creates a temporary one to test the package
         Command::Check { package_files } => check_packages(&ui, &package_files),
+        Command::GhUpdate { package_files } => {
+            let app = App::new(&home)?;
+            gh_update(&app, &ui, &package_files)
+        }
     }
 }

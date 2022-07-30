@@ -103,14 +103,13 @@ pub fn add_builds(
     app: &App,
     ui: &Ui,
     path: &Path,
-    version: &str,
+    version: &Version,
     arch_os: &Option<String>,
     urls: &Vec<String>,
 ) -> Result<()> {
     let package = Package::from_file(path)?;
 
-    let version = Version::parse(version)?;
-    let mut release = match package.releases.get(&version) {
+    let mut release = match package.releases.get(version) {
         Some(x) => x.clone(),
         None => HashMap::<ArchOs, Build>::new(),
     };
@@ -139,15 +138,28 @@ pub fn add_builds(
                     ui.error(&format!("Can't add {:?} build from {}", arch_os, url));
                 }
             } else {
-                ui.error(&format!("Can't extract arch-os from {}", name));
+                ui.warn(&format!("Can't extract arch-os from {}, skipping", name));
             }
         }
     }
 
-    let new_package = package.replace_release(&version, release);
+    let new_package = package.replace_release(version, release);
     new_package.to_file(path)?;
 
     Ok(())
+}
+
+/// Wraps add_builds to make it easier to use as a standalone command
+pub fn add_builds_cmd(
+    app: &App,
+    ui: &Ui,
+    path: &Path,
+    version: &str,
+    arch_os: &Option<String>,
+    urls: &Vec<String>,
+) -> Result<()> {
+    let version = Version::parse(version)?;
+    add_builds(app, ui, path, &version, arch_os, urls)
 }
 
 #[cfg(test)]
