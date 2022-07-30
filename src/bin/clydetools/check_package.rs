@@ -13,6 +13,7 @@ use tempfile::TempDir;
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
 use clyde::package::Package;
+use clyde::ui::Ui;
 
 fn check_has_releases(package: &Package) -> Result<()> {
     package
@@ -41,7 +42,7 @@ fn get_latest_version(package: &Package) -> Option<Version> {
         .map(|_| version.clone())
 }
 
-fn check_can_install(package_path: &Path, version: &Version) -> Result<()> {
+fn check_can_install(ui: &Ui, package_path: &Path, version: &Version) -> Result<()> {
     let home_temp_dir = TempDir::new()?;
     let home_dir = home_temp_dir.path();
     let store_dir = home_dir.join("store");
@@ -58,7 +59,7 @@ fn check_can_install(package_path: &Path, version: &Version) -> Result<()> {
         .arg("install")
         .arg(format!("{}@={}", package_str, version));
 
-    println!("Executing {cmd:?}");
+    ui.info(&format!("Executing {cmd:?}"));
     let status = cmd.status().context("Failed to execute command")?;
 
     match status.code() {
@@ -81,7 +82,7 @@ fn check_package_name(package: &Package, path: &Path) -> Result<()> {
 }
 
 /// The bool indicates if a build was available
-fn check_package(path: &Path) -> Result<bool> {
+fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
     let package = Package::from_file(path)?;
 
     check_package_name(&package, path)?;
@@ -91,11 +92,11 @@ fn check_package(path: &Path) -> Result<bool> {
     let version = match get_latest_version(&package) {
         Some(x) => x,
         None => {
-            println!("No builds available for {}", ArchOs::current());
+            ui.error(&format!("No builds available for {}", ArchOs::current()));
             return Ok(false);
         }
     };
-    check_can_install(path, &version)?;
+    check_can_install(ui, path, &version)?;
     Ok(true)
 }
 
@@ -104,28 +105,29 @@ fn print_summary_line(header: &str, packages: &[&str]) {
     println!("{}: {}", header, joined);
 }
 
-pub fn check_packages(paths: &Vec<PathBuf>) -> Result<()> {
+pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
     let mut ok_packages = Vec::<&str>::new();
     let mut no_build_packages = Vec::<&str>::new();
     let mut failed_packages = Vec::<&str>::new();
 
     for path in paths {
         let name = path.file_stem().unwrap().to_str().unwrap();
-        println!("\n# Checking {name}");
-        match check_package(path) {
+        ui.info(&format!("Checking {name}"));
+        let ui2 = ui.nest();
+        match check_package(&ui2, path) {
             Ok(true) => ok_packages.push(name),
             Ok(false) => no_build_packages.push(name),
             Err(message) => {
-                println!("Error: {message}");
+                ui2.error(&format!("Error: {message}"));
                 failed_packages.push(name)
             }
         };
     }
 
-    println!("\n# Summary");
-    print_summary_line("OK      ", &ok_packages);
-    print_summary_line("NO BUILD", &no_build_packages);
-    print_summary_line("FAIL    ", &failed_packages);
+    ui.info("Finished");
+    print_summary_line("OK       ", &ok_packages);
+    print_summary_line("NO BUILD ", &no_build_packages);
+    print_summary_line("FAIL     ", &failed_packages);
 
     if !failed_packages.is_empty() {
         return Err(anyhow!("{} package(s) failed", failed_packages.len()));

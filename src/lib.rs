@@ -17,6 +17,7 @@ pub mod setup;
 pub mod show;
 pub mod store;
 pub mod test_file_utils;
+pub mod ui;
 pub mod uninstall;
 pub mod unpacker;
 pub mod update;

@@ -10,15 +10,16 @@ use crate::app::App;
 use crate::db::{Database, PackageInfo};
 use crate::install::install_with_package_and_requested_version;
 use crate::store::Store;
+use crate::ui::Ui;
 
-fn get_upgrades(store: &dyn Store, db: &Database) -> Result<Vec<PackageInfo>> {
+fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<PackageInfo>> {
     let mut upgrades = Vec::<PackageInfo>::new();
 
     for info in db.get_installed_packages()? {
         let package = match store.get_package(&info.name) {
             Ok(x) => x,
             Err(x) => {
-                eprintln!("Can't check updates for {}: {}", info.name, x);
+                ui.warn(&format!("Can't check updates for {}: {}", info.name, x));
                 continue;
             }
         };
@@ -31,18 +32,24 @@ fn get_upgrades(store: &dyn Store, db: &Database) -> Result<Vec<PackageInfo>> {
     Ok(upgrades)
 }
 
-pub fn upgrade(app: &App) -> Result<()> {
-    let to_upgrade = get_upgrades(&*app.store, &app.database)?;
+pub fn upgrade(app: &App, ui: &Ui) -> Result<()> {
+    ui.info("Checking upgrades");
+    let to_upgrade = get_upgrades(&ui.nest(), &*app.store, &app.database)?;
     if to_upgrade.is_empty() {
-        eprintln!("No packages to upgrade");
+        ui.info("No packages to upgrade");
         return Ok(());
     }
     for info in to_upgrade {
-        eprintln!("Upgrading {}", info.name);
-        install_with_package_and_requested_version(app, &info.name, &info.requested_version)
-            .unwrap_or_else(|x| {
-                eprintln!("Error: Failed to upgrade {}: {}", info.name, x);
-            });
+        ui.info(&format!("Upgrading {}", info.name));
+        install_with_package_and_requested_version(
+            app,
+            &ui.nest(),
+            &info.name,
+            &info.requested_version,
+        )
+        .unwrap_or_else(|x| {
+            ui.error(&format!("Error: Failed to upgrade {}: {}", info.name, x));
+        });
     }
     Ok(())
 }
@@ -121,7 +128,7 @@ mod tests {
         store.packages.insert("foo".to_string(), package);
 
         // WHEN get_upgrades() is called
-        let upgrades = get_upgrades(&store, &db).unwrap();
+        let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
         // THEN it returns an empty vector
         assert_eq!(upgrades, vec![]);
@@ -162,7 +169,7 @@ mod tests {
         store.packages.insert("foo".to_string(), package);
 
         // WHEN get_upgrades() is called
-        let upgrades = get_upgrades(&store, &db).unwrap();
+        let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
         // THEN it returns an empty vector
         assert_eq!(upgrades, vec![]);
@@ -198,7 +205,7 @@ mod tests {
         store.packages.insert("foo".to_string(), package);
 
         // WHEN get_upgrades() is called
-        let upgrades = get_upgrades(&store, &db).unwrap();
+        let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
         // THEN it returns foo
         assert_eq!(

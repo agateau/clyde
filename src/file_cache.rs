@@ -8,6 +8,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{anyhow, Result};
 
 use crate::download::download;
+use crate::ui::Ui;
 
 pub struct FileCache {
     dir: PathBuf,
@@ -24,7 +25,7 @@ impl FileCache {
         self.dir.join(name)
     }
 
-    pub fn download(&self, url: &str) -> Result<PathBuf> {
+    pub fn download(&self, ui: &Ui, url: &str) -> Result<PathBuf> {
         let (_, name) = url
             .rsplit_once('/')
             .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
@@ -32,7 +33,7 @@ impl FileCache {
         let archive_path = self.get_path(&OsString::from(name));
 
         if !archive_path.exists() {
-            download(url, &archive_path)?;
+            download(ui, url, &archive_path)?;
         }
 
         Ok(archive_path)

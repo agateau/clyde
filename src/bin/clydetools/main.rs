@@ -15,6 +15,7 @@ pub mod check_package;
 extern crate lazy_static;
 
 use clyde::app::App;
+use clyde::ui::Ui;
 
 use add_build::add_builds;
 use check_package::check_packages;
@@ -57,7 +58,8 @@ enum Command {
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let home = App::find_home()?;
+    let ui = Ui::default();
+    let home = App::find_home(&ui)?;
 
     match cli.command {
         Command::AddBuild {
@@ -67,9 +69,9 @@ fn main() -> Result<()> {
             urls,
         } => {
             let app = App::new(&home)?;
-            add_builds(&app, &package_file, &version, &arch_os, &urls)
+            add_builds(&app, &ui, &package_file, &version, &arch_os, &urls)
         }
         // Check can run without an existing Clyde home: it creates a temporary one to test the package
-        Command::Check { package_files } => check_packages(&package_files),
+        Command::Check { package_files } => check_packages(&ui, &package_files),
     }
 }

@@ -14,6 +14,7 @@ use clyde::arch_os::ArchOs;
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Build, Package};
+use clyde::ui::Ui;
 
 const ARCH_X86_64: &str = "x86_64";
 const ARCH_X86: &str = "x86";
@@ -50,8 +51,8 @@ lazy_static! {
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi"]);
 }
 
-fn compute_url_checksum(cache: &FileCache, url: &str) -> Result<String> {
-    let path = cache.download(url)?;
+fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
+    let path = cache.download(ui, url)?;
     compute_checksum(&path)
 }
 
@@ -80,12 +81,13 @@ fn is_supported_name(name: &str) -> bool {
 }
 
 fn add_build(
+    ui: &Ui,
     cache: &FileCache,
     release: &mut HashMap<ArchOs, Build>,
     arch_os: &ArchOs,
     url: &str,
 ) -> Result<()> {
-    let checksum = compute_url_checksum(cache, url)?;
+    let checksum = compute_url_checksum(ui, cache, url)?;
 
     let build = Build {
         url: url.to_string(),
@@ -99,6 +101,7 @@ fn add_build(
 
 pub fn add_builds(
     app: &App,
+    ui: &Ui,
     path: &Path,
     version: &str,
     arch_os: &Option<String>,
@@ -118,7 +121,7 @@ pub fn add_builds(
         }
         let url = urls.first().unwrap();
         let arch_os = ArchOs::parse(arch_os)?;
-        add_build(&app.download_cache, &mut release, &arch_os, url)?;
+        add_build(ui, &app.download_cache, &mut release, &arch_os, url)?;
     } else {
         for url in urls {
             let (_, name) = url
@@ -127,16 +130,16 @@ pub fn add_builds(
 
             let name = name.to_ascii_lowercase();
             if !is_supported_name(&name) {
-                eprintln!("Skipping {url}, unsupported extension");
+                ui.info(&format!("Skipping {url}, unsupported extension"));
                 continue;
             }
 
             if let Some(arch_os) = extract_arch_os(&name) {
-                if add_build(&app.download_cache, &mut release, &arch_os, url).is_err() {
-                    eprintln!("Can't add {:?} build from {}", arch_os, url);
+                if add_build(ui, &app.download_cache, &mut release, &arch_os, url).is_err() {
+                    ui.error(&format!("Can't add {:?} build from {}", arch_os, url));
                 }
             } else {
-                eprintln!("Can't extract arch-os from {}", name);
+                ui.error(&format!("Can't extract arch-os from {}", name));
             }
         }
     }
