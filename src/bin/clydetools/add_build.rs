@@ -54,6 +54,7 @@ lazy_static! {
 
 fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
     let path = cache.download(ui, url)?;
+    ui.info("Computing checksum");
     compute_checksum(&path)
 }
 
@@ -136,14 +137,16 @@ pub fn add_builds(
                 .rsplit_once('/')
                 .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
 
-            let name = name.to_ascii_lowercase();
-            if !is_supported_name(&name) {
-                ui.info(&format!("Skipping {url}, unsupported extension"));
+            let lname = name.to_ascii_lowercase();
+            if !is_supported_name(&lname) {
+                ui.info(&format!("Skipping {name}, unsupported extension"));
                 continue;
             }
 
-            if let Some(arch_os) = extract_arch_os(&name) {
-                if add_build(ui, &app.download_cache, &mut release, &arch_os, url).is_err() {
+            if let Some(arch_os) = extract_arch_os(&lname) {
+                ui.info(&format!("{arch_os}: {name}"));
+                if add_build(&ui.nest(), &app.download_cache, &mut release, &arch_os, url).is_err()
+                {
                     ui.error(&format!("Can't add {:?} build from {}", arch_os, url));
                 }
             } else {
