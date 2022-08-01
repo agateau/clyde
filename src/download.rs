@@ -16,8 +16,7 @@ use crate::ui::Ui;
 
 const FILE_PREFIX: &str = "file://";
 
-const PROGRESS_BAR_TEMPLATE: &str =
-    "{bar:40.dim.green/blue} {bytes}/{total_bytes} - {bytes_per_sec}";
+const PROGRESS_BAR_TEMPLATE: &str = "|{bar:40}| {bytes}/{total_bytes} - {bytes_per_sec}";
 
 struct ProgressWriter<W: Write> {
     writer: W,
@@ -30,12 +29,13 @@ impl<W> ProgressWriter<W>
 where
     W: Write,
 {
-    fn new(writer: W, start_size: u64, total_size: u64) -> Self {
+    fn new(ui: &Ui, writer: W, start_size: u64, total_size: u64) -> Self {
         let bar = ProgressBar::new(start_size + total_size);
+        let template = ui.get_indent() + PROGRESS_BAR_TEMPLATE;
         bar.set_style(
             ProgressStyle::default_bar()
-                .template(PROGRESS_BAR_TEMPLATE)
-                .progress_chars("━━─"),
+                .template(&template)
+                .progress_chars("▓▓ "),
         );
         Self {
             writer,
@@ -124,7 +124,7 @@ fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
         partial_size = 0;
     }
     if let Some(total_size) = response.content_length() {
-        let mut writer = ProgressWriter::new(&mut file, partial_size, total_size);
+        let mut writer = ProgressWriter::new(&ui.nest(), &mut file, partial_size, total_size);
         response.copy_to(&mut writer)?;
     } else {
         response.copy_to(&mut file)?;
@@ -146,7 +146,7 @@ fn file_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     let total_size = fs::metadata(path_str)?.len();
 
     let mut dst_file = File::create(dst_path)?;
-    let mut writer = ProgressWriter::new(&mut dst_file, 0, total_size);
+    let mut writer = ProgressWriter::new(&ui.nest(), &mut dst_file, 0, total_size);
 
     io::copy(&mut file, &mut writer)?;
     Ok(())
