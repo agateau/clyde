@@ -4,7 +4,7 @@
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::time::Duration;
 
 use anyhow::{anyhow, Context, Result};
@@ -81,19 +81,21 @@ pub fn download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     }
 }
 
-fn create_partial_path_name(path: &Path) -> Result<PathBuf> {
+fn get_file_name(path: &Path) -> Result<&str> {
     let name = path
         .file_name()
-        .ok_or_else(|| anyhow!("{path:?} has no filename"))?;
-    let mut name = name.to_os_string();
-    name.push(".partial");
-    Ok(path.with_file_name(name))
+        .ok_or_else(|| anyhow!("{path:?} has no filename"))?
+        .to_str()
+        .ok_or_else(|| anyhow!("{path:?} has a weird filename"))?;
+    Ok(name)
 }
 
 fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
-    ui.info("Downloading archive");
+    let name = get_file_name(dst_path)?;
+    ui.info(&format!("Downloading {}", name));
+
     // Prepare partial file
-    let partial_path = create_partial_path_name(dst_path)?;
+    let partial_path = dst_path.with_file_name(name.to_string() + ".partial");
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)

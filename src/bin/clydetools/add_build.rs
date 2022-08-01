@@ -48,11 +48,13 @@ lazy_static! {
         ("win32", OS_WINDOWS),
         ("win", OS_WINDOWS),
     ];
-    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi"]);
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "asc", "sha256", "sbom"]);
+    static ref SINGLE_COMPRESSED_FILE_EXTS : HashSet<&'static str> = HashSet::from(["gz", "xz", "bz2"]);
 }
 
 fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
     let path = cache.download(ui, url)?;
+    ui.info("Computing checksum");
     compute_checksum(&path)
 }
 
@@ -73,11 +75,19 @@ fn extract_arch_os(name: &str) -> Option<ArchOs> {
 }
 
 fn is_supported_name(name: &str) -> bool {
-    let ext = match name.rsplit_once('.') {
-        Some((_, ext)) => ext,
+    let (stem, ext) = match name.rsplit_once('.') {
+        Some(x) => x,
         None => return true,
     };
-    !UNSUPPORTED_EXTS.contains(ext)
+    if UNSUPPORTED_EXTS.contains(ext) {
+        return false;
+    }
+    // Compressed executables. Not supported yet.
+    // See https://github.com/agateau/clyde/issues/69
+    if SINGLE_COMPRESSED_FILE_EXTS.contains(ext) && !stem.ends_with("tar") {
+        return false;
+    }
+    true
 }
 
 fn add_build(
@@ -127,14 +137,16 @@ pub fn add_builds(
                 .rsplit_once('/')
                 .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
 
-            let name = name.to_ascii_lowercase();
-            if !is_supported_name(&name) {
-                ui.info(&format!("Skipping {url}, unsupported extension"));
+            let lname = name.to_ascii_lowercase();
+            if !is_supported_name(&lname) {
+                ui.info(&format!("Skipping {name}, unsupported extension"));
                 continue;
             }
 
-            if let Some(arch_os) = extract_arch_os(&name) {
-                if add_build(ui, &app.download_cache, &mut release, &arch_os, url).is_err() {
+            if let Some(arch_os) = extract_arch_os(&lname) {
+                ui.info(&format!("{arch_os}: {name}"));
+                if add_build(&ui.nest(), &app.download_cache, &mut release, &arch_os, url).is_err()
+                {
                     ui.error(&format!("Can't add {:?} build from {}", arch_os, url));
                 }
             } else {
@@ -193,11 +205,13 @@ mod tests {
         assert!(is_supported_name("foo.tar.gz"));
         assert!(is_supported_name("foo.zip"));
         assert!(is_supported_name("foo.exe"));
-        assert!(is_supported_name("foo.gz"));
         assert!(is_supported_name("foo-x86_64-linux"));
 
         assert!(!is_supported_name("foo.deb"));
         assert!(!is_supported_name("foo.rpm"));
         assert!(!is_supported_name("foo.msi"));
+        assert!(!is_supported_name("foo.gz"));
+        assert!(!is_supported_name("foo.exe.xz"));
+        assert!(!is_supported_name("foo.bz2"));
     }
 }
