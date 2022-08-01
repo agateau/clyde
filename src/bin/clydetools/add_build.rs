@@ -145,10 +145,16 @@ pub fn add_builds(
 
             if let Some(arch_os) = extract_arch_os(&lname) {
                 ui.info(&format!("{arch_os}: {name}"));
-                if add_build(&ui.nest(), &app.download_cache, &mut release, &arch_os, url).is_err()
-                {
-                    ui.error(&format!("Can't add {:?} build from {}", arch_os, url));
-                }
+                let result =
+                    add_build(&ui.nest(), &app.download_cache, &mut release, &arch_os, url);
+                if result.is_err() {
+                    ui.error(&format!(
+                        "Can't add {:?} build from {}: {}",
+                        arch_os,
+                        url,
+                        result.unwrap_err()
+                    ));
+                };
             } else {
                 ui.warn(&format!("Can't extract arch-os from {}, skipping", name));
             }
