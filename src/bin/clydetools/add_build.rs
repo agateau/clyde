@@ -48,7 +48,7 @@ lazy_static! {
         ("win32", OS_WINDOWS),
         ("win", OS_WINDOWS),
     ];
-    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "asc", "sha256", "sbom"]);
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt"]);
     static ref SINGLE_COMPRESSED_FILE_EXTS : HashSet<&'static str> = HashSet::from(["gz", "xz", "bz2"]);
 }
 
