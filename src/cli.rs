@@ -32,19 +32,21 @@ enum Command {
     Setup {},
     /// Update Clyde store
     Update {},
-    /// Install an application
+    /// Install applications
     Install {
         /// Application name, optionally suffixed with @version
         ///
         /// @version must follow Cargo's interpretation of Semantic Versioning:
         /// <https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html>
-        package_name: String,
+        #[clap(required = true, value_name = "APPLICATION_NAME")]
+        package_names: Vec<String>,
     },
-    /// Uninstall an application (alias: remove)
+    /// Uninstall applications (alias: remove)
     #[clap(alias("remove"))]
     Uninstall {
         /// Application name
-        package_name: String,
+        #[clap(required = true, value_name = "APPLICATION_NAME")]
+        package_names: Vec<String>,
     },
     /// Show details about an application
     Show {
@@ -83,13 +85,13 @@ impl Cli {
                 let app = App::new(&home)?;
                 update(&app, &ui)
             }
-            Command::Install { package_name } => {
+            Command::Install { package_names } => {
                 let app = App::new(&home)?;
-                install(&app, &ui, &package_name)
+                install(&app, &ui, &package_names)
             }
-            Command::Uninstall { package_name } => {
+            Command::Uninstall { package_names } => {
                 let app = App::new(&home)?;
-                uninstall(&app, &ui, &package_name)
+                uninstall(&app, &ui, &package_names)
             }
             Command::Show { package_name, list } => {
                 let app = App::new(&home)?;

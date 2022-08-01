@@ -26,7 +26,14 @@ fn path_exists(path: &Path) -> bool {
     path.is_symlink() || path.exists()
 }
 
-pub fn uninstall(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
+pub fn uninstall(app: &App, ui: &Ui, package_names: &Vec<String>) -> Result<()> {
+    for package_name in package_names {
+        uninstall_package(app, ui, package_name)?;
+    }
+    Ok(())
+}
+
+pub fn uninstall_package(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
     let db = &app.database;
 
     let installed_version = match db.get_package_version(package_name)? {
@@ -36,7 +43,10 @@ pub fn uninstall(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
         }
     };
 
-    ui.info(&format!("Removing {} {}", &package_name, installed_version));
+    ui.info(&format!(
+        "Uninstalling {} {}",
+        &package_name, installed_version
+    ));
     let ui = ui.nest();
 
     let current_exe_path = env::current_exe().context("Can't find path to current executable")?;
@@ -97,7 +107,7 @@ mod tests {
         .unwrap();
 
         // WHEN uninstall() is called on `p2`
-        let result = uninstall(&app, &Ui::default(), "p2");
+        let result = uninstall_package(&app, &Ui::default(), "p2");
         assert!(result.is_ok(), "{:?}", result);
 
         // THEN only `share/man/f1` file remains
@@ -136,7 +146,7 @@ mod tests {
         .unwrap();
 
         // WHEN uninstall() is called
-        let result = uninstall(&app, &Ui::default(), "foo");
+        let result = uninstall_package(&app, &Ui::default(), "foo");
 
         // THEN it succeeds
         assert!(result.is_ok(), "{:?}", result);
