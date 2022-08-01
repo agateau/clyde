@@ -22,6 +22,10 @@ impl Ui {
         }
     }
 
+    pub fn get_indent(&self) -> String {
+        "  ".repeat(self.level as usize)
+    }
+
     pub fn println(&self, msg: &str) {
         self.print_indent();
         eprintln!("{}", msg);
