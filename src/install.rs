@@ -13,7 +13,7 @@ use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
 use crate::ui::Ui;
-use crate::uninstall::uninstall;
+use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 
@@ -125,9 +125,12 @@ fn create_vars_map(package_name: &str) -> VarsMap {
     map
 }
 
-pub fn install(app: &App, ui: &Ui, package_name_arg: &str) -> Result<()> {
-    let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-    install_with_package_and_requested_version(app, ui, package_name, &requested_version)
+pub fn install(app: &App, ui: &Ui, package_name_args: &Vec<String>) -> Result<()> {
+    for package_name_arg in package_name_args {
+        let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
+        install_with_package_and_requested_version(app, ui, package_name, &requested_version)?;
+    }
+    Ok(())
 }
 
 pub fn install_with_package_and_requested_version(
@@ -178,7 +181,7 @@ pub fn install_with_package_and_requested_version(
 
     if installed_version.is_some() {
         // A different version is already installed, uninstall it first
-        uninstall(app, &ui, package_name)?;
+        uninstall_package(app, &ui, package_name)?;
     }
 
     ui.info("Installing files");
