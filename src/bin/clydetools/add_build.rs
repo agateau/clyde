@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use semver::Version;
 
 use clyde::app::App;
-use clyde::arch_os::ArchOs;
+use clyde::arch_os::{ArchOs, ANY};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Build, Package};
@@ -34,10 +34,12 @@ lazy_static! {
         ("x64", ARCH_X86_64),
         ("x86", ARCH_X86),
         ("386", ARCH_X86),
+        ("686", ARCH_X86),
         ("aarch64", ARCH_AARCH64),
         ("arm64", ARCH_AARCH64),
         ("32bit", ARCH_X86),
         ("64bit", ARCH_X86_64),
+        ("universal", ANY),
     ];
     static ref OS_VEC: Vec<MatchingPair> = vec![
         ("linux", OS_LINUX),
@@ -48,7 +50,7 @@ lazy_static! {
         ("win32", OS_WINDOWS),
         ("win", OS_WINDOWS),
     ];
-    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt"]);
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg"]);
     static ref SINGLE_COMPRESSED_FILE_EXTS : HashSet<&'static str> = HashSet::from(["gz", "xz", "bz2"]);
 }
 
@@ -202,6 +204,14 @@ mod tests {
         check_extract_arch_os(
             "node-v16.16.0-darwin-x64.tar.gz",
             Some(ArchOs::new(ARCH_X86_64, OS_MACOS)),
+        );
+        check_extract_arch_os(
+            "bat-v0.21.0-i686-pc-windows-msvc.zip",
+            Some(ArchOs::new(ARCH_X86, OS_WINDOWS)),
+        );
+        check_extract_arch_os(
+            "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
+            Some(ArchOs::new(ANY, OS_MACOS)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }
