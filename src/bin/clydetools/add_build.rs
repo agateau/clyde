@@ -50,7 +50,7 @@ lazy_static! {
         ("win32", OS_WINDOWS),
         ("win", OS_WINDOWS),
     ];
-    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg"]);
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
     static ref SINGLE_COMPRESSED_FILE_EXTS : HashSet<&'static str> = HashSet::from(["gz", "xz", "bz2"]);
 }
 
@@ -149,13 +149,12 @@ pub fn add_builds(
                 ui.info(&format!("{arch_os}: {name}"));
                 let result =
                     add_build(&ui.nest(), &app.download_cache, &mut release, &arch_os, url);
-                if result.is_err() {
+                if let Err(err) = result {
                     ui.error(&format!(
                         "Can't add {:?} build from {}: {}",
-                        arch_os,
-                        url,
-                        result.unwrap_err()
+                        arch_os, url, err
                     ));
+                    return Err(err);
                 };
             } else {
                 ui.warn(&format!("Can't extract arch-os from {}, skipping", name));
