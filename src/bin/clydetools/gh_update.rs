@@ -176,7 +176,14 @@ pub fn gh_update(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
     }
 
     for path in paths {
-        gh_update_package(app, ui, out_dir, path)?;
+        let result = gh_update_package(app, ui, out_dir, path);
+        if result.is_err() {
+            ui.warn(&format!(
+                "Failed to update {:?}: {}",
+                path,
+                result.unwrap_err()
+            ));
+        }
     }
     Ok(())
 }
