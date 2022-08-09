@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::collections::{BTreeMap, HashMap};
-use std::ffi::OsString;
 use std::fs::File;
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -19,16 +18,7 @@ pub struct Build {
     pub sha256: String,
 }
 
-impl Build {
-    pub fn get_archive_name(&self) -> Result<OsString> {
-        let (_, name) = self
-            .url
-            .rsplit_once('/')
-            .ok_or_else(|| anyhow!("Can't find archive name in URL {}", self.url))?;
-
-        Ok(OsString::from(name))
-    }
-}
+pub type Release = HashMap<ArchOs, Build>;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
@@ -45,8 +35,7 @@ impl Install {
             .map(|(src, dst)| {
                 (
                     src.clone(),
-                    // The == "~" is there to workaround https://github.com/dtolnay/serde-yaml/issues/87
-                    if dst.is_empty() || dst == "~" {
+                    if dst.is_empty() {
                         src.clone()
                     } else {
                         dst.clone()
@@ -66,7 +55,7 @@ pub struct Package {
     pub name: String,
     pub description: String,
     pub homepage: String,
-    pub releases: BTreeMap<Version, HashMap<ArchOs, Build>>,
+    pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
 }
@@ -114,7 +103,7 @@ impl InternalPackage {
     }
 
     fn to_package(&self) -> Result<Package> {
-        let mut releases = BTreeMap::<Version, HashMap<ArchOs, Build>>::new();
+        let mut releases = BTreeMap::<Version, Release>::new();
         if let Some(internal_releases) = &self.releases {
             for (version_str, builds_for_arch_os) in internal_releases.iter() {
                 let version = Version::parse(version_str)?;
@@ -171,7 +160,7 @@ impl Package {
 
     /// Returns a clone of the package with the builds for version `version` replaced by
     /// those from `release`
-    pub fn replace_release(&self, version: &Version, release: HashMap<ArchOs, Build>) -> Package {
+    pub fn replace_release(&self, version: &Version, release: Release) -> Package {
         let mut releases = self.releases.clone();
         releases.insert(version.clone(), release);
         Package {
@@ -262,8 +251,11 @@ mod tests {
         let install = package
             .get_install(&Version::new(1, 2, 0), &ArchOs::current())
             .unwrap();
-        assert!(install.files.get("bin/foo-1.2") == Some(&"bin/foo".to_string()));
-        assert!(install.files.get("share") == Some(&"share".to_string()));
+        assert_eq!(
+            install.files.get("bin/foo-1.2"),
+            Some(&"bin/foo".to_string())
+        );
+        assert_eq!(install.files.get("share"), Some(&"share".to_string()));
     }
 
     #[test]
@@ -299,10 +291,10 @@ mod tests {
         let v121 = Version::new(1, 2, 1);
         let v200 = Version::new(2, 0, 0);
 
-        assert!(package.get_version_matching(&req300) == None);
-        assert!(package.get_version_matching(&req121) == Some(&v121));
-        assert!(package.get_version_matching(&req12) == Some(&v121));
-        assert!(package.get_version_matching(&req2) == Some(&v200));
+        assert_eq!(package.get_version_matching(&req300), None);
+        assert_eq!(package.get_version_matching(&req121), Some(&v121));
+        assert_eq!(package.get_version_matching(&req12), Some(&v121));
+        assert_eq!(package.get_version_matching(&req2), Some(&v200));
     }
 
     #[test]

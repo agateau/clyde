@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::path::Path;
 use std::slice::Iter;
 
@@ -13,7 +13,7 @@ use clyde::app::App;
 use clyde::arch_os::{ArchOs, ANY};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
-use clyde::package::{Build, Package};
+use clyde::package::{Build, Package, Release};
 use clyde::ui::Ui;
 
 const ARCH_X86_64: &str = "x86_64";
@@ -95,7 +95,7 @@ fn is_supported_name(name: &str) -> bool {
 fn add_build(
     ui: &Ui,
     cache: &FileCache,
-    release: &mut HashMap<ArchOs, Build>,
+    release: &mut Release,
     arch_os: &ArchOs,
     url: &str,
 ) -> Result<()> {
@@ -123,7 +123,7 @@ pub fn add_builds(
 
     let mut release = match package.releases.get(version) {
         Some(x) => x.clone(),
-        None => HashMap::<ArchOs, Build>::new(),
+        None => Release::new(),
     };
 
     if let Some(arch_os) = arch_os {

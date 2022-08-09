@@ -149,10 +149,13 @@ mod tests {
         assert!(result.is_ok(), "{:?}", result);
 
         // AND the package is there
-        assert!(db.get_package_version(&package).unwrap() == Some(installed_version));
+        assert_eq!(
+            db.get_package_version(&package).unwrap(),
+            Some(installed_version)
+        );
 
         // AND the files are there
-        assert!(db.get_package_files(&package).unwrap() == files);
+        assert_eq!(db.get_package_files(&package).unwrap(), files);
     }
 
     #[test]
@@ -165,7 +168,7 @@ mod tests {
         let result = db.get_package_version("not_there");
 
         // THEN it returns none
-        assert!(result.unwrap() == None);
+        assert_eq!(result.unwrap(), None);
     }
 
     #[test]
