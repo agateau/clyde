@@ -14,6 +14,7 @@ kinds:
 - label: Removed
 - label: Fixed
 - label: Security
+- label: Package format change
 newlines:
   afterChangelogHeader: 1
   beforeChangelogVersion: 1
