@@ -45,7 +45,7 @@ installs:
     any-any:
       # instructions for all arch-os
 
-      # Ignore first level of directory
+      # Ignore first level of directory. Defaults to 0 if not set.
       strip: 1
 
       files:
