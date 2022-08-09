@@ -87,8 +87,8 @@ fn install_files(
 
     fs::create_dir_all(&install_dir)?;
     for (src, dst) in file_map.iter() {
-        let src = expand_vars(src, vars);
-        let dst = expand_vars(dst, vars);
+        let src = expand_vars(src, vars)?;
+        let dst = expand_vars(dst, vars)?;
 
         let src_path = pkg_dir.join(src);
         install_file_entry(&mut files, &src_path, install_dir, Path::new(&dst), vars)?;
