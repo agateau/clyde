@@ -35,8 +35,7 @@ impl Install {
             .map(|(src, dst)| {
                 (
                     src.clone(),
-                    // The == "~" is there to workaround https://github.com/dtolnay/serde-yaml/issues/87
-                    if dst.is_empty() || dst == "~" {
+                    if dst.is_empty() {
                         src.clone()
                     } else {
                         dst.clone()
