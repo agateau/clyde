@@ -12,6 +12,7 @@ use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::blocking::ClientBuilder;
 use reqwest::{header, StatusCode, Url};
 
+use crate::file_utils;
 use crate::ui::Ui;
 
 const FILE_PREFIX: &str = "file://";
@@ -81,17 +82,8 @@ pub fn download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     }
 }
 
-fn get_file_name(path: &Path) -> Result<&str> {
-    let name = path
-        .file_name()
-        .ok_or_else(|| anyhow!("{path:?} has no filename"))?
-        .to_str()
-        .ok_or_else(|| anyhow!("{path:?} has a weird filename"))?;
-    Ok(name)
-}
-
 fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
-    let name = get_file_name(dst_path)?;
+    let name = file_utils::get_file_name(dst_path)?;
     ui.info(&format!("Downloading {}", name));
 
     // Prepare partial file
