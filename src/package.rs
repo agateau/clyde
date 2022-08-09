@@ -252,8 +252,11 @@ mod tests {
         let install = package
             .get_install(&Version::new(1, 2, 0), &ArchOs::current())
             .unwrap();
-        assert!(install.files.get("bin/foo-1.2") == Some(&"bin/foo".to_string()));
-        assert!(install.files.get("share") == Some(&"share".to_string()));
+        assert_eq!(
+            install.files.get("bin/foo-1.2"),
+            Some(&"bin/foo".to_string())
+        );
+        assert_eq!(install.files.get("share"), Some(&"share".to_string()));
     }
 
     #[test]
@@ -289,10 +292,10 @@ mod tests {
         let v121 = Version::new(1, 2, 1);
         let v200 = Version::new(2, 0, 0);
 
-        assert!(package.get_version_matching(&req300) == None);
-        assert!(package.get_version_matching(&req121) == Some(&v121));
-        assert!(package.get_version_matching(&req12) == Some(&v121));
-        assert!(package.get_version_matching(&req2) == Some(&v200));
+        assert_eq!(package.get_version_matching(&req300), None);
+        assert_eq!(package.get_version_matching(&req121), Some(&v121));
+        assert_eq!(package.get_version_matching(&req12), Some(&v121));
+        assert_eq!(package.get_version_matching(&req2), Some(&v200));
     }
 
     #[test]
