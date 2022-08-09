@@ -9,6 +9,7 @@ pub mod cli;
 pub mod db;
 pub mod download;
 pub mod file_cache;
+pub mod file_utils;
 pub mod install;
 pub mod list;
 pub mod package;

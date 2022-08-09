@@ -12,6 +12,7 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
+use crate::file_utils;
 use crate::ui::Ui;
 use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
@@ -108,7 +109,7 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
     }
 }
 
-fn create_vars_map(package_name: &str) -> VarsMap {
+fn create_vars_map(archive_name: &str, package_name: &str) -> VarsMap {
     let mut map = VarsMap::new();
 
     map.insert(
@@ -121,6 +122,7 @@ fn create_vars_map(package_name: &str) -> VarsMap {
     );
 
     map.insert("doc_dir".into(), format!("share/doc/{}/", package_name));
+    map.insert("archive_name".into(), archive_name.to_string());
 
     map
 }
@@ -167,6 +169,7 @@ pub fn install_with_package_and_requested_version(
 
     let ui = ui.nest();
     let archive_path = app.download_cache.download(&ui, &build.url)?;
+    let archive_name = file_utils::get_file_name(&archive_path)?;
 
     ui.info("Verifying archive integrity");
     verify_checksum(&archive_path, &build.sha256)?;
@@ -189,7 +192,7 @@ pub fn install_with_package_and_requested_version(
         &unpack_dir,
         &app.install_dir,
         &install.files,
-        &create_vars_map(package_name),
+        &create_vars_map(archive_name, package_name),
     )?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 
