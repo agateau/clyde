@@ -3,11 +3,10 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::collections::{BTreeMap, HashMap};
-use std::ffi::OsString;
 use std::fs::File;
 use std::path::Path;
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -19,16 +18,7 @@ pub struct Build {
     pub sha256: String,
 }
 
-impl Build {
-    pub fn get_archive_name(&self) -> Result<OsString> {
-        let (_, name) = self
-            .url
-            .rsplit_once('/')
-            .ok_or_else(|| anyhow!("Can't find archive name in URL {}", self.url))?;
-
-        Ok(OsString::from(name))
-    }
-}
+pub type Release = HashMap<ArchOs, Build>;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
@@ -66,7 +56,7 @@ pub struct Package {
     pub name: String,
     pub description: String,
     pub homepage: String,
-    pub releases: BTreeMap<Version, HashMap<ArchOs, Build>>,
+    pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
 }
@@ -114,7 +104,7 @@ impl InternalPackage {
     }
 
     fn to_package(&self) -> Result<Package> {
-        let mut releases = BTreeMap::<Version, HashMap<ArchOs, Build>>::new();
+        let mut releases = BTreeMap::<Version, Release>::new();
         if let Some(internal_releases) = &self.releases {
             for (version_str, builds_for_arch_os) in internal_releases.iter() {
                 let version = Version::parse(version_str)?;
@@ -171,7 +161,7 @@ impl Package {
 
     /// Returns a clone of the package with the builds for version `version` replaced by
     /// those from `release`
-    pub fn replace_release(&self, version: &Version, release: HashMap<ArchOs, Build>) -> Package {
+    pub fn replace_release(&self, version: &Version, release: Release) -> Package {
         let mut releases = self.releases.clone();
         releases.insert(version.clone(), release);
         Package {
