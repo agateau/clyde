@@ -1,0 +1,3 @@
+kind: Package format change
+body: The `strip` field is now optional, and defaults to 0 (#10).
+time: 2022-08-09T11:39:25.705549173+02:00

@@ -32,6 +32,7 @@ impl Build {
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
+    #[serde(default)]
     pub strip: u32,
     pub files: BTreeMap<String, String>,
 }
@@ -334,5 +335,33 @@ mod tests {
 
         // THEN the any-macos install is used
         assert_eq!(install.strip, 3);
+    }
+
+    #[test]
+    fn strip_should_default_to_0_if_not_set() {
+        // GIVEN a package with no value for `strip`
+        // WHEN parsing it
+        let package = Package::from_yaml_str(
+            "
+            name: test
+            description: desc
+            homepage:
+            releases: {}
+            installs:
+              1.0.0:
+                any:
+                  files:
+                    foo:
+            ",
+        );
+
+        // THEN it succeeds
+        let package = package.unwrap();
+
+        // AND strip is 0
+        let install = package
+            .get_install(&Version::new(1, 0, 0), &ArchOs::new(ANY, ANY))
+            .unwrap();
+        assert_eq!(install.strip, 0);
     }
 }
