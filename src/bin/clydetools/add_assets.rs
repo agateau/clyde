@@ -13,7 +13,7 @@ use clyde::app::App;
 use clyde::arch_os::{ArchOs, ANY};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
-use clyde::package::{Build, Package, Release};
+use clyde::package::{Asset, Package, Release};
 use clyde::ui::Ui;
 
 const ARCH_X86_64: &str = "x86_64";
@@ -92,7 +92,7 @@ fn is_supported_name(name: &str) -> bool {
     true
 }
 
-fn add_build(
+fn add_asset(
     ui: &Ui,
     cache: &FileCache,
     release: &mut Release,
@@ -101,17 +101,17 @@ fn add_build(
 ) -> Result<()> {
     let checksum = compute_url_checksum(ui, cache, url)?;
 
-    let build = Build {
+    let asset = Asset {
         url: url.to_string(),
         sha256: checksum,
     };
 
-    release.insert(arch_os.clone(), build);
+    release.insert(arch_os.clone(), asset);
 
     Ok(())
 }
 
-pub fn add_builds(
+pub fn add_assets(
     app: &App,
     ui: &Ui,
     path: &Path,
@@ -132,7 +132,7 @@ pub fn add_builds(
         }
         let url = urls.first().unwrap();
         let arch_os = ArchOs::parse(arch_os)?;
-        add_build(ui, &app.download_cache, &mut release, &arch_os, url)?;
+        add_asset(ui, &app.download_cache, &mut release, &arch_os, url)?;
     } else {
         for url in urls {
             let (_, name) = url
@@ -148,7 +148,7 @@ pub fn add_builds(
             if let Some(arch_os) = extract_arch_os(&lname) {
                 ui.info(&format!("{arch_os}: {name}"));
                 let result =
-                    add_build(&ui.nest(), &app.download_cache, &mut release, &arch_os, url);
+                    add_asset(&ui.nest(), &app.download_cache, &mut release, &arch_os, url);
                 if let Err(err) = result {
                     ui.error(&format!(
                         "Can't add {:?} build from {}: {}",
@@ -168,8 +168,8 @@ pub fn add_builds(
     Ok(())
 }
 
-/// Wraps add_builds to make it easier to use as a standalone command
-pub fn add_builds_cmd(
+/// Wraps add_assets to make it easier to use as a standalone command
+pub fn add_assets_cmd(
     app: &App,
     ui: &Ui,
     path: &Path,
@@ -178,7 +178,7 @@ pub fn add_builds_cmd(
     urls: &Vec<String>,
 ) -> Result<()> {
     let version = Version::parse(version)?;
-    add_builds(app, ui, path, &version, arch_os, urls)
+    add_assets(app, ui, path, &version, arch_os, urls)
 }
 
 #[cfg(test)]

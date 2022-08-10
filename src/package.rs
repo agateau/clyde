@@ -13,12 +13,12 @@ use serde::{Deserialize, Serialize};
 use crate::arch_os::{ArchOs, ANY};
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
-pub struct Build {
+pub struct Asset {
     pub url: String,
     pub sha256: String,
 }
 
-pub type Release = HashMap<ArchOs, Build>;
+pub type Release = HashMap<ArchOs, Asset>;
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
@@ -67,13 +67,13 @@ struct InternalPackage {
     pub name: String,
     pub description: String,
     pub homepage: String,
-    pub releases: Option<BTreeMap<String, BTreeMap<String, Build>>>,
+    pub releases: Option<BTreeMap<String, BTreeMap<String, Asset>>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
 }
 
 impl InternalPackage {
     fn from_package(package: &Package) -> InternalPackage {
-        let mut releases = BTreeMap::<String, BTreeMap<String, Build>>::new();
+        let mut releases = BTreeMap::<String, BTreeMap<String, Asset>>::new();
         for (version, release) in package.releases.iter() {
             let version_str = version.to_string();
             let release = release
@@ -184,7 +184,7 @@ impl Package {
         Some(entry.0)
     }
 
-    pub fn get_build(&self, version: &Version, arch_os: &ArchOs) -> Option<&Build> {
+    pub fn get_asset(&self, version: &Version, arch_os: &ArchOs) -> Option<&Asset> {
         let release = self.releases.get(version)?;
         release.get(arch_os)
     }
