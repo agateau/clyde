@@ -77,6 +77,16 @@ installs:
       # macOS special instructions
 ```
 
+### Variables
+
+The source and destination parts of the `files` mapping supports variables. A variable can be used with the `${variable_name}` syntax.
+
+The following variables are available:
+
+- `${asset_name}`: Name of the downloaded asset. Useful for releases where assets are the package executable.
+- `${doc_dir}`: Directory storing the package documentation. Set to "share/doc/<package_name>/".
+- `${exe_ext}`: Executable extension for the target OS. Set to ".exe" on Windows and "" on other OSes.
+
 ## Clyde store
 
 Clyde package files are stored in the Clyde store, a git repository hosted at <https://github.com/agateau/clyde-store>. The `clyde setup` commands checkouts this repository inside Clyde home (see section below).
