@@ -51,7 +51,6 @@ lazy_static! {
         ("win", OS_WINDOWS),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
-    static ref SINGLE_COMPRESSED_FILE_EXTS : HashSet<&'static str> = HashSet::from(["gz", "xz", "bz2"]);
 }
 
 fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
@@ -77,16 +76,11 @@ fn extract_arch_os(name: &str) -> Option<ArchOs> {
 }
 
 fn is_supported_name(name: &str) -> bool {
-    let (stem, ext) = match name.rsplit_once('.') {
-        Some(x) => x,
+    let ext = match name.rsplit_once('.') {
+        Some(x) => x.1,
         None => return true,
     };
     if UNSUPPORTED_EXTS.contains(ext) {
-        return false;
-    }
-    // Compressed executables. Not supported yet.
-    // See https://github.com/agateau/clyde/issues/69
-    if SINGLE_COMPRESSED_FILE_EXTS.contains(ext) && !stem.ends_with("tar") {
         return false;
     }
     true
@@ -221,12 +215,12 @@ mod tests {
         assert!(is_supported_name("foo.zip"));
         assert!(is_supported_name("foo.exe"));
         assert!(is_supported_name("foo-x86_64-linux"));
+        assert!(is_supported_name("foo.gz"));
+        assert!(is_supported_name("foo.exe.xz"));
+        assert!(is_supported_name("foo.bz2"));
 
         assert!(!is_supported_name("foo.deb"));
         assert!(!is_supported_name("foo.rpm"));
         assert!(!is_supported_name("foo.msi"));
-        assert!(!is_supported_name("foo.gz"));
-        assert!(!is_supported_name("foo.exe.xz"));
-        assert!(!is_supported_name("foo.bz2"));
     }
 }

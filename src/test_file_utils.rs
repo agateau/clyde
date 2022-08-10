@@ -102,11 +102,11 @@ fn get_fixtures_dir() -> PathBuf {
     path
 }
 
-pub fn get_test_exe_gz_path() -> PathBuf {
+pub fn get_fixture_path(name: &str) -> PathBuf {
     let fixtures_dir = get_fixtures_dir();
-    let path = fixtures_dir.join("test_exe.gz");
+    let path = fixtures_dir.join(name);
     if !path.exists() {
-        panic!("Can't find test_exe.gz");
+        panic!("Can't find {name}");
     }
     path
 }
