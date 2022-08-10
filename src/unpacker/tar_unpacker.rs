@@ -27,7 +27,7 @@ impl TarUnpacker {
             || name.ends_with(".tar.bz2")
             || name.ends_with(".tar.xz")
             || name.ends_with(".tgz")
-            || name.ends_with("tbz2")
+            || name.ends_with(".tbz2")
     }
 }
 
