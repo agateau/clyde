@@ -16,7 +16,7 @@ use clyde::app::App;
 use clyde::package::Package;
 use clyde::ui::Ui;
 
-use crate::add_build::add_builds;
+use crate::add_assets::add_assets;
 
 /// Extract GitHub `<repo>/<owner>` for a package, if it's hosted on GitHub.
 /// Returns None if it's not.
@@ -157,7 +157,7 @@ fn gh_update_package(app: &App, ui: &Ui, out_dir: &Path, package_path: &Path) ->
 
     let urls = extract_build_urls(&release_json)?;
 
-    add_builds(
+    add_assets(
         app,
         &ui,
         package_path,

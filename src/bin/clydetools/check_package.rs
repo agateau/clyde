@@ -38,7 +38,7 @@ fn get_latest_version(package: &Package) -> Option<Version> {
     let version = package.get_latest_version().unwrap();
 
     package
-        .get_build(version, &ArchOs::current())
+        .get_asset(version, &ArchOs::current())
         .map(|_| version.clone())
 }
 
@@ -81,7 +81,7 @@ fn check_package_name(package: &Package, path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// The bool indicates if a build was available
+/// The bool indicates if an asset was available
 fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
     let package = Package::from_file(path)?;
 
@@ -92,7 +92,10 @@ fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
     let version = match get_latest_version(&package) {
         Some(x) => x,
         None => {
-            ui.error(&format!("No builds available for {}", ArchOs::current()));
+            ui.error(&format!(
+                "No release assets available for {}",
+                ArchOs::current()
+            ));
             return Ok(false);
         }
     };
@@ -107,7 +110,7 @@ fn print_summary_line(header: &str, packages: &[&str]) {
 
 pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
     let mut ok_packages = Vec::<&str>::new();
-    let mut no_build_packages = Vec::<&str>::new();
+    let mut not_on_arch_os_packages = Vec::<&str>::new();
     let mut failed_packages = Vec::<&str>::new();
 
     for path in paths {
@@ -116,7 +119,7 @@ pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
         let ui2 = ui.nest();
         match check_package(&ui2, path) {
             Ok(true) => ok_packages.push(name),
-            Ok(false) => no_build_packages.push(name),
+            Ok(false) => not_on_arch_os_packages.push(name),
             Err(message) => {
                 ui2.error(&format!("Error: {message}"));
                 failed_packages.push(name)
@@ -125,9 +128,9 @@ pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
     }
 
     ui.info("Finished");
-    print_summary_line("OK       ", &ok_packages);
-    print_summary_line("NO BUILD ", &no_build_packages);
-    print_summary_line("FAIL     ", &failed_packages);
+    print_summary_line("OK   ", &ok_packages);
+    print_summary_line("N/A  ", &not_on_arch_os_packages);
+    print_summary_line("FAIL ", &failed_packages);
 
     if !failed_packages.is_empty() {
         return Err(anyhow!("{} package(s) failed", failed_packages.len()));

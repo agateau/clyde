@@ -109,7 +109,7 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
     }
 }
 
-fn create_vars_map(archive_name: &str, package_name: &str) -> VarsMap {
+fn create_vars_map(asset_name: &str, package_name: &str) -> VarsMap {
     let mut map = VarsMap::new();
 
     map.insert(
@@ -122,7 +122,7 @@ fn create_vars_map(archive_name: &str, package_name: &str) -> VarsMap {
     );
 
     map.insert("doc_dir".into(), format!("share/doc/{}/", package_name));
-    map.insert("archive_name".into(), archive_name.to_string());
+    map.insert("asset_name".into(), asset_name.to_string());
 
     map
 }
@@ -154,8 +154,8 @@ pub fn install_with_package_and_requested_version(
         })?;
 
     let build = package
-        .get_build(version, &arch_os)
-        .ok_or_else(|| anyhow!("No {arch_os} build available for {package_name} {version}"))?;
+        .get_asset(version, &arch_os)
+        .ok_or_else(|| anyhow!("No {arch_os} asset available for {package_name} {version}"))?;
 
     let install = package
         .get_install(version, &arch_os)
@@ -168,19 +168,19 @@ pub fn install_with_package_and_requested_version(
     ui.info(&format!("Installing {} {}", package_name, version));
 
     let ui = ui.nest();
-    let archive_path = app.download_cache.download(&ui, &build.url)?;
-    let archive_name = file_utils::get_file_name(&archive_path)?;
+    let asset_path = app.download_cache.download(&ui, &build.url)?;
+    let asset_name = file_utils::get_file_name(&asset_path)?;
 
-    ui.info("Verifying archive integrity");
-    verify_checksum(&archive_path, &build.sha256)?;
+    ui.info("Verifying asset integrity");
+    verify_checksum(&asset_path, &build.sha256)?;
 
     let unpack_dir = app.tmp_dir.join(&package.name);
     if unpack_dir.exists() {
         fs::remove_dir_all(&unpack_dir)?
     }
 
-    ui.info("Unpacking archive");
-    unpack(&archive_path, &unpack_dir, install.strip)?;
+    ui.info("Unpacking asset");
+    unpack(&asset_path, &unpack_dir, install.strip)?;
 
     if installed_version.is_some() {
         // A different version is already installed, uninstall it first
@@ -192,7 +192,7 @@ pub fn install_with_package_and_requested_version(
         &unpack_dir,
         &app.install_dir,
         &install.files,
-        &create_vars_map(archive_name, package_name),
+        &create_vars_map(asset_name, package_name),
     )?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 
