@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use goblin::{self, Hint};
 
+use crate::file_utils;
 use crate::unpacker::Unpacker;
 
 /// An "unpacker" for archives which are actually directly an executable
@@ -63,13 +64,7 @@ impl Unpacker for ExeUnpacker {
 
         io::copy(&mut src_file, &mut dst_file)?;
 
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let permissions = fs::metadata(&dst_path).unwrap().permissions();
-            let mode = permissions.mode() | 0o111;
-            fs::set_permissions(&dst_path, fs::Permissions::from_mode(mode))?;
-        }
+        file_utils::set_file_executable(&dst_path)?;
         Ok(())
     }
 }
@@ -78,7 +73,7 @@ impl Unpacker for ExeUnpacker {
 mod tests {
     use super::*;
 
-    use crate::test_file_utils::create_test_zip_file;
+    use crate::test_file_utils::{create_test_zip_file, is_file_executable};
 
     const EXECUTABLE_NAME: &str = if cfg!(unix) {
         "/bin/ls"
@@ -137,11 +132,6 @@ mod tests {
         assert!(dst_path.exists());
 
         // AND the executable has the required permission
-        #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let permissions = fs::metadata(&dst_path).unwrap().permissions();
-            assert_eq!(permissions.mode() & 0o111_u32, 0o111_u32);
-        }
+        assert!(is_file_executable(&dst_path));
     }
 }

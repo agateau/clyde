@@ -92,3 +92,32 @@ pub fn pathbufset_from_strings(strings: &[&str]) -> HashSet<PathBuf> {
 pub fn create_test_zip_file(zip_path: &Path) {
     fs::write(&zip_path, ZIP_BYTES).unwrap();
 }
+
+fn get_fixtures_dir() -> PathBuf {
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("src").join("fixtures");
+    if !path.exists() {
+        panic!("Can't find fixtures dir");
+    }
+    path
+}
+
+pub fn get_test_exe_gz_path() -> PathBuf {
+    let fixtures_dir = get_fixtures_dir();
+    let path = fixtures_dir.join("test_exe.gz");
+    if !path.exists() {
+        panic!("Can't find test_exe.gz");
+    }
+    path
+}
+
+pub fn is_file_executable(path: &Path) -> bool {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let permissions = fs::metadata(&path).unwrap().permissions();
+        permissions.mode() & 0o111_u32 == 0o111_u32
+    }
+    #[cfg(not(unix))]
+    true
+}
