@@ -97,7 +97,7 @@ impl Unpacker for ZipUnpacker {
 mod tests {
     use super::*;
 
-    use crate::test_file_utils::{create_test_zip_file, list_tree, pathbufset_from_strings};
+    use crate::test_file_utils::{get_fixture_path, list_tree, pathbufset_from_strings};
 
     #[test]
     fn apply_strip_should_strip_1() {
@@ -117,8 +117,7 @@ mod tests {
         let dir = assert_fs::TempDir::new().unwrap();
 
         // GIVEN the test zip file
-        let zip_path = dir.join("test.zip");
-        create_test_zip_file(&zip_path);
+        let zip_path = get_fixture_path("test_archive.zip");
 
         // AND an unpacker on this zip file
         let unpacker = ZipUnpacker::new(&zip_path);
@@ -143,8 +142,7 @@ mod tests {
         // hello/bin/
         // hello/bin/hello
         // hello/README.md
-        let zip_path = dir.join("test.zip");
-        create_test_zip_file(&zip_path);
+        let zip_path = get_fixture_path("test_archive.zip");
 
         // AND an unpacker on this zip file
         let unpacker = ZipUnpacker::new(&zip_path);
@@ -169,8 +167,7 @@ mod tests {
         // hello/bin/
         // hello/bin/hello
         // hello/README.md
-        let zip_path = dir.join("test.zip");
-        create_test_zip_file(&zip_path);
+        let zip_path = get_fixture_path("test_archive.zip");
 
         // AND an unpacker on this zip file
         let unpacker = ZipUnpacker::new(&zip_path);

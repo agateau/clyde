@@ -9,13 +9,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-// Zip content:
-// hello/
-// hello/bin/
-// hello/bin/hello
-// hello/README.md
-const ZIP_BYTES: &[u8; 626] = include_bytes!("zip_unpacker_test_archive.zip");
-
 /// Saves the current working directory and restores it when dropped
 pub struct CwdSaver {
     old_dir: PathBuf,
@@ -87,10 +80,6 @@ pub fn list_tree(root: &Path) -> Result<HashSet<PathBuf>> {
 
 pub fn pathbufset_from_strings(strings: &[&str]) -> HashSet<PathBuf> {
     strings.iter().map(PathBuf::from).collect()
-}
-
-pub fn create_test_zip_file(zip_path: &Path) {
-    fs::write(&zip_path, ZIP_BYTES).unwrap();
 }
 
 fn get_fixtures_dir() -> PathBuf {

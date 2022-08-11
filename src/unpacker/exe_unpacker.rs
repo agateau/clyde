@@ -76,7 +76,7 @@ impl Unpacker for ExeUnpacker {
 mod tests {
     use super::*;
 
-    use crate::test_file_utils::create_test_zip_file;
+    use crate::test_file_utils::get_fixture_path;
 
     const EXECUTABLE_NAME: &str = if cfg!(unix) {
         "/bin/ls"
@@ -100,10 +100,7 @@ mod tests {
 
     #[test]
     fn supports_should_not_accept_zip_files() {
-        let dir = assert_fs::TempDir::new().unwrap();
-        let zip_path = dir.join("test.zip");
-        create_test_zip_file(&zip_path);
-
+        let zip_path = get_fixture_path("test_archive.zip");
         assert!(!ExeUnpacker::supports(&zip_path));
     }
 
