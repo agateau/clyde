@@ -41,7 +41,7 @@ fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {
 }
 
 impl Unpacker for ZipUnpacker {
-    fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<()> {
+    fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<Option<String>> {
         let archive_file = fs::File::open(&self.archive_path)
             .with_context(|| format!("Failed to open {:?}", self.archive_path))?;
 
@@ -89,7 +89,7 @@ impl Unpacker for ZipUnpacker {
                 }
             }
         }
-        Ok(())
+        Ok(None)
     }
 }
 

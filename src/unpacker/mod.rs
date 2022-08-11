@@ -18,7 +18,10 @@ use tar_unpacker::TarUnpacker;
 use zip_unpacker::ZipUnpacker;
 
 pub trait Unpacker {
-    fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<()>;
+    /// Unpacks the archive in `dst_dir`
+    ///
+    /// Returns the name of the unpacked asset if the archive was a single-file one
+    fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<Option<String>>;
 }
 
 pub fn get_unpacker(archive: &Path) -> Result<Box<dyn Unpacker>> {

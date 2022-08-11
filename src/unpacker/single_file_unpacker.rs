@@ -31,7 +31,7 @@ impl SingleFileUnpacker {
 }
 
 impl Unpacker for SingleFileUnpacker {
-    fn unpack(&self, dst_dir: &Path, _strip: u32) -> Result<()> {
+    fn unpack(&self, dst_dir: &Path, _strip: u32) -> Result<Option<String>> {
         let extension = self
             .archive_path
             .extension()
@@ -52,7 +52,8 @@ impl Unpacker for SingleFileUnpacker {
 
         file_utils::set_file_executable(&dst_path)?;
 
-        Ok(())
+        let name = file_utils::get_file_name(&dst_path)?;
+        Ok(Some(name.to_string()))
     }
 }
 

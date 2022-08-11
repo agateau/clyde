@@ -32,7 +32,7 @@ impl TarUnpacker {
 }
 
 impl Unpacker for TarUnpacker {
-    fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<()> {
+    fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<Option<String>> {
         fs::create_dir_all(&dst_dir)?;
 
         let mut cmd = Command::new("tar");
@@ -61,6 +61,6 @@ impl Unpacker for TarUnpacker {
             return Err(anyhow!("Error unpacking {}", self.archive.display()));
         }
 
-        Ok(())
+        Ok(None)
     }
 }

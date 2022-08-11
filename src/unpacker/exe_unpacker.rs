@@ -50,7 +50,7 @@ impl ExeUnpacker {
 }
 
 impl Unpacker for ExeUnpacker {
-    fn unpack(&self, dst_dir: &Path, _strip: u32) -> Result<()> {
+    fn unpack(&self, dst_dir: &Path, _strip: u32) -> Result<Option<String>> {
         let exe_file_name = self.archive_path.file_name().unwrap();
 
         let dst_path = dst_dir.join(exe_file_name);
@@ -65,7 +65,9 @@ impl Unpacker for ExeUnpacker {
         io::copy(&mut src_file, &mut dst_file)?;
 
         file_utils::set_file_executable(&dst_path)?;
-        Ok(())
+
+        let name = file_utils::get_file_name(&dst_path)?;
+        Ok(Some(name.to_string()))
     }
 }
 
