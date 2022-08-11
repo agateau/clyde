@@ -55,7 +55,7 @@ impl ArchOs {
     }
 
     pub fn to_str(&self) -> String {
-        return format!("{}-{}", self.arch, self.os);
+        format!("{}-{}", self.arch, self.os)
     }
 }
 
