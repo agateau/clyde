@@ -2,7 +2,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::fs;
 use std::path::Path;
 
 use anyhow::{anyhow, Result};
@@ -16,13 +15,13 @@ pub fn get_file_name(path: &Path) -> Result<&str> {
     Ok(name)
 }
 
+#[cfg(unix)]
 pub fn set_file_executable(path: &Path) -> Result<()> {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = fs::metadata(&path).unwrap().permissions();
-        let mode = permissions.mode() | 0o111;
-        fs::set_permissions(&path, fs::Permissions::from_mode(mode))?;
-    }
+    use std::fs;
+    use std::os::unix::fs::PermissionsExt;
+
+    let permissions = fs::metadata(&path).unwrap().permissions();
+    let mode = permissions.mode() | 0o111;
+    fs::set_permissions(&path, fs::Permissions::from_mode(mode))?;
     Ok(())
 }

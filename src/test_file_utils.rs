@@ -111,13 +111,9 @@ pub fn get_fixture_path(name: &str) -> PathBuf {
     path
 }
 
+#[cfg(unix)]
 pub fn is_file_executable(path: &Path) -> bool {
-    #[cfg(unix)]
-    {
-        use std::os::unix::fs::PermissionsExt;
-        let permissions = fs::metadata(&path).unwrap().permissions();
-        permissions.mode() & 0o111_u32 == 0o111_u32
-    }
-    #[cfg(not(unix))]
-    true
+    use std::os::unix::fs::PermissionsExt;
+    let permissions = fs::metadata(&path).unwrap().permissions();
+    permissions.mode() & 0o111_u32 == 0o111_u32
 }

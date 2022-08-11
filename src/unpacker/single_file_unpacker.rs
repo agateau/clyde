@@ -50,6 +50,7 @@ impl Unpacker for SingleFileUnpacker {
         };
         compressed.decompress(&dst_path)?;
 
+        #[cfg(unix)]
         file_utils::set_file_executable(&dst_path)?;
 
         let name = file_utils::get_file_name(&dst_path)?;
@@ -61,7 +62,7 @@ impl Unpacker for SingleFileUnpacker {
 mod tests {
     use super::*;
 
-    use crate::test_file_utils::{get_fixture_path, is_file_executable};
+    use crate::test_file_utils::get_fixture_path;
 
     #[test]
     fn supports_should_not_accept_tar_compressed_files() {
@@ -89,7 +90,11 @@ mod tests {
         assert!(dst_path.exists());
 
         // AND the executable has the required permission
-        assert!(is_file_executable(&dst_path));
+        #[cfg(unix)]
+        {
+            use crate::test_file_utils::is_file_executable;
+            assert!(is_file_executable(&dst_path));
+        }
     }
 
     #[test]

@@ -64,6 +64,7 @@ impl Unpacker for ExeUnpacker {
 
         io::copy(&mut src_file, &mut dst_file)?;
 
+        #[cfg(unix)]
         file_utils::set_file_executable(&dst_path)?;
 
         let name = file_utils::get_file_name(&dst_path)?;
@@ -75,7 +76,7 @@ impl Unpacker for ExeUnpacker {
 mod tests {
     use super::*;
 
-    use crate::test_file_utils::{create_test_zip_file, is_file_executable};
+    use crate::test_file_utils::create_test_zip_file;
 
     const EXECUTABLE_NAME: &str = if cfg!(unix) {
         "/bin/ls"
@@ -134,6 +135,10 @@ mod tests {
         assert!(dst_path.exists());
 
         // AND the executable has the required permission
-        assert!(is_file_executable(&dst_path));
+        #[cfg(unix)]
+        {
+            use crate::test_file_utils::is_file_executable;
+            assert!(is_file_executable(&dst_path));
+        }
     }
 }
