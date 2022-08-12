@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use goblin::{self, Hint};
 
+use crate::file_utils;
 use crate::unpacker::Unpacker;
 
 /// An "unpacker" for archives which are actually directly an executable
@@ -49,7 +50,7 @@ impl ExeUnpacker {
 }
 
 impl Unpacker for ExeUnpacker {
-    fn unpack(&self, dst_dir: &Path, _strip: u32) -> Result<()> {
+    fn unpack(&self, dst_dir: &Path, _strip: u32) -> Result<Option<String>> {
         let exe_file_name = self.archive_path.file_name().unwrap();
 
         let dst_path = dst_dir.join(exe_file_name);
@@ -64,13 +65,10 @@ impl Unpacker for ExeUnpacker {
         io::copy(&mut src_file, &mut dst_file)?;
 
         #[cfg(unix)]
-        {
-            use std::os::unix::fs::PermissionsExt;
-            let permissions = fs::metadata(&dst_path).unwrap().permissions();
-            let mode = permissions.mode() | 0o111;
-            fs::set_permissions(&dst_path, fs::Permissions::from_mode(mode))?;
-        }
-        Ok(())
+        file_utils::set_file_executable(&dst_path)?;
+
+        let name = file_utils::get_file_name(&dst_path)?;
+        Ok(Some(name.to_string()))
     }
 }
 
@@ -78,7 +76,7 @@ impl Unpacker for ExeUnpacker {
 mod tests {
     use super::*;
 
-    use crate::test_file_utils::create_test_zip_file;
+    use crate::test_file_utils::get_fixture_path;
 
     const EXECUTABLE_NAME: &str = if cfg!(unix) {
         "/bin/ls"
@@ -102,10 +100,7 @@ mod tests {
 
     #[test]
     fn supports_should_not_accept_zip_files() {
-        let dir = assert_fs::TempDir::new().unwrap();
-        let zip_path = dir.join("test.zip");
-        create_test_zip_file(&zip_path);
-
+        let zip_path = get_fixture_path("test_archive.zip");
         assert!(!ExeUnpacker::supports(&zip_path));
     }
 
@@ -139,9 +134,8 @@ mod tests {
         // AND the executable has the required permission
         #[cfg(unix)]
         {
-            use std::os::unix::fs::PermissionsExt;
-            let permissions = fs::metadata(&dst_path).unwrap().permissions();
-            assert_eq!(permissions.mode() & 0o111_u32, 0o111_u32);
+            use crate::test_file_utils::is_file_executable;
+            assert!(is_file_executable(&dst_path));
         }
     }
 }

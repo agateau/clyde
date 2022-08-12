@@ -12,16 +12,14 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
-use crate::file_utils;
 use crate::ui::Ui;
 use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 
-fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<()> {
+fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<Option<String>> {
     let unpacker = get_unpacker(archive)?;
-    unpacker.unpack(pkg_dir, strip)?;
-    Ok(())
+    unpacker.unpack(pkg_dir, strip)
 }
 
 /// Create dir containing `path` and all its parents, if necessary
@@ -109,7 +107,7 @@ fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
     }
 }
 
-fn create_vars_map(asset_name: &str, package_name: &str) -> VarsMap {
+fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
     let mut map = VarsMap::new();
 
     map.insert(
@@ -122,7 +120,9 @@ fn create_vars_map(asset_name: &str, package_name: &str) -> VarsMap {
     );
 
     map.insert("doc_dir".into(), format!("share/doc/{}/", package_name));
-    map.insert("asset_name".into(), asset_name.to_string());
+    if let Some(asset_name) = asset_name {
+        map.insert("asset_name".into(), asset_name.clone());
+    }
 
     map
 }
@@ -169,7 +169,6 @@ pub fn install_with_package_and_requested_version(
 
     let ui = ui.nest();
     let asset_path = app.download_cache.download(&ui, &build.url)?;
-    let asset_name = file_utils::get_file_name(&asset_path)?;
 
     ui.info("Verifying asset integrity");
     verify_checksum(&asset_path, &build.sha256)?;
@@ -180,7 +179,7 @@ pub fn install_with_package_and_requested_version(
     }
 
     ui.info("Unpacking asset");
-    unpack(&asset_path, &unpack_dir, install.strip)?;
+    let asset_name = unpack(&asset_path, &unpack_dir, install.strip)?;
 
     if installed_version.is_some() {
         // A different version is already installed, uninstall it first
@@ -192,7 +191,7 @@ pub fn install_with_package_and_requested_version(
         &unpack_dir,
         &app.install_dir,
         &install.files,
-        &create_vars_map(asset_name, package_name),
+        &create_vars_map(&asset_name, package_name),
     )?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 

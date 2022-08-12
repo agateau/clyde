@@ -83,7 +83,7 @@ The source and destination parts of the `files` mapping supports variables. A va
 
 The following variables are available:
 
-- `${asset_name}`: Name of the downloaded asset. Useful for releases where assets are the package executable.
+- `${asset_name}`: Name of the unpacked asset if the asset is a single-file asset. A single-file asset is an asset which is either the package executable, or a compressed version of it, compressed with gzip, bzip2 or xz. This variable is only available if the asset is a single-file asset.
 - `${doc_dir}`: Directory storing the package documentation. Set to "share/doc/<package_name>/".
 - `${exe_ext}`: Executable extension for the target OS. Set to ".exe" on Windows and "" on other OSes.
 

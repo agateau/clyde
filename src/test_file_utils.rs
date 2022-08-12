@@ -9,13 +9,6 @@ use std::path::{Path, PathBuf};
 
 use anyhow::Result;
 
-// Zip content:
-// hello/
-// hello/bin/
-// hello/bin/hello
-// hello/README.md
-const ZIP_BYTES: &[u8; 626] = include_bytes!("zip_unpacker_test_archive.zip");
-
 /// Saves the current working directory and restores it when dropped
 pub struct CwdSaver {
     old_dir: PathBuf,
@@ -89,6 +82,27 @@ pub fn pathbufset_from_strings(strings: &[&str]) -> HashSet<PathBuf> {
     strings.iter().map(PathBuf::from).collect()
 }
 
-pub fn create_test_zip_file(zip_path: &Path) {
-    fs::write(&zip_path, ZIP_BYTES).unwrap();
+fn get_fixtures_dir() -> PathBuf {
+    let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let path = manifest_dir.join("src").join("fixtures");
+    if !path.exists() {
+        panic!("Can't find fixtures dir");
+    }
+    path
+}
+
+pub fn get_fixture_path(name: &str) -> PathBuf {
+    let fixtures_dir = get_fixtures_dir();
+    let path = fixtures_dir.join(name);
+    if !path.exists() {
+        panic!("Can't find {name}");
+    }
+    path
+}
+
+#[cfg(unix)]
+pub fn is_file_executable(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    let permissions = fs::metadata(&path).unwrap().permissions();
+    permissions.mode() & 0o111_u32 == 0o111_u32
 }
