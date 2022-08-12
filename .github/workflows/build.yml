@@ -10,6 +10,20 @@ on:
   workflow_dispatch:
 
 jobs:
+  lint:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install stable toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Run static checks
+        run: ci/run-static-checks
+
   build:
     strategy:
       fail-fast: false
@@ -46,9 +60,6 @@ jobs:
       - name: Build
         run: ci/build-app
 
-      - name: Run static checks
-        run: ci/run-static-checks
-
       - name: Run tests
         run: ci/run-tests
 
@@ -64,7 +75,9 @@ jobs:
             artifacts/*.zip
 
   server-upload:
-    needs: build
+    needs:
+      - lint
+      - build
     runs-on: ubuntu-20.04
     if: github.ref == 'refs/heads/main'
 
