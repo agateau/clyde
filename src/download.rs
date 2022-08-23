@@ -17,7 +17,7 @@ use crate::ui::Ui;
 
 const FILE_PREFIX: &str = "file://";
 
-const PROGRESS_BAR_TEMPLATE: &str = "|{bar:40}| {bytes}/{total_bytes} - {bytes_per_sec}";
+const PROGRESS_BAR_TEMPLATE: &str = "[{bar:40}] {bytes} / {total_bytes} - {bytes_per_sec}";
 
 struct ProgressWriter<W: Write> {
     writer: W,
@@ -36,7 +36,7 @@ where
         bar.set_style(
             ProgressStyle::default_bar()
                 .template(&template)
-                .progress_chars("▓▓ "),
+                .progress_chars("●●."),
         );
         Self {
             writer,
