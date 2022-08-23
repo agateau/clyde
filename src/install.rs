@@ -195,7 +195,9 @@ pub fn install_with_package_and_requested_version(
     )?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 
+    ui.info("Cleaning");
     fs::remove_dir_all(&unpack_dir)?;
+    fs::remove_file(&asset_path)?;
 
     Ok(())
 }
