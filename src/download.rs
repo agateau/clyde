@@ -5,7 +5,6 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Seek, SeekFrom, Write};
 use std::path::Path;
-use std::time::Duration;
 
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -98,7 +97,7 @@ fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
 
     // Send request
     let url = Url::parse(url_str)?;
-    let client_builder = ClientBuilder::new().timeout(Duration::from_secs(3));
+    let client_builder = ClientBuilder::new();
     let client = client_builder.build()?;
 
     let request = client
