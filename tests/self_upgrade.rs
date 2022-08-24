@@ -33,7 +33,7 @@ const CLYDE_YAML_TEMPLATE: &str = "
 
 fn create_clyde_yaml(store_dir: &Path, version: &str) -> Result<()> {
     let clyde_path = env!("CARGO_BIN_EXE_clyde");
-    let url = format!("file://{clyde_path}");
+    let url = format!("file://{clyde_path}").replace('\\', "/");
     let sha256 = checksum::compute_checksum(Path::new(&clyde_path))?;
 
     let content = CLYDE_YAML_TEMPLATE
