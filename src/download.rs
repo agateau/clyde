@@ -5,7 +5,6 @@
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, Seek, SeekFrom, Write};
 use std::path::Path;
-use std::time::Duration;
 
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -17,7 +16,7 @@ use crate::ui::Ui;
 
 const FILE_PREFIX: &str = "file://";
 
-const PROGRESS_BAR_TEMPLATE: &str = "|{bar:40}| {bytes}/{total_bytes} - {bytes_per_sec}";
+const PROGRESS_BAR_TEMPLATE: &str = "[{bar:40}] {bytes} / {total_bytes} - {bytes_per_sec}";
 
 struct ProgressWriter<W: Write> {
     writer: W,
@@ -36,7 +35,7 @@ where
         bar.set_style(
             ProgressStyle::default_bar()
                 .template(&template)
-                .progress_chars("▓▓ "),
+                .progress_chars("●●."),
         );
         Self {
             writer,
@@ -98,7 +97,7 @@ fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
 
     // Send request
     let url = Url::parse(url_str)?;
-    let client_builder = ClientBuilder::new().timeout(Duration::from_secs(3));
+    let client_builder = ClientBuilder::new();
     let client = client_builder.build()?;
 
     let request = client
