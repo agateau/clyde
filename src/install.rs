@@ -138,34 +138,44 @@ pub fn install(app: &App, ui: &Ui, package_name_args: &Vec<String>) -> Result<()
 pub fn install_with_package_and_requested_version(
     app: &App,
     ui: &Ui,
-    package_name: &str,
+    package_path: &str,
     requested_version: &VersionReq,
 ) -> Result<()> {
     let db = &app.database;
 
     let arch_os = ArchOs::current();
 
-    let package = app.store.get_package(package_name)?;
+    let package = app.store.get_package(package_path)?;
 
     let version = package
         .get_version_matching(requested_version)
         .ok_or_else(|| {
-            anyhow!("No version matching '{requested_version}' available for {package_name}")
+            anyhow!(
+                "No version matching '{requested_version}' available for {}",
+                &package.name
+            )
         })?;
 
-    let build = package
-        .get_asset(version, &arch_os)
-        .ok_or_else(|| anyhow!("No {arch_os} asset available for {package_name} {version}"))?;
+    let build = package.get_asset(version, &arch_os).ok_or_else(|| {
+        anyhow!(
+            "No {arch_os} asset available for {} {version}",
+            &package.name
+        )
+    })?;
 
     let install = package
         .get_install(version, &arch_os)
-        .ok_or_else(|| anyhow!("No files instruction for {}", package_name))?;
+        .ok_or_else(|| anyhow!("No files instruction for {}", &package.name))?;
 
-    let installed_version = db.get_package_version(package_name)?;
+    let installed_version = db.get_package_version(&package.name)?;
     if installed_version == Some(version.clone()) {
-        return Err(anyhow!("{} {} is already installed", package_name, version));
+        return Err(anyhow!(
+            "{} {} is already installed",
+            &package.name,
+            version
+        ));
     }
-    ui.info(&format!("Installing {} {}", package_name, version));
+    ui.info(&format!("Installing {} {}", &package.name, version));
 
     let ui = ui.nest();
     let asset_path = app.download_cache.download(&ui, &build.url)?;
@@ -183,7 +193,7 @@ pub fn install_with_package_and_requested_version(
 
     if installed_version.is_some() {
         // A different version is already installed, uninstall it first
-        uninstall_package(app, &ui, package_name)?;
+        uninstall_package(app, &ui, &package.name)?;
     }
 
     ui.info("Installing files");
@@ -191,7 +201,7 @@ pub fn install_with_package_and_requested_version(
         &unpack_dir,
         &app.install_dir,
         &install.files,
-        &create_vars_map(&asset_name, package_name),
+        &create_vars_map(&asset_name, &package.name),
     )?;
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 
