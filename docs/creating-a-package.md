@@ -20,9 +20,9 @@ description: A one line description of the namcap app
 homepage: https://namcap.example.com
 ```
 
-## Adding releases
+## Adding release assets
 
-Now we need to add releases. Clyde provides a tool to help with this: `clydetools add-build`.
+Now we need to add release assets. Clyde provides a tool to help with this: `clydetools add-assets`.
 
 Let's say namcap provides the following archives for version 1.2.3:
 
@@ -31,17 +31,17 @@ Let's say namcap provides the following archives for version 1.2.3:
 - https://namcap.example.com/download/namcap-1.2.3-x86_64-darwin.tar.gz
 - https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz
 
-To use all these archives for the 1.2.3 release, run `clydetools add-build` like this:
+To use all these archives for the 1.2.3 release, run `clydetools add-assets` like this:
 
 ```
-clydetools add-build namcap.yaml 1.2.3 \
+clydetools add-assets namcap.yaml 1.2.3 \
     https://namcap.example.com/download/namcap-1.2.3-x86_64-linux.tar.gz \
     https://namcap.example.com/download/namcap-1.2.3-x86_64-windows.zip \
     https://namcap.example.com/download/namcap-1.2.3-x86_64-darwin.tar.gz \
     https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz
 ```
 
-`clydetools add-build` downloads all archives, computes their sha256 checksum, and adds them as builds for the 1.2.3 release to `namcap.yaml`.
+`clydetools add-assets` downloads all archives, computes their sha256 checksum, and adds them as builds for the 1.2.3 release to `namcap.yaml`.
 
 Our `namcap.yaml` should now look like this:
 
@@ -71,7 +71,7 @@ It's time to add an `installs` entry so that Clyde knows which files should go w
 
 Let's assume the archive content is the following:
 
-```
+```yaml
 namcap-1.2.3-$arch-$os/
   namcap (namcap.exe on Windows)
   README.md
@@ -88,7 +88,7 @@ This is what the installation must do:
 
 We can do this with an `installs` entry like this:
 
-```
+```yaml
 installs:
   1.2.3:
     any-any:
@@ -112,7 +112,7 @@ Finally, the `files` part defines where each file go. There are a few subtleties
 - To install to a directory, it *must* end with a `/`, writing `doc/namcap.1: share/man/man1` would mean moving `namcap.1` to `share/man` and renaming it to `man1`.
 - To install to the documentation directory, we can use the `${doc_dir}` variable.
 
-For more details on the file format, have a look at the [internals.md](internals.md) document.
+For more details on the file format, have a look at the [package-file-format.md](package-file-format.md) document.
 
 ## Testing it
 
