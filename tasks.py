@@ -7,16 +7,13 @@ A set of tasks to simplify the release process. See docs/release-check-list.md
 for details.
 """
 
-import json
 import os
 import re
 import shutil
 import sys
 
-from http.client import HTTPResponse
 from pathlib import Path
-from typing import List, Dict
-from urllib import request
+from typing import List
 
 from invoke import task, run
 
@@ -26,19 +23,6 @@ ARTIFACTS_DIR = Path("artifacts")
 
 def get_version():
     return os.environ["VERSION"]
-
-
-def create_request(url: str, headers: Dict[str, str]) -> request.Request:
-    req = request.Request(url)
-    for key, value in headers.items():
-        req.add_header(key, value)
-
-    return req
-
-
-def http_get(url: str, headers: Dict[str, str]) -> HTTPResponse:
-    req = create_request(url, headers)
-    return request.urlopen(req)
 
 
 def erun(*args, **kwargs):
@@ -186,18 +170,11 @@ def publish(c):
 @task
 def update_store(c):
     version = get_version()
-    tag_url = f"https://api.github.com/repos/agateau/clyde/releases/tags/{version}"
-    print(f"Fetching release info from {tag_url}")
-    response = http_get(tag_url, dict())
-    dct = json.load(response)
-    archives_url = [x["browser_download_url"] for x in dct["assets"]]
-
     with c.cd("../clyde-store"):
         cerun(c, "git checkout main")
         cerun(c, "git pull")
         cerun(c, "git checkout -b update-clyde")
-        urls_str = " ".join(archives_url)
-        cerun(c, f"clydetools add-assets clyde.yaml {version} {urls_str}")
+        cerun(c, f"clydetools fetch clyde.yaml", pty=True)
         cerun(c, "git add clyde.yaml")
         cerun(c, f"git commit -m 'Update clyde to {version}'")
         cerun(c, "git push -u origin update-clyde")
