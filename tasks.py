@@ -115,6 +115,9 @@ def prepare_release3(c):
 
     erun("cargo publish --dry-run --allow-dirty")
     erun("cargo package --list --allow-dirty")
+
+    # `publish --dry-run` updates Cargo.lock. Commit the changes.
+    erun("git add Cargo.lock")
     create_pr(c)
 
 
