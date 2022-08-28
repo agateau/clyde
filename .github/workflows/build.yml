@@ -7,6 +7,7 @@ on:
       # Only build on pushes to the main branch, otherwise branches pushed for PR
       # are built twice
       - main
+    tags:
   workflow_dispatch:
 
 jobs:
