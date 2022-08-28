@@ -55,6 +55,7 @@ pub struct Package {
     pub name: String,
     pub description: String,
     pub homepage: String,
+    pub repository: String,
     pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
@@ -67,6 +68,8 @@ struct InternalPackage {
     pub name: String,
     pub description: String,
     pub homepage: String,
+    #[serde(default)]
+    pub repository: String,
     pub releases: Option<BTreeMap<String, BTreeMap<String, Asset>>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
 }
@@ -97,6 +100,7 @@ impl InternalPackage {
             name: package.name.clone(),
             description: package.description.clone(),
             homepage: package.homepage.clone(),
+            repository: package.repository.clone(),
             releases: Some(releases),
             installs: Some(installs),
         }
@@ -133,6 +137,7 @@ impl InternalPackage {
             name: self.name.clone(),
             description: self.description.clone(),
             homepage: self.homepage.clone(),
+            repository: self.repository.clone(),
             releases,
             installs,
         })
@@ -167,6 +172,7 @@ impl Package {
             name: self.name.clone(),
             description: self.description.clone(),
             homepage: self.homepage.clone(),
+            repository: self.repository.clone(),
             releases,
             installs: self.installs.clone(),
         }

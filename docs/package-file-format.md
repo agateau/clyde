@@ -9,7 +9,10 @@ Clyde packages are defined as YAML files.
 ```yaml
 name: foobar
 description: Foo Bar Baz
+# The public homepage
 homepage: https://foobar.example.com
+# Where the code can be downloaded. Optional.
+repository: https://src.example.com
 ```
 
 ## Releases

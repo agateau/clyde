@@ -12,6 +12,7 @@ fn show_details(db: &Database, package: &Package) -> Result<()> {
     println!("Name: {}", package.name);
     println!("Description: {}", package.description);
     println!("Homepage: {}", package.homepage);
+    println!("Repository: {}", package.repository);
 
     if let Some(installed_version) = db.get_package_version(&package.name)? {
         println!("Installed version: {}", installed_version);
