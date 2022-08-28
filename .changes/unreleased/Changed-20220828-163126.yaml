@@ -1,0 +1,4 @@
+kind: Changed
+body: 'Clyde output is nicer: command details are indented and `clyde list` prints
+  packages as a table (#12).'
+time: 2022-08-28T16:31:26.944754704+02:00
