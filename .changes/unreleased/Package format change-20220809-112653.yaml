@@ -1,4 +1,0 @@
-kind: Package format change
-body: It's now possible to refer to the asset name in the `files` entries, using
-  the new `${asset_name}` variable (#65).
-time: 2022-08-09T11:26:53.666654355+02:00
