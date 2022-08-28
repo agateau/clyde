@@ -167,7 +167,7 @@ fn gh_update_package(app: &App, ui: &Ui, out_dir: &Path, package_path: &Path) ->
     )
 }
 
-pub fn gh_update(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
+pub fn gh_fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
     let out_dir = Path::new("out");
     if !out_dir.exists() {
         ui.info(&format!("Creating {} dir", out_dir.display()));

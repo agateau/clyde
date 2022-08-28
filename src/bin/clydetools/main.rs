@@ -10,7 +10,7 @@ use clap::{Parser, Subcommand};
 
 pub mod add_assets;
 pub mod check_package;
-pub mod gh_update;
+pub mod gh_fetcher;
 
 #[macro_use]
 extern crate lazy_static;
@@ -20,7 +20,7 @@ use clyde::ui::Ui;
 
 use add_assets::add_assets_cmd;
 use check_package::check_packages;
-use gh_update::gh_update;
+use gh_fetcher::gh_fetch;
 
 /// Helper tools for Clyde package authors. These commands are not useful to use Clyde.
 #[derive(Debug, Parser)]
@@ -57,9 +57,8 @@ enum Command {
         #[clap(required = true)]
         package_files: Vec<PathBuf>,
     },
-    /// Update GitHub-hosted packages: uses GitHub REST API to check for new versions and calls
-    /// add-assets on them.
-    GhUpdate {
+    /// Fetch updates for supported packages
+    Fetch {
         /// Path to the package YAML files
         #[clap(required = true)]
         package_files: Vec<PathBuf>,
@@ -83,9 +82,9 @@ fn main() -> Result<()> {
         }
         // Check can run without an existing Clyde home: it creates a temporary one to test the package
         Command::Check { package_files } => check_packages(&ui, &package_files),
-        Command::GhUpdate { package_files } => {
+        Command::Fetch { package_files } => {
             let app = App::new(&home)?;
-            gh_update(&app, &ui, &package_files)
+            gh_fetch(&app, &ui, &package_files)
         }
     }
 }
