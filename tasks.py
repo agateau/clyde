@@ -126,6 +126,10 @@ def tag(c):
     version = get_version()
     erun("git checkout main")
     erun("git pull")
+    changes_file = Path(".changes") / f"{version}.md"
+    if not changes_file.exists():
+        print(f"{changes_file} does not exist, check previous PR has been merged")
+        sys.exit(1)
     if not is_ok("Create tag?"):
         sys.exit(1)
 
