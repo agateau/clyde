@@ -4,13 +4,15 @@
 
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
 use crate::arch_os::{ArchOs, ANY};
+
+const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Asset {
@@ -30,6 +32,8 @@ pub struct Install {
     #[serde(skip_serializing_if = "is_zero")]
     pub strip: u32,
     pub files: BTreeMap<String, String>,
+    #[serde(default)]
+    pub extra_files: BTreeMap<String, String>,
 }
 
 #[derive(Debug, Clone)]
@@ -41,6 +45,7 @@ pub struct Package {
     pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
+    pub extra_files_dir: PathBuf,
 }
 
 /// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
@@ -54,6 +59,8 @@ struct InternalPackage {
     pub repository: String,
     pub releases: Option<BTreeMap<String, BTreeMap<String, Asset>>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
+    #[serde(skip)]
+    pub extra_files_dir: PathBuf,
 }
 
 impl InternalPackage {
@@ -85,6 +92,7 @@ impl InternalPackage {
             repository: package.repository.clone(),
             releases: Some(releases),
             installs: Some(installs),
+            extra_files_dir: package.extra_files_dir.clone(),
         }
     }
 
@@ -120,6 +128,7 @@ impl InternalPackage {
             repository: self.repository.clone(),
             releases,
             installs,
+            extra_files_dir: self.extra_files_dir.clone(),
         })
     }
 }
@@ -127,7 +136,11 @@ impl InternalPackage {
 impl Package {
     pub fn from_file(path: &Path) -> Result<Package> {
         let file = File::open(path)?;
-        let internal_package: InternalPackage = serde_yaml::from_reader(file)?;
+        let mut internal_package: InternalPackage = serde_yaml::from_reader(file)?;
+        internal_package.extra_files_dir = path
+            .parent()
+            .ok_or_else(|| anyhow!("No parent dir for package {}", path.display()))?
+            .join(EXTRA_FILES_DIR_NAME);
         internal_package.to_package()
     }
 
@@ -155,6 +168,7 @@ impl Package {
             repository: self.repository.clone(),
             releases,
             installs: self.installs.clone(),
+            extra_files_dir: self.extra_files_dir.clone(),
         }
     }
 
@@ -214,25 +228,67 @@ impl Package {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
+
+    use crate::store::INDEX_NAME;
+
+    const TEST_PACKAGE_YAML_CONTENT: &str = "
+    name: test
+    description: desc
+    homepage:
+    releases: {}
+    installs:
+      1.2.0:
+        any:
+          strip: 1
+          files:
+            bin/foo-1.2: bin/foo
+            share:
+    ";
+
+    #[test]
+    fn from_file_should_load_packages_defined_as_dirs() {
+        // GIVEN a package defined as a dir
+        let dir = assert_fs::TempDir::new().unwrap();
+        let package_dir = dir.join("test");
+        fs::create_dir(&package_dir).unwrap();
+
+        let package_file = package_dir.join(INDEX_NAME);
+        fs::write(&package_file, TEST_PACKAGE_YAML_CONTENT).unwrap();
+
+        // WHEN loading the package
+        // THEN it is loaded as expected
+        let package = Package::from_file(&package_file).unwrap();
+
+        // ANd its extra_files_dir is correct
+        assert_eq!(
+            package.extra_files_dir,
+            package_dir.join(EXTRA_FILES_DIR_NAME)
+        );
+    }
+
+    #[test]
+    fn from_file_should_load_packages_defined_as_files() {
+        // GIVEN a package defined as a file
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        let package_file = dir.join("test.yaml");
+        fs::write(&package_file, TEST_PACKAGE_YAML_CONTENT).unwrap();
+
+        // WHEN loading the package
+        // THEN it is loaded as expected
+        let package = Package::from_file(&package_file).unwrap();
+
+        // ANd its extra_files_dir is correct
+        assert_eq!(
+            package.extra_files_dir,
+            dir.path().join(EXTRA_FILES_DIR_NAME)
+        );
+    }
 
     #[test]
     fn test_to_package() {
-        let package = Package::from_yaml_str(
-            "
-            name: test
-            description: desc
-            homepage:
-            releases: {}
-            installs:
-              1.2.0:
-                any:
-                  strip: 1
-                  files:
-                    bin/foo-1.2: bin/foo
-                    share:
-            ",
-        )
-        .unwrap();
+        let package = Package::from_yaml_str(TEST_PACKAGE_YAML_CONTENT).unwrap();
 
         let install = package
             .get_install(&Version::new(1, 2, 0), &ArchOs::current())

@@ -29,10 +29,17 @@ fn create_parent_dir(path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[derive(Clone, Copy)]
+enum InstallMode {
+    Move,
+    Copy,
+}
+
 /// Install `src_path` in `install_dir/dst`. If `src_path` is a dir, install its content
 /// recursively.
 /// Add the installed files to `installed_files`.
 fn install_file_entry(
+    install_mode: InstallMode,
     installed_files: &mut HashSet<PathBuf>,
     src_path: &Path,
     install_dir: &Path,
@@ -47,7 +54,14 @@ fn install_file_entry(
                 .file_name()
                 .ok_or_else(|| anyhow!("{:?} has no file name!", sub_src_path))?;
             let sub_dst = dst.join(dst_name);
-            install_file_entry(installed_files, &sub_src_path, install_dir, &sub_dst, vars)?;
+            install_file_entry(
+                install_mode,
+                installed_files,
+                &sub_src_path,
+                install_dir,
+                &sub_dst,
+                vars,
+            )?;
         }
     } else {
         // rel_dst_path is the destination path, relative to install_dir
@@ -65,8 +79,18 @@ fn install_file_entry(
 
         create_parent_dir(&dst_path)?;
 
-        fs::rename(&src_path, &dst_path)
-            .with_context(|| format!("Failed to move {:?} to {:?}", &src_path, &dst_path))?;
+        match install_mode {
+            InstallMode::Move => {
+                fs::rename(&src_path, &dst_path).with_context(|| {
+                    format!("Failed to move {:?} to {:?}", &src_path, &dst_path)
+                })?;
+            }
+            InstallMode::Copy => {
+                fs::copy(&src_path, &dst_path).with_context(|| {
+                    format!("Failed to copy {:?} to {:?}", &src_path, &dst_path)
+                })?;
+            }
+        }
 
         installed_files.insert(rel_dst_path);
     }
@@ -74,15 +98,15 @@ fn install_file_entry(
 }
 
 /// Install all files from a `${arch_os}.files` mapping.
-/// Returns a set of the installed files.
+/// Add the installed files to `installed_files`.
 fn install_files(
+    install_mode: InstallMode,
+    installed_files: &mut HashSet<PathBuf>,
     pkg_dir: &Path,
     install_dir: &Path,
     file_map: &BTreeMap<String, String>,
     vars: &VarsMap,
-) -> Result<HashSet<PathBuf>> {
-    let mut files = HashSet::<PathBuf>::new();
-
+) -> Result<()> {
     fs::create_dir_all(&install_dir)?;
     for (src, dst) in file_map.iter() {
         let src = expand_vars(src, vars)?;
@@ -94,9 +118,16 @@ fn install_files(
         };
 
         let src_path = pkg_dir.join(src);
-        install_file_entry(&mut files, &src_path, install_dir, Path::new(&dst), vars)?;
+        install_file_entry(
+            install_mode,
+            installed_files,
+            &src_path,
+            install_dir,
+            Path::new(&dst),
+            vars,
+        )?;
     }
-    Ok(files)
+    Ok(())
 }
 
 fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
@@ -202,12 +233,27 @@ pub fn install_with_package_and_requested_version(
     }
 
     ui.info("Installing files");
-    let installed_files = install_files(
+    let map = create_vars_map(&asset_name, &package.name);
+    let mut installed_files = HashSet::<PathBuf>::new();
+    install_files(
+        InstallMode::Move,
+        &mut installed_files,
         &unpack_dir,
         &app.install_dir,
         &install.files,
-        &create_vars_map(&asset_name, &package.name),
+        &map,
     )?;
+    if package.extra_files_dir.exists() {
+        ui.info("Installing extra files");
+        install_files(
+            InstallMode::Copy,
+            &mut installed_files,
+            &package.extra_files_dir,
+            &app.install_dir,
+            &install.extra_files,
+            &map,
+        )?;
+    }
     db.add_package(&package.name, version, requested_version, &installed_files)?;
 
     ui.info("Cleaning");
@@ -264,11 +310,22 @@ mod tests {
         ]);
 
         // WHEN install_files() is called
-        let result = install_files(&pkg_dir, &inst_dir, &files, &HashMap::new());
+        let mut installed_files = HashSet::<PathBuf>::new();
+        let result = install_files(
+            InstallMode::Move,
+            &mut installed_files,
+            &pkg_dir,
+            &inst_dir,
+            &files,
+            &HashMap::new(),
+        );
 
-        // THEN it returns the correct file list
+        // THEN it is OK
+        assert!(result.is_ok());
+
+        // AND installed_files contains the correct file list
         assert_eq!(
-            result.unwrap(),
+            installed_files,
             pathbufset_from_strings(&["bin/foo", "bin/food", "share/doc/foo/README.md"])
         );
 
@@ -295,9 +352,20 @@ mod tests {
             ("exe_ext".to_string(), ".exe".to_string()),
             ("doc_dir".to_string(), "share/doc/foo/".to_string()),
         ]);
-        let result = install_files(&pkg_dir, &inst_dir, &files, &vars);
+
+        let mut installed_files = HashSet::<PathBuf>::new();
+        let result = install_files(
+            InstallMode::Move,
+            &mut installed_files,
+            &pkg_dir,
+            &inst_dir,
+            &files,
+            &vars,
+        );
+
+        assert!(result.is_ok());
         assert_eq!(
-            result.unwrap(),
+            installed_files,
             pathbufset_from_strings(&["bin/foo.exe", "share/doc/foo/README.md"])
         );
         assert_eq!(
@@ -321,9 +389,20 @@ mod tests {
             BTreeMap::from([("share".to_string(), "share".to_string())]);
 
         // WHEN install_files() is called
-        let result = install_files(&pkg_dir, &inst_dir, &files, &HashMap::new());
+        let mut installed_files = HashSet::<PathBuf>::new();
+        let result = install_files(
+            InstallMode::Move,
+            &mut installed_files,
+            &pkg_dir,
+            &inst_dir,
+            &files,
+            &HashMap::new(),
+        );
 
-        // THEN the prefix contain both files
+        // THEN the result is OK
+        assert!(result.is_ok());
+
+        // AND the prefix contain both files
         assert_eq!(
             list_tree(&inst_dir).unwrap(),
             pathbufset_from_strings(&["share/man/f1", "share/man/f2"])
@@ -331,7 +410,7 @@ mod tests {
 
         // AND install_files() returns the path to `share/man/f2`
         assert_eq!(
-            result.unwrap(),
+            installed_files,
             HashSet::from([PathBuf::from("share/man/f2")])
         );
     }

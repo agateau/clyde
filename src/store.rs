@@ -12,7 +12,7 @@ use anyhow::{anyhow, Result};
 
 use crate::package::Package;
 
-const INDEX_NAME: &str = "index.yaml";
+pub const INDEX_NAME: &str = "index.yaml";
 
 #[derive(Clone)]
 pub struct SearchHit {

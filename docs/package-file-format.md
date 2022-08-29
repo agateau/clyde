@@ -4,6 +4,10 @@ This document describes the file format used by Clyde.
 
 Clyde packages are defined as YAML files.
 
+They can be either a plain file: `<package>.yaml`, or a directory: `<package>/index.yaml`.
+
+The directory format is supported since 0.4.0.
+
 ## Meta information
 
 ```yaml
@@ -52,13 +56,19 @@ releases:
 
 Next is the "installs" entry. This entry tells Clyde how to install the downloaded asset.
 
-`installs` is a mapping which contain entries for the supported versions. There is not necessarily one entry for each version: the `clyde install` command uses the entry with highest version which is lower than or equal to the version to install.
+`installs` is a mapping containing entries for the supported versions. There is not necessarily one entry for each version: the `clyde install` command uses the entry with the highest version which is lower than or equal to the version to install.
 
-This means that if a package have `installs` entries for version 1.2.0 and 1.3.0, then installing 1.3.4 would use the 1.3.0 entries. Installing 1.2.4 would use the 1.2.0 entries.
+This means that if a package has `installs` entries for version 1.2.0 and 1.3.0, then installing 1.3.4 would use the 1.3.0 entries. Installing 1.2.4 would use the 1.2.0 entries.
 
-Each version entry then contains arch-os entries. The arch and/or OS part can be set to `any` if install instructions are independent of the arch and/or the OS.
+Each version entry then contains arch-os entries. The arch and/or OS parts can be set to `any` if install instructions are independent of the arch and/or the OS.
 
-Each arch-os entry contain a `strip` entry and a `files` entry, as demonstrated below.
+Each arch-os entry can contain the following entries:
+
+- `files`: a mapping of files contained in the asset to the place where they should be installed. See below for more examples.
+- `strip` (optional): the number of directories to ignore inside the asset. For example if all files of foo-1.0.tar.gz are inside a `foo-1.0` directory, set `strip` to 1 to tell Clyde that all entries in `files` are *inside* this directory. Defaults to 0.
+- `extra_files` (optional, since 0.4.0): a mapping of files inside the package `extra_files` directory to the place where they should be installed.
+
+Here is an example of an `installs` entry:
 
 ```yaml
 installs:
@@ -94,14 +104,18 @@ installs:
         # expands to "share/doc/<package_name>/".
         # In this example "README.md" is copied to "share/doc/foobar/README.md".
         README.md: ${doc_dir}
+
+      extra_files:
+        # Copy "extra_files/bar" from within the package directory to "bin/bar"
+        bar: bin/
     any-macos:
       # macOS special instructions
 ```
 
 Packages must follow these rules:
 
-- install binaries in bin
-- install man pages in share/man
+- install binaries in `bin`
+- install man pages in `share/man`
 - install documentation in `share/doc/<package_name>` (use `${doc_dir}` for this, see "Variables" section)
 
 ### Variables
