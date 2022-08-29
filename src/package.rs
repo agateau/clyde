@@ -32,29 +32,6 @@ pub struct Install {
     pub files: BTreeMap<String, String>,
 }
 
-impl Install {
-    pub fn expanded(other: &Install) -> Install {
-        let files = other
-            .files
-            .iter()
-            .map(|(src, dst)| {
-                (
-                    src.clone(),
-                    if dst.is_empty() {
-                        src.clone()
-                    } else {
-                        dst.clone()
-                    },
-                )
-            })
-            .collect();
-        Install {
-            strip: other.strip,
-            files,
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub struct Package {
     pub name: String,
@@ -130,9 +107,7 @@ impl InternalPackage {
                 let version = Version::parse(version_str)?;
                 let installs_for_arch_os = installs_for_arch_os
                     .iter()
-                    .map(|(arch_os, install)| {
-                        (ArchOs::parse(arch_os).unwrap(), Install::expanded(install))
-                    })
+                    .map(|(arch_os, install)| (ArchOs::parse(arch_os).unwrap(), install.clone()))
                     .collect();
                 installs.insert(version, installs_for_arch_os);
             }
@@ -266,7 +241,7 @@ mod tests {
             install.files.get("bin/foo-1.2"),
             Some(&"bin/foo".to_string())
         );
-        assert_eq!(install.files.get("share"), Some(&"share".to_string()));
+        assert_eq!(install.files.get("share"), Some(&"".to_string()));
     }
 
     #[test]

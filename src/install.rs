@@ -86,7 +86,12 @@ fn install_files(
     fs::create_dir_all(&install_dir)?;
     for (src, dst) in file_map.iter() {
         let src = expand_vars(src, vars)?;
-        let dst = expand_vars(dst, vars)?;
+        let dst = if dst.is_empty() {
+            // If dst is empty it means the destination is the same as the source
+            src.clone()
+        } else {
+            expand_vars(dst, vars)?
+        };
 
         let src_path = pkg_dir.join(src);
         install_file_entry(&mut files, &src_path, install_dir, Path::new(&dst), vars)?;
@@ -239,24 +244,38 @@ mod tests {
 
     #[test]
     fn install_files_should_copy_files() {
+        // GIVEN an unpacked package with files:
+        // bin/foo-1.2
+        // bin/food
+        // README.md
         let dir = assert_fs::TempDir::new().unwrap();
         let pkg_dir = dir.join("pkg");
         let inst_dir = dir.join("inst");
-        create_tree(&pkg_dir, &["bin/foo-1.2", "README.md"]);
+        create_tree(&pkg_dir, &["bin/foo-1.2", "bin/food", "README.md"]);
 
+        // And a map to install:
+        // bin/foo-1.2 as bin/foo
+        // bin/food as bin/food
+        // README.md as share/doc/foo/README.md
         let files: BTreeMap<String, String> = BTreeMap::from([
             ("bin/foo-1.2".to_string(), "bin/foo".to_string()),
+            ("bin/food".to_string(), "".to_string()),
             ("README.md".to_string(), "share/doc/foo/".to_string()),
         ]);
 
+        // WHEN install_files() is called
         let result = install_files(&pkg_dir, &inst_dir, &files, &HashMap::new());
+
+        // THEN it returns the correct file list
         assert_eq!(
             result.unwrap(),
-            pathbufset_from_strings(&["bin/foo", "share/doc/foo/README.md"])
+            pathbufset_from_strings(&["bin/foo", "bin/food", "share/doc/foo/README.md"])
         );
+
+        // AND the install dir contains the correct files
         assert_eq!(
             list_tree(&inst_dir).unwrap(),
-            pathbufset_from_strings(&["bin/foo", "share/doc/foo/README.md"])
+            pathbufset_from_strings(&["bin/foo", "bin/food", "share/doc/foo/README.md"])
         );
     }
 
