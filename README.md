@@ -4,7 +4,7 @@ Clyde is a package manager for prebuilt applications.
 
 It works on Linux, macOS and Windows.
 
-[Clyde demo](https://user-images.githubusercontent.com/3575/181382294-df105634-537e-4dab-906a-650107a73500.webm)
+[![Clyde demo](https://asciinema.org/a/bbNhN0xG779gAFvWjAJMlVeai.svg)](https://asciinema.org/a/bbNhN0xG779gAFvWjAJMlVeai)
 
 ## Motivation
 
