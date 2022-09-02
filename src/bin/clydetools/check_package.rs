@@ -12,7 +12,9 @@ use tempfile::TempDir;
 
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
+use clyde::file_utils::get_file_name;
 use clyde::package::Package;
+use clyde::store::INDEX_NAME;
 use clyde::ui::Ui;
 
 fn check_has_releases(package: &Package) -> Result<()> {
@@ -70,12 +72,22 @@ fn check_can_install(ui: &Ui, package_path: &Path, version: &Version) -> Result<
 }
 
 fn check_package_name(package: &Package, path: &Path) -> Result<()> {
-    let name = path.file_stem().unwrap().to_str().unwrap();
-    if package.name != name {
+    let file_name = get_file_name(path)?;
+    let package_file_name = if file_name == INDEX_NAME {
+        get_file_name(path.parent().unwrap())?
+    } else {
+        match file_name.rsplit_once('.') {
+            Some((stem, _ext)) => stem,
+            None => {
+                return Err(anyhow!("Invalid package name ({})", path.display()));
+            }
+        }
+    };
+    if package.name != package_file_name {
         return Err(anyhow!(
-            "Package name ({}) must be the package file name without extension ({})",
+            "Package name ({}) must match the package file name ({})",
             package.name,
-            name
+            package_file_name
         ));
     }
     Ok(())
@@ -83,9 +95,10 @@ fn check_package_name(package: &Package, path: &Path) -> Result<()> {
 
 /// The bool indicates if an asset was available
 fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
-    let package = Package::from_file(path)?;
+    let path = path.canonicalize()?;
+    let package = Package::from_file(&path)?;
 
-    check_package_name(&package, path)?;
+    check_package_name(&package, &path)?;
     check_has_releases(&package)?;
     check_has_installs(&package)?;
 
@@ -99,7 +112,7 @@ fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
             return Ok(false);
         }
     };
-    check_can_install(ui, path, &version)?;
+    check_can_install(ui, &path, &version)?;
     Ok(true)
 }
 
