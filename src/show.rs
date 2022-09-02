@@ -5,10 +5,10 @@
 use anyhow::Result;
 
 use crate::app::App;
-use crate::db::Database;
-use crate::package::Package;
 
-fn show_details(db: &Database, package: &Package) -> Result<()> {
+fn show_details(app: &App, package_name: &str) -> Result<()> {
+    let db = &app.database;
+    let package = app.store.get_package(package_name)?;
     println!("Name: {}", package.name);
     println!("Description: {}", package.description);
     println!("Homepage: {}", package.homepage);
@@ -29,8 +29,8 @@ fn show_details(db: &Database, package: &Package) -> Result<()> {
     Ok(())
 }
 
-fn show_files(app: &App, package: &Package) -> Result<()> {
-    let fileset = app.database.get_package_files(&package.name)?;
+fn show_files(app: &App, package_name: &str) -> Result<()> {
+    let fileset = app.database.get_package_files(package_name)?;
     let mut files = Vec::from_iter(fileset);
     files.sort();
     for file in files {
@@ -41,12 +41,9 @@ fn show_files(app: &App, package: &Package) -> Result<()> {
 }
 
 pub fn show(app: &App, app_name: &str, list: bool) -> Result<()> {
-    let db = &app.database;
-    let package = app.store.get_package(app_name)?;
-
     if list {
-        show_files(app, &package)
+        show_files(app, app_name)
     } else {
-        show_details(db, &package)
+        show_details(app, app_name)
     }
 }
