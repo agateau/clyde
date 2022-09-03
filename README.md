@@ -67,7 +67,7 @@ Check you can read its man page:
 man rg
 ```
 
-4. To ensure you always run the latest version of Clyde, install it with itself!
+To ensure you always run the latest version of Clyde, install it with itself!
 
 ```
 clyde install clyde
