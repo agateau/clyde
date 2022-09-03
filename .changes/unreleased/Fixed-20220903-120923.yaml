@@ -1,0 +1,4 @@
+kind: Fixed
+body: '`clyde show -l <package>` now works even for packages installed from outside
+  the store.'
+time: 2022-09-03T12:09:23.051784179+02:00
