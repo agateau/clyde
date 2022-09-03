@@ -20,9 +20,14 @@ pub struct Asset {
 
 pub type Release = HashMap<ArchOs, Asset>;
 
+fn is_zero(x: &u32) -> bool {
+    *x == 0
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
     #[serde(default)]
+    #[serde(skip_serializing_if = "is_zero")]
     pub strip: u32,
     pub files: BTreeMap<String, String>,
 }
