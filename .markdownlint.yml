@@ -1,0 +1,23 @@
+default: true
+ul-indent:
+    indent: 4
+
+# Enforcing fenced code-blo-style is disabled for now because it reports the
+# yaml content of the gallery:: plugin as indented code-blocks
+#code-block-style: false
+code-block-style:
+    style: fenced
+fenced-code-language: false
+
+line_length: false
+
+# Disable this because of .changes file entries
+first-line-h1: false
+
+# Disable this becauase of CHANGELOG.md
+no-duplicate-heading: false
+#no-trailing-punctuation: false
+#no-inline-html: false
+#commands-show-output: false
+# Disable this because in some articles `_` is used for image captions
+#no-emphasis-as-heading: false

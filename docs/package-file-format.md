@@ -99,6 +99,7 @@ installs:
 ```
 
 Packages must follow these rules:
+
 - install binaries in bin
 - install man pages in share/man
 - install documentation in `share/doc/<package_name>` (use `${doc_dir}` for this, see "Variables" section)

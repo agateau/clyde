@@ -5,6 +5,7 @@ This document describes the internals of a Clyde home.
 ## Clyde home location
 
 The default location for Clyde home depends on your OS:
+
 - Linux: `$HOME/.cache/clyde`
 - Windows: `$LOCALAPPDATA/clyde/cache`
 - macOS: `$HOME/Library/Caches/clyde`

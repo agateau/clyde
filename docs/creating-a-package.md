@@ -26,10 +26,10 @@ Now we need to add release assets. Clyde provides a tool to help with this: `cly
 
 Let's say namcap provides the following archives for version 1.2.3:
 
-- https://namcap.example.com/download/namcap-1.2.3-x86_64-linux.tar.gz
-- https://namcap.example.com/download/namcap-1.2.3-x86_64-windows.zip
-- https://namcap.example.com/download/namcap-1.2.3-x86_64-darwin.tar.gz
-- https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz
+- <https://namcap.example.com/download/namcap-1.2.3-x86_64-linux.tar.gz>
+- <https://namcap.example.com/download/namcap-1.2.3-x86_64-windows.zip>
+- <https://namcap.example.com/download/namcap-1.2.3-x86_64-darwin.tar.gz>
+- <https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz>
 
 To use all these archives for the 1.2.3 release, run `clydetools add-assets` like this:
 
@@ -82,6 +82,7 @@ namcap-1.2.3-$arch-$os/
 ```
 
 This is what the installation must do:
+
 - `namcap` (`namcap.exe` on Windows) must go to the `bin` directory
 - `namcap.1` must go to the `share/man/man1` directory
 - The other files must go to the package documentation directory (`share/doc/namcap`)
@@ -108,6 +109,7 @@ Then there is an `any-any` entry: the first `any` is for the architecture (x86_6
 Then `strip: 1` tells Clyde to skip the first subdirectory of the archive (the `namcap-1.2.3-$arch-$os` part).
 
 Finally, the `files` part defines where each file go. There are a few subtleties here:
+
 - For the executable we use the `${exe_ext}` variable to transparently handle the fact that Windows binaries have a ".exe" extension.
 - To install to a directory, it *must* end with a `/`, writing `doc/namcap.1: share/man/man1` would mean moving `namcap.1` to `share/man` and renaming it to `man1`.
 - To install to the documentation directory, we can use the `${doc_dir}` variable.

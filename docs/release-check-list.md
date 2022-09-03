@@ -2,12 +2,16 @@
 
 - [ ] Setup
 
-    pip install invoke
-    export VERSION=<the-new-version>
+```
+pip install invoke
+export VERSION=<the-new-version>
+```
 
 - [ ] Prepare
 
-    invoke prepare-release
+```
+invoke prepare-release
+```
 
 ## Tag
 
@@ -15,23 +19,31 @@
 
 - [ ] Create tag
 
-    invoke tag
+```
+invoke tag
+```
 
 ## Publish
 
 - [ ] Download artifacts
 
-    invoke download-artifacts
+```
+invoke download-artifacts
+```
 
 - [ ] Publish
 
-    invoke publish
+```
+invoke publish
+```
 
 ## Post publish
 
 - [ ] Update package on clyde-store
 
-    invoke update-store
+```
+invoke update-store
+```
 
 - [ ] Wait for store CI to be happy
 
