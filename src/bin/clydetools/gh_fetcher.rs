@@ -24,19 +24,10 @@ use crate::add_assets::add_assets;
 /// Can be simplified once https://github.com/agateau/clyde/issues/67 is done and all packages have
 /// been updated.
 fn get_repo_owner(package: &Package) -> Result<Option<String>> {
-    let latest_version = package
-        .get_latest_version()
-        .ok_or_else(|| anyhow!("Can't get latest version of {}", package.name))?;
-
-    let build = package.releases[latest_version]
-        .values()
-        .next()
-        .ok_or_else(|| anyhow!("No build available for version {}", latest_version))?;
-
     let rx = Regex::new("https://github.com/(?P<repo_owner>([^/]+)/([^/]+))").unwrap();
 
     let repo_owner = rx
-        .captures(&build.url)
+        .captures(&package.repository)
         .map(|captures| captures["repo_owner"].to_string());
     Ok(repo_owner)
 }
