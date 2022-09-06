@@ -2,7 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::collections::HashSet;
+use std::cmp::Ordering;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::slice::Iter;
 
@@ -51,6 +52,17 @@ lazy_static! {
         ("win", OS_WINDOWS),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
+
+    // Packer extensions, ordered from worse to best
+    static ref PACKER_EXTENSIONS: Vec<&'static str> = vec![
+        "zip", "gz", "bz2", "xz"
+    ];
+
+    // Libc names, ordered from worse to best. List msvc at the end because on Windows it tends to
+    // produce smaller binaries
+    static ref LIBC_NAMES: Vec<&'static str> = vec![
+        "gnu", "musl", "msvc"
+    ];
 }
 
 fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
@@ -75,9 +87,20 @@ fn extract_arch_os(name: &str) -> Option<ArchOs> {
     Some(ArchOs::new(arch, os))
 }
 
+fn get_extension(name: &str) -> Option<&str> {
+    name.rsplit_once('.').map(|x| x.1)
+}
+
+fn get_lname(url: &str) -> Result<String> {
+    let (_, name) = url
+        .rsplit_once('/')
+        .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
+    Ok(name.to_ascii_lowercase())
+}
+
 fn is_supported_name(name: &str) -> bool {
-    let ext = match name.rsplit_once('.') {
-        Some(x) => x.1,
+    let ext = match get_extension(name) {
+        Some(x) => x,
         None => return true,
     };
     if UNSUPPORTED_EXTS.contains(ext) {
@@ -105,6 +128,82 @@ fn add_asset(
     Ok(())
 }
 
+/// Given an asset URL, return a score based on the packer it uses. The better the packer, the
+/// higher the score.
+fn get_pack_score(name: &str) -> usize {
+    let ext = match get_extension(name) {
+        Some(x) => x,
+        None => return 0,
+    };
+
+    match PACKER_EXTENSIONS.iter().position(|&x| x == ext) {
+        Some(idx) => idx + 1,
+        None => 0,
+    }
+}
+
+/// Given an asset URL, return a score based on the libc it uses. The better the libc, the higher
+/// the score.
+fn get_libc_score(name: &str) -> usize {
+    match LIBC_NAMES.iter().position(|&x| name.contains(x)) {
+        Some(idx) => idx + 1,
+        None => 0,
+    }
+}
+
+/// Given two asset URLs, return the one we prefer to use
+fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
+    // We know get_lname() is going to succeed here, because it has already been called before
+    let n1 = get_lname(u1).unwrap();
+    let n2 = get_lname(u2).unwrap();
+
+    let u1_libc_score = get_libc_score(&n1);
+    let u2_libc_score = get_libc_score(&n2);
+    match u1_libc_score.cmp(&u2_libc_score) {
+        Ordering::Greater => return u1,
+        Ordering::Less => return u2,
+        Ordering::Equal => (),
+    };
+
+    let u1_pack_score = get_pack_score(&n1);
+    let u2_pack_score = get_pack_score(&n2);
+    match u1_pack_score.cmp(&u2_pack_score) {
+        Ordering::Greater => u1,
+        Ordering::Less => u2,
+        Ordering::Equal => {
+            ui.warn(&format!(
+                "Don't know which of '{n1}' and '{n2}' is the best, picking the first one"
+            ));
+            u1
+        }
+    }
+}
+
+/// Given a bunch of asset URLs returns the best URL per arch-os
+fn select_best_urls(ui: &Ui, urls: &Vec<String>) -> Result<HashMap<ArchOs, String>> {
+    let mut best_urls = HashMap::<ArchOs, String>::new();
+    for url in urls {
+        let lname = get_lname(url)?;
+        if !is_supported_name(&lname) {
+            continue;
+        }
+
+        let arch_os = match extract_arch_os(&lname) {
+            Some(x) => x,
+            None => {
+                ui.warn(&format!("Can't extract arch-os from {lname}, skipping"));
+                continue;
+            }
+        };
+        let url = match best_urls.get(&arch_os) {
+            Some(current_url) => select_best_url(ui, current_url, url),
+            None => url,
+        };
+        best_urls.insert(arch_os, url.to_string());
+    }
+    Ok(best_urls)
+}
+
 pub fn add_assets(
     app: &App,
     ui: &Ui,
@@ -128,31 +227,23 @@ pub fn add_assets(
         let arch_os = ArchOs::parse(arch_os)?;
         add_asset(ui, &app.download_cache, &mut release, &arch_os, url)?;
     } else {
-        for url in urls {
-            let (_, name) = url
-                .rsplit_once('/')
-                .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
-
-            let lname = name.to_ascii_lowercase();
-            if !is_supported_name(&lname) {
-                ui.info(&format!("Skipping {name}, unsupported extension"));
-                continue;
-            }
-
-            if let Some(arch_os) = extract_arch_os(&lname) {
-                ui.info(&format!("{arch_os}: {name}"));
-                let result =
-                    add_asset(&ui.nest(), &app.download_cache, &mut release, &arch_os, url);
-                if let Err(err) = result {
-                    ui.error(&format!(
-                        "Can't add {:?} build from {}: {}",
-                        arch_os, url, err
-                    ));
-                    return Err(err);
-                };
-            } else {
-                ui.warn(&format!("Can't extract arch-os from {}, skipping", name));
-            }
+        let urls_for_arch_os = select_best_urls(ui, urls)?;
+        for (arch_os, url) in urls_for_arch_os {
+            ui.info(&format!("{arch_os}: {url}"));
+            let result = add_asset(
+                &ui.nest(),
+                &app.download_cache,
+                &mut release,
+                &arch_os,
+                &url,
+            );
+            if let Err(err) = result {
+                ui.error(&format!(
+                    "Can't add {:?} build from {}: {}",
+                    arch_os, url, err
+                ));
+                return Err(err);
+            };
         }
     }
 
@@ -222,5 +313,33 @@ mod tests {
         assert!(!is_supported_name("foo.deb"));
         assert!(!is_supported_name("foo.rpm"));
         assert!(!is_supported_name("foo.msi"));
+    }
+
+    #[test]
+    fn test_select_best_url() {
+        let ui = Ui::default();
+
+        assert_eq!(
+            select_best_url(&ui, "https://example.com/foo.gz", "https://example.com/foo"),
+            "https://example.com/foo.gz"
+        );
+        assert_eq!(
+            select_best_url(
+                &ui,
+                "https://example.com/foo.gz",
+                "https://example.com/foo.xz"
+            ),
+            "https://example.com/foo.xz"
+        );
+
+        // libc is more important than compression
+        assert_eq!(
+            select_best_url(
+                &ui,
+                "https://example.com/foo-musl",
+                "https://example.com/foo-glibc.gz"
+            ),
+            "https://example.com/foo-musl"
+        );
     }
 }
