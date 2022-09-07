@@ -1,0 +1,3 @@
+kind: Fixed
+body: Fixed unpacking of single-file executables compressed with xz.
+time: 2022-09-07T08:27:10.003381216+02:00
