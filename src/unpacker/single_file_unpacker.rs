@@ -26,7 +26,7 @@ impl SingleFileUnpacker {
         if TarUnpacker::supports(name) {
             return false;
         }
-        name.ends_with(".gz") || name.ends_with(".bz2") || name.ends_with(".xz2")
+        name.ends_with(".gz") || name.ends_with(".bz2") || name.ends_with(".xz")
     }
 }
 
