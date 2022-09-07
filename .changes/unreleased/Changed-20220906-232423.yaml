@@ -1,4 +1,0 @@
-kind: Changed
-body: '`clydetools add-assets` and `clydetools fetch` no longer downloads more than
-  one URL per arch-os.'
-time: 2022-09-06T23:24:23.881681546+02:00

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.1 - 2022-09-07
+
+### Changed
+
+- `clydetools add-assets` and `clydetools fetch` no longer download more than one URL per arch-os.
+
+### Fixed
+
+- `clyde show -l <package>` now works even for packages installed from outside the store.
+
+- When `clydetools` writes package files, it no longer writes `strip: 0`.
+
+- Unpacking of single-file executables compressed with xz now works as expected.
+
 ## 0.3.0 - 2022-08-28
 
 ### Added
