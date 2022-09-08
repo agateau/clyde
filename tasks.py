@@ -109,15 +109,14 @@ def prepare_release2(c):
 @task
 def prepare_release3(c):
     version = get_version()
+    # Rebuild to ensure Cargo.lock is updated
+    erun("cargo build")
     erun("git add Cargo.toml Cargo.lock CHANGELOG.md .changes")
+
+    erun("cargo publish --dry-run")
+
     erun(f"git commit -m 'Prepare {version}'")
     erun("git push -u origin prep-release")
-
-    erun("cargo publish --dry-run --allow-dirty")
-    erun("cargo package --list --allow-dirty")
-
-    # `publish --dry-run` updates Cargo.lock. Commit the changes.
-    erun("git add Cargo.lock")
     create_pr(c)
 
 
