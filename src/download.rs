@@ -35,6 +35,7 @@ where
         bar.set_style(
             ProgressStyle::default_bar()
                 .template(&template)
+                .unwrap()
                 .progress_chars("●●."),
         );
         Self {
