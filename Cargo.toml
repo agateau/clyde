@@ -12,27 +12,27 @@ license = "GPL-3.0-or-later"
 categories = ["command-line-utilities"]
 
 [dependencies]
-anyhow = "1.0"
-clap = { version = "3.1.18", features = ["derive"] }
-serde = { version = "1.0.137", features = ["derive"] }
-serde_json = "1.0.81"
-serde_yaml = "0.9.4"
-sha2 = "0.10.2"
-hex = "0.4"
-semver = "1.0.10"
+anyhow = "1.0.64"
+clap = { version = "3.2.20", features = ["derive"] }
+serde = { version = "1.0.144", features = ["derive"] }
+serde_json = "1.0.85"
+serde_yaml = "0.9.11"
+sha2 = "0.10.5"
+hex = "0.4.3"
+semver = "1.0.13"
 directories = "4.0.1"
-rusqlite = { version = "0.27.0", features = ["bundled"] }
+rusqlite = { version = "0.28.0", features = ["bundled"] }
 zip = "0.6.2"
-goblin = "0.5.2"
+goblin = "0.5.4"
 lazy_static = "1.4.0"
 tempfile = "3.3.0"
 shell-words = "1.1.0"
 reqwest = { version = "0.11.11", default-features = false, features = ["rustls-tls", "blocking"] }
-indicatif = "0.16.2"
+indicatif = "0.17.0"
 console = { version = "0.15.1", default-features = false, features = ["ansi-parsing"] }
 regex = "1.6.0"
 archiver-rs = { version = "0.5.1", default-features = false, features = ["bzip", "gzip", "xz"] }
 
 [dev-dependencies]
-assert_fs = "1.0.1"
-which = "4.2.5"
+assert_fs = "1.0.7"
+which = "4.3.0"
