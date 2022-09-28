@@ -11,19 +11,13 @@ use anyhow::{anyhow, Result};
 use semver::Version;
 
 use clyde::app::App;
-use clyde::arch_os::{ArchOs, ANY};
+use clyde::arch_os::{
+    ArchOs, ANY, ARCH_AARCH64, ARCH_X86, ARCH_X86_64, OS_LINUX, OS_MACOS, OS_WINDOWS,
+};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Asset, Package, Release};
 use clyde::ui::Ui;
-
-const ARCH_X86_64: &str = "x86_64";
-const ARCH_X86: &str = "x86";
-const ARCH_AARCH64: &str = "aarch64";
-
-const OS_LINUX: &str = "linux";
-const OS_MACOS: &str = "macos";
-const OS_WINDOWS: &str = "windows";
 
 type MatchingPair = (&'static str, &'static str);
 
