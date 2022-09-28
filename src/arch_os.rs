@@ -37,6 +37,20 @@ impl ArchOs {
         }
     }
 
+    pub fn with_any_arch(&self) -> ArchOs {
+        ArchOs {
+            arch: ANY.into(),
+            os: self.os.clone(),
+        }
+    }
+
+    pub fn with_any_os(&self) -> ArchOs {
+        ArchOs {
+            arch: self.arch.clone(),
+            os: ANY.into(),
+        }
+    }
+
     pub fn parse(text: &str) -> Result<ArchOs> {
         if text == ANY {
             return Ok(ArchOs::new(ANY, ANY));

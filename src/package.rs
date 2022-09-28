@@ -197,7 +197,23 @@ impl Package {
 
     pub fn get_asset(&self, version: &Version, arch_os: &ArchOs) -> Option<&Asset> {
         let release = self.releases.get(version)?;
-        release.get(arch_os)
+        let asset = release.get(arch_os);
+        if asset.is_some() {
+            return asset;
+        }
+        if arch_os.arch != ANY {
+            let asset = release.get(&arch_os.with_any_arch());
+            if asset.is_some() {
+                return asset;
+            }
+        }
+        if arch_os.os != ANY {
+            let asset = release.get(&arch_os.with_any_os());
+            if asset.is_some() {
+                return asset;
+            }
+        }
+        release.get(&ArchOs::new(ANY, ANY))
     }
 
     /// Return files definition for wanted_version
@@ -208,16 +224,14 @@ impl Package {
             return install;
         }
         if arch_os.arch != ANY {
-            let arch_os = ArchOs::new(ANY, &arch_os.os);
-            let install = self.get_install_internal(wanted_version, &arch_os);
+            let install = self.get_install_internal(wanted_version, &arch_os.with_any_arch());
             if install.is_some() {
                 return install;
             }
         }
         if arch_os.os != ANY {
             // Probably less useful than the previous check, but you never know
-            let arch_os = ArchOs::new(&arch_os.arch, ANY);
-            let install = self.get_install_internal(wanted_version, &arch_os);
+            let install = self.get_install_internal(wanted_version, &arch_os.with_any_os());
             if install.is_some() {
                 return install;
             }
