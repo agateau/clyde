@@ -9,6 +9,14 @@ use anyhow::{anyhow, Result};
 
 pub const ANY: &str = "any";
 
+pub const ARCH_X86_64: &str = "x86_64";
+pub const ARCH_X86: &str = "x86";
+pub const ARCH_AARCH64: &str = "aarch64";
+
+pub const OS_LINUX: &str = "linux";
+pub const OS_MACOS: &str = "macos";
+pub const OS_WINDOWS: &str = "windows";
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct ArchOs {
     pub arch: String,
@@ -26,6 +34,20 @@ impl ArchOs {
         ArchOs {
             arch: arch.into(),
             os: os.into(),
+        }
+    }
+
+    pub fn with_any_arch(&self) -> ArchOs {
+        ArchOs {
+            arch: ANY.into(),
+            os: self.os.clone(),
+        }
+    }
+
+    pub fn with_any_os(&self) -> ArchOs {
+        ArchOs {
+            arch: self.arch.clone(),
+            os: ANY.into(),
         }
     }
 
