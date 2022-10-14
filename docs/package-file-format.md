@@ -4,7 +4,7 @@ This document describes the file format used by Clyde.
 
 Clyde packages are defined as YAML files.
 
-They can be either a plain file: `<package>.yaml`, or a directory: `<package>/index.yaml`.
+They can be either a directory: `<package_name>/index.yaml` or a plain file: `<package_name>.yaml`.
 
 The directory format is supported since 0.4.0.
 
@@ -66,7 +66,7 @@ Each arch-os entry can contain the following entries:
 
 - `files`: a mapping of files contained in the asset to the place where they should be installed. See below for more examples.
 - `strip` (optional): the number of directories to ignore inside the asset. For example if all files of foo-1.0.tar.gz are inside a `foo-1.0` directory, set `strip` to 1 to tell Clyde that all entries in `files` are *inside* this directory. Defaults to 0.
-- `extra_files` (optional, since 0.4.0): a mapping of files inside the package `extra_files` directory to the place where they should be installed.
+- `extra_files` (optional, since 0.4.0): the directory of a package using the directory format can contain an `extra_files` directory to provide files to install in addition to the asset files. This can be useful to provide launcher scripts, icons, or .desktop files. In this case this entry is a mapping of files from the `extra_files` directory to the place where they should be installed.
 
 Here is an example of an `installs` entry:
 
@@ -118,6 +118,8 @@ Packages must follow these rules:
 - install man pages in `share/man`
 - install documentation in `share/doc/<package_name>` (use `${doc_dir}` for this, see "Variables" section)
 
+If it is not possible to install the package files this way, then install all package files in `opt/<package_name>/`, add a launcher script to `extra_files` and install it in `bin`. Don't forget to make your launcher script executable.
+
 ### Variables
 
 The source and destination parts of the `files` mapping supports variables. A variable can be used with the `${variable_name}` syntax.
@@ -127,3 +129,7 @@ The following variables are available:
 - `${asset_name}`: Name of the unpacked asset if the asset is a single-file asset. A single-file asset is an asset which is either the package executable, or a compressed version of it, compressed with gzip, bzip2 or xz. This variable is only available if the asset is a single-file asset.
 - `${doc_dir}`: Directory storing the package documentation. Set to "share/doc/<package_name>/".
 - `${exe_ext}`: Executable extension for the target OS. Set to ".exe" on Windows and "" on other OSes.
+
+## Environment variables
+
+Clyde activation scripts define a `$CLYDE_INST_DIR` environment variable pointing to Clyde prefix. This means Clyde `opt` directory for example, can be referred to as `$CLYDE_INST_DIR/opt`. Launcher scripts installed via `extra_files` can make use of the `$CLYDE_INST_DIR` environment variable to refer to a file installed in `$CLYDE_INST_DIR/opt/<package_name>`.
