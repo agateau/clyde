@@ -48,24 +48,32 @@ fn shell_path_from_path(path: &Path) -> Result<String> {
     Ok(quote(cygpath_output.trim()).to_string())
 }
 
-fn create_activate_script(ui: &Ui, app: &App) -> Result<()> {
+fn create_activate_script(app: &App) -> Result<String> {
     let install_dir = shell_path_from_path(&app.install_dir)?;
     let content = SH_INIT.replace("@INSTALL_DIR@", &install_dir);
 
     let scripts_dir = app.home.join("scripts");
     let script_path = scripts_dir.join("activate.sh");
-    ui.info("Creating activation script");
 
-    fs::create_dir(&scripts_dir)?;
+    fs::create_dir_all(&scripts_dir)?;
     fs::write(&script_path, &content)?;
 
     let shell_script_path = shell_path_from_path(&script_path)?;
-    eprintln!("\nAll set! To activate your Clyde installation, add this line to your shell startup script:\n\n\
-              . {shell_script_path}");
+    Ok(shell_script_path)
+}
+
+fn update_activate_script(ui: &Ui, home: &Path) -> Result<()> {
+    let app = App::new(home)?;
+    ui.info("Updating activation script");
+    create_activate_script(&app)?;
     Ok(())
 }
 
-pub fn setup(ui: &Ui, home: &Path) -> Result<()> {
+pub fn setup(ui: &Ui, home: &Path, update_scripts: bool) -> Result<()> {
+    if update_scripts {
+        return update_activate_script(ui, home);
+    }
+
     if home.exists() {
         return Err(anyhow!("Clyde directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
             home));
@@ -81,7 +89,11 @@ pub fn setup(ui: &Ui, home: &Path) -> Result<()> {
     ui.info("Creating Clyde database");
     app.database.create()?;
 
-    create_activate_script(ui, &app)?;
+    ui.info("Creating activation script");
+    let shell_script_path = create_activate_script(&app)?;
+
+    eprintln!("\nAll set! To activate your Clyde installation, add this line to your shell startup script:\n\n\
+              . {shell_script_path}");
 
     Ok(())
 }
