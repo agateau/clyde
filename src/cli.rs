@@ -29,7 +29,11 @@ pub struct Cli {
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Setup Clyde
-    Setup {},
+    Setup {
+        /// Update the activation scripts of an existing installation.
+        #[clap(short, long)]
+        update_scripts: bool,
+    },
     /// Update Clyde store
     Update {},
     /// Install applications
@@ -80,7 +84,7 @@ impl Cli {
         let home = App::find_home(&ui)?;
 
         match self.command {
-            Command::Setup {} => setup(&ui, &home),
+            Command::Setup { update_scripts } => setup(&ui, &home, update_scripts),
             Command::Update {} => {
                 let app = App::new(&home)?;
                 update(&app, &ui)

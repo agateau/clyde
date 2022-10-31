@@ -15,10 +15,11 @@ The home location can be overridden using the `$CLYDE_HOME` environment variable
 ## Folder hierarchy
 
 - `$CLYDE_HOME`
-    - `inst`: where files are installed
+    - `inst`: Clyde "prefix": where files are installed
         - `bin`
         - `share`
-    - `download`: where clyde downloads assets
+        - `opt`
+    - `download`: where Clyde downloads assets
     - `store`: Clyde store (see below)
     - `scripts`: activation scripts
     - `tmp_dir`: used while installing

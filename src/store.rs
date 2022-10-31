@@ -12,6 +12,8 @@ use anyhow::{anyhow, Result};
 
 use crate::package::Package;
 
+pub const INDEX_NAME: &str = "index.yaml";
+
 #[derive(Clone)]
 pub struct SearchHit {
     pub name: String,
@@ -56,12 +58,34 @@ impl GitStore {
                 None
             };
         }
+        let store_path = self.dir.join(name).join(INDEX_NAME);
+        if store_path.is_file() {
+            return Some(store_path);
+        }
         let store_path = self.dir.join(name.to_owned() + ".yaml");
         if store_path.is_file() {
             return Some(store_path);
         }
         None
     }
+}
+
+/// Return path to the YAML file if it exists
+/// If path is a dir, returns <path>/index.yaml
+/// If path is a file, returns <path> if its extension is .yaml
+fn get_package_path(path: &Path) -> Option<PathBuf> {
+    if path.is_dir() {
+        let path = path.join(INDEX_NAME);
+        if path.exists() {
+            return Some(path);
+        } else {
+            return None;
+        }
+    }
+    if path.extension() != Some(&OsString::from("yaml")) {
+        return None;
+    }
+    Some(path.into())
 }
 
 impl Store for GitStore {
@@ -112,13 +136,14 @@ impl Store for GitStore {
 
         // This implementation is very inefficient, but it's good enough for now given the number
         // of available packages. It should be revisited when the number of packages grow.
-        // A possible solution is to create a database table to store the name and descriptions of
+        // A possible solution is to create a database table to store the name and description of
         // available packages.
         for entry in fs::read_dir(&self.dir)? {
             let path = entry?.path();
-            if path.extension() != Some(&OsString::from("yaml")) {
-                continue;
-            }
+            let path = match get_package_path(&path) {
+                Some(x) => x,
+                None => continue,
+            };
             let package = Package::from_file(&path).expect("Skipping invalid package");
 
             if package.name.to_lowercase().contains(&query) {
@@ -146,6 +171,27 @@ mod tests {
     }
 
     fn create_package_file_with_desc(dir: &Path, name: &str, desc: &str) {
+        let package_dir = dir.join(name);
+        fs::create_dir(&package_dir).unwrap();
+        let path = package_dir.join(INDEX_NAME);
+        fs::write(
+            path,
+            format!(
+                "
+        name: {name}
+        description: {desc}
+        homepage:
+        releases: {{}}
+        installs: {{}}
+        ",
+                name = name,
+                desc = desc
+            ),
+        )
+        .unwrap();
+    }
+
+    fn create_old_package_file_with_desc(dir: &Path, name: &str, desc: &str) {
         let path = dir.join(name.to_owned() + ".yaml");
         fs::write(
             path,
@@ -173,9 +219,9 @@ mod tests {
 
         create_package_file(&dir, "foo");
         create_package_file(&dir, "bar");
-        create_package_file_with_desc(&dir, "baz", "Helper package for Foo");
+        create_old_package_file_with_desc(&dir, "baz", "Helper package for Foo");
 
-        // WHEN I search for bar
+        // WHEN I search for fOo
         let results = store.search("fOo").unwrap();
 
         // THEN foo and baz should be returned
