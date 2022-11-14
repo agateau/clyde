@@ -44,7 +44,7 @@ impl Drop for CwdSaver {
 pub fn create_tree(root: &Path, files: &[&str]) {
     for file in files {
         let path = root.join(file);
-        fs::create_dir_all(&path.parent().unwrap()).unwrap();
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
         File::create(&path).unwrap();
     }
 }
@@ -52,14 +52,14 @@ pub fn create_tree(root: &Path, files: &[&str]) {
 pub fn create_tree_from_path_set(root: &Path, files: &HashSet<PathBuf>) {
     for file in files {
         let path = root.join(file);
-        fs::create_dir_all(&path.parent().unwrap()).unwrap();
+        fs::create_dir_all(path.parent().unwrap()).unwrap();
         File::create(&path).unwrap();
     }
 }
 
 fn list_tree_internal(root: &Path, parent: &Path) -> Result<HashSet<PathBuf>> {
     let mut files = HashSet::<PathBuf>::new();
-    for entry in fs::read_dir(&parent)? {
+    for entry in fs::read_dir(parent)? {
         let entry = entry?;
         let path = entry.path();
         if path.is_dir() {
@@ -67,7 +67,7 @@ fn list_tree_internal(root: &Path, parent: &Path) -> Result<HashSet<PathBuf>> {
                 files.insert(file.to_path_buf());
             }
         } else {
-            let rel_path = path.strip_prefix(&root)?;
+            let rel_path = path.strip_prefix(root)?;
             files.insert(rel_path.to_path_buf());
         }
     }
@@ -103,6 +103,6 @@ pub fn get_fixture_path(name: &str) -> PathBuf {
 #[cfg(unix)]
 pub fn is_file_executable(path: &Path) -> bool {
     use std::os::unix::fs::PermissionsExt;
-    let permissions = fs::metadata(&path).unwrap().permissions();
+    let permissions = fs::metadata(path).unwrap().permissions();
     permissions.mode() & 0o111_u32 == 0o111_u32
 }

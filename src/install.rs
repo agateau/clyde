@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -25,7 +25,7 @@ fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<Option<String>> 
 /// Create dir containing `path` and all its parents, if necessary
 fn create_parent_dir(path: &Path) -> Result<()> {
     let dir = path.parent().unwrap();
-    fs::create_dir_all(&dir).with_context(|| format!("Failed to create directory {:?}", &dir))?;
+    fs::create_dir_all(dir).with_context(|| format!("Failed to create directory {:?}", &dir))?;
     Ok(())
 }
 
@@ -44,7 +44,6 @@ fn install_file_entry(
     src_path: &Path,
     install_dir: &Path,
     dst: &Path,
-    vars: &HashMap<String, String>,
 ) -> Result<()> {
     if src_path.is_dir() {
         for entry in fs::read_dir(src_path)? {
@@ -60,7 +59,6 @@ fn install_file_entry(
                 &sub_src_path,
                 install_dir,
                 &sub_dst,
-                vars,
             )?;
         }
     } else {
@@ -81,12 +79,12 @@ fn install_file_entry(
 
         match install_mode {
             InstallMode::Move => {
-                fs::rename(&src_path, &dst_path).with_context(|| {
+                fs::rename(src_path, &dst_path).with_context(|| {
                     format!("Failed to move {:?} to {:?}", &src_path, &dst_path)
                 })?;
             }
             InstallMode::Copy => {
-                fs::copy(&src_path, &dst_path).with_context(|| {
+                fs::copy(src_path, &dst_path).with_context(|| {
                     format!("Failed to copy {:?} to {:?}", &src_path, &dst_path)
                 })?;
             }
@@ -107,7 +105,7 @@ fn install_files(
     file_map: &BTreeMap<String, String>,
     vars: &VarsMap,
 ) -> Result<()> {
-    fs::create_dir_all(&install_dir)?;
+    fs::create_dir_all(install_dir)?;
     for (src, dst) in file_map.iter() {
         let src = expand_vars(src, vars)?;
         let dst = if dst.is_empty() {
@@ -124,7 +122,6 @@ fn install_files(
             &src_path,
             install_dir,
             Path::new(&dst),
-            vars,
         )?;
     }
     Ok(())
@@ -268,6 +265,7 @@ pub fn install_with_package_and_requested_version(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
     use std::path::PathBuf;
 
     use crate::test_file_utils::{create_tree, list_tree, pathbufset_from_strings};

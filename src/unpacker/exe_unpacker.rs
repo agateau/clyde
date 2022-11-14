@@ -54,7 +54,7 @@ impl Unpacker for ExeUnpacker {
         let exe_file_name = self.archive_path.file_name().unwrap();
 
         let dst_path = dst_dir.join(exe_file_name);
-        fs::create_dir_all(&dst_path.parent().unwrap())?;
+        fs::create_dir_all(dst_path.parent().unwrap())?;
 
         let mut src_file = File::open(&self.archive_path)
             .with_context(|| format!("Error with {:?}", self.archive_path))?;

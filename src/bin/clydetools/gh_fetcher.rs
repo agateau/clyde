@@ -49,7 +49,7 @@ fn get_latest_release(release_file: &Path, repo_owner: &str) -> Result<()> {
             .unwrap_or_else(|_| "[unreadable]".to_string());
         return Err(anyhow!("Request failed with error {code}:\n{body}"));
     }
-    let mut file = File::create(&release_file)?;
+    let mut file = File::create(release_file)?;
     response.copy_to(&mut file)?;
     Ok(())
 }
@@ -162,7 +162,7 @@ pub fn gh_fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
     let out_dir = Path::new("out");
     if !out_dir.exists() {
         ui.info(&format!("Creating {} dir", out_dir.display()));
-        fs::create_dir(&out_dir)
+        fs::create_dir(out_dir)
             .with_context(|| format!("Cannot create {} dir", out_dir.display()))?;
     }
 

@@ -23,7 +23,7 @@ pub struct PackageInfo {
 
 impl Database {
     pub fn new_from_path(db_path: &Path) -> Result<Database> {
-        let conn = Connection::open(&db_path)?;
+        let conn = Connection::open(db_path)?;
 
         Ok(Database { conn })
     }

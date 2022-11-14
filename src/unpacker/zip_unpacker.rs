@@ -68,7 +68,7 @@ impl Unpacker for ZipUnpacker {
             } else {
                 if let Some(parent) = dst_path.parent() {
                     if !parent.exists() {
-                        fs::create_dir_all(&parent)
+                        fs::create_dir_all(parent)
                             .with_context(|| format!("Failed to create directory {parent:?}"))?;
                     }
                 }

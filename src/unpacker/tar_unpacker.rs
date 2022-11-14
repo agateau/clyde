@@ -33,7 +33,7 @@ impl TarUnpacker {
 
 impl Unpacker for TarUnpacker {
     fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<Option<String>> {
-        fs::create_dir_all(&dst_dir)?;
+        fs::create_dir_all(dst_dir)?;
 
         let mut cmd = Command::new("tar");
         cmd.arg("-C");
