@@ -20,6 +20,7 @@ from invoke import task, run
 
 ARTIFACTS_DIR = Path("artifacts")
 
+MAIN_BRANCH = "main"
 
 def get_version():
     return os.environ["VERSION"]
@@ -77,7 +78,7 @@ def prepare_release(c):
     if not is_ok("Continue?"):
         sys.exit(1)
 
-    erun("git checkout main")
+    erun(f"git checkout {MAIN_BRANCH}")
     erun("git pull")
     erun("git status -s")
     if not is_ok("Continue?"):
@@ -123,7 +124,7 @@ def prepare_release3(c):
 @task
 def tag(c):
     version = get_version()
-    erun("git checkout main")
+    erun(f"git checkout {MAIN_BRANCH}")
     erun("git pull")
     changes_file = Path(".changes") / f"{version}.md"
     if not changes_file.exists():
