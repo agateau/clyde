@@ -80,7 +80,7 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool) -> Result<()> {
     }
     ui.info(&format!("Setting up Clyde in {:?}", home));
 
-    fs::create_dir_all(&home)?;
+    fs::create_dir_all(home)?;
 
     let app = App::new(home)?;
 
