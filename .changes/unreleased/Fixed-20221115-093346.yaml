@@ -1,0 +1,4 @@
+kind: Fixed
+body: Clyde now ensures only one command is running at a time on a given installation
+  (#3).
+time: 2022-11-15T09:33:46.456930192+01:00

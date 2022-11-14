@@ -83,6 +83,8 @@ impl Cli {
         let ui = Ui::default();
         let home = App::find_home(&ui)?;
 
+        let _instance = App::create_single_instance(&home)?;
+
         match self.command {
             Command::Setup { update_scripts } => setup(&ui, &home, update_scripts),
             Command::Update {} => {
