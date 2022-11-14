@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use directories::ProjectDirs;
+use single_instance::SingleInstance;
 
 use crate::db::Database;
 use crate::file_cache::FileCache;
@@ -39,6 +40,21 @@ impl App {
         }
 
         Err(anyhow!("Could not find Clyde home directory"))
+    }
+
+    /// Make sure that for a given home directory, only one instance of Clippy is running at a time
+    pub fn create_single_instance(home: &Path) -> Result<SingleInstance> {
+        let name = home
+            .to_str()
+            .unwrap_or_else(|| panic!("{home:?} has a weird name."));
+
+        let instance = SingleInstance::new(name)
+            .unwrap_or_else(|x| panic!("Failed to check if instance is unique: {x}"));
+
+        if !instance.is_single() {
+            return Err(anyhow!("Another instance of Clyde is already running."));
+        }
+        Ok(instance)
     }
 
     /// Creates the app. It takes a home which *must* exist. This ensures no command
