@@ -9,6 +9,9 @@ use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
 use directories::ProjectDirs;
+use hex;
+use sha2::{digest::DynDigest, Sha256};
+use single_instance::SingleInstance;
 
 use crate::db::Database;
 use crate::file_cache::FileCache;
@@ -27,6 +30,14 @@ pub struct App {
     pub database: Database,
 }
 
+fn create_single_instance_name(home: &Path) -> String {
+    // On Windows, SingleInstance::new() fails if it's argument is a path. Create a hex digest of
+    // it to avoid that problem.
+    let mut hasher = Sha256::default();
+    hasher.update(home.to_string_lossy().as_bytes());
+    hex::encode(hasher.finalize_reset())
+}
+
 impl App {
     pub fn find_home(ui: &Ui) -> Result<PathBuf> {
         if let Some(home) = env::var_os("CLYDE_HOME") {
@@ -39,6 +50,19 @@ impl App {
         }
 
         Err(anyhow!("Could not find Clyde home directory"))
+    }
+
+    /// Make sure that for a given home directory, only one instance of Clippy is running at a time
+    pub fn create_single_instance(home: &Path) -> Result<SingleInstance> {
+        let name = create_single_instance_name(home);
+
+        let instance = SingleInstance::new(&name)
+            .unwrap_or_else(|x| panic!("Failed to check if instance is unique: {x}"));
+
+        if !instance.is_single() {
+            return Err(anyhow!("Another instance of Clyde is already running."));
+        }
+        Ok(instance)
     }
 
     /// Creates the app. It takes a home which *must* exist. This ensures no command
