@@ -17,10 +17,15 @@ use clyde::package::Package;
 use clyde::store::INDEX_NAME;
 use clyde::ui::Ui;
 
-fn check_has_releases(package: &Package) -> Result<()> {
-    package
-        .get_latest_version()
-        .ok_or_else(|| anyhow!("No version defined"))?;
+fn check_has_release_assets(package: &Package) -> Result<()> {
+    if package.releases.is_empty() {
+        return Err(anyhow!("No releases"));
+    }
+    for (version, release) in package.releases.iter() {
+        if release.is_empty() {
+            return Err(anyhow!("No release assets for version {}", version));
+        }
+    }
     Ok(())
 }
 
@@ -99,13 +104,13 @@ fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
     let package = Package::from_file(&path)?;
 
     check_package_name(&package, &path)?;
-    check_has_releases(&package)?;
+    check_has_release_assets(&package)?;
     check_has_installs(&package)?;
 
     let version = match get_latest_version(&package) {
         Some(x) => x,
         None => {
-            ui.error(&format!(
+            ui.info(&format!(
                 "No release assets available for {}",
                 ArchOs::current()
             ));
@@ -149,4 +154,51 @@ pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
         return Err(anyhow!("{} package(s) failed", failed_packages.len()));
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clyde::package::Package;
+
+    #[test]
+    fn check_has_release_assets_fails_if_a_release_has_no_assets() {
+        // GIVEN a package with a release containing no assets
+        let package = Package::from_yaml_str(
+            "
+        name: test
+        description: desc
+        homepage:
+        releases:
+            1.2.0:
+        ",
+        )
+        .unwrap();
+
+        // WHEN check_has_release_assets() is called
+        let result = check_has_release_assets(&package);
+
+        // THEN it fails
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn check_has_release_assets_fails_if_it_has_no_releases() {
+        // GIVEN a package with no release
+        let package = Package::from_yaml_str(
+            "
+        name: test
+        description: desc
+        homepage:
+        releases:
+        ",
+        )
+        .unwrap();
+
+        // WHEN check_has_release_assets() is called
+        let result = check_has_release_assets(&package);
+
+        // THEN it fails
+        assert!(result.is_err());
+    }
 }
