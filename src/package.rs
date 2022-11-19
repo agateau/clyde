@@ -34,6 +34,8 @@ pub struct Install {
     pub files: BTreeMap<String, String>,
     #[serde(default)]
     pub extra_files: BTreeMap<String, String>,
+    #[serde(default)]
+    pub tests: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -258,6 +260,9 @@ mod tests {
           files:
             bin/foo-1.2: bin/foo
             share:
+          tests:
+            - foo --help
+            - foo --version
     ";
 
     #[test]
@@ -279,6 +284,11 @@ mod tests {
             package.extra_files_dir,
             package_dir.join(EXTRA_FILES_DIR_NAME)
         );
+
+        // AND its tests are valid
+        let version = Version::new(1, 2, 0);
+        let install = package.get_install(&version, &ArchOs::current()).unwrap();
+        assert_eq!(install.tests, &["foo --help", "foo --version"]);
     }
 
     #[test]
@@ -298,6 +308,11 @@ mod tests {
             package.extra_files_dir,
             dir.path().join(EXTRA_FILES_DIR_NAME)
         );
+
+        // AND its tests are valid
+        let version = Version::new(1, 2, 0);
+        let install = package.get_install(&version, &ArchOs::current()).unwrap();
+        assert_eq!(install.tests, &["foo --help", "foo --version"]);
     }
 
     #[test]

@@ -67,6 +67,7 @@ Each arch-os entry can contain the following entries:
 - `files`: a mapping of files contained in the asset to the place where they should be installed. See below for more examples.
 - `strip` (optional): the number of directories to ignore inside the asset. For example if all files of foo-1.0.tar.gz are inside a `foo-1.0` directory, set `strip` to 1 to tell Clyde that all entries in `files` are *inside* this directory. Defaults to 0.
 - `extra_files` (optional, since 0.4.0): the directory of a package using the directory format can contain an `extra_files` directory to provide files to install in addition to the asset files. This can be useful to provide launcher scripts, icons, or .desktop files. In this case this entry is a mapping of files from the `extra_files` directory to the place where they should be installed.
+- `tests` (optional, since 0.4.0): a list of commands to run to verify the package is correct. Used by `clydetools check`.
 
 Here is an example of an `installs` entry:
 
@@ -122,7 +123,7 @@ If it is not possible to install the package files this way, then install all pa
 
 ### Variables
 
-The source and destination parts of the `files` mapping supports variables. A variable can be used with the `${variable_name}` syntax.
+The source and destination parts of the `files` mapping support variables. A variable can be used with the `${variable_name}` syntax.
 
 The following variables are available:
 

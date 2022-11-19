@@ -49,7 +49,33 @@ fn get_latest_version(package: &Package) -> Option<Version> {
         .map(|_| version.clone())
 }
 
-fn check_can_install(ui: &Ui, package_path: &Path, version: &Version) -> Result<()> {
+fn run_test_command(home_dir: &Path, test_command: &str) -> Result<()> {
+    let script = format!(
+        "
+    export PATH=\"{}/inst/bin:$PATH\"
+    {}
+    ",
+        &home_dir.to_string_lossy(),
+        test_command
+    );
+
+    let status = Command::new("sh")
+        .arg("-c")
+        .arg(script)
+        .status()
+        .map_err(|x| anyhow!("Failed to start command: {}", x))?;
+    if !status.success() {
+        return Err(anyhow!("Command failed: {status}"));
+    }
+    Ok(())
+}
+
+fn check_can_install(
+    ui: &Ui,
+    package: &Package,
+    package_path: &Path,
+    version: &Version,
+) -> Result<()> {
     let home_temp_dir = TempDir::new()?;
     let home_dir = home_temp_dir.path();
     let store_dir = home_dir.join("store");
@@ -73,7 +99,16 @@ fn check_can_install(ui: &Ui, package_path: &Path, version: &Version) -> Result<
         Some(0) => Ok(()),
         Some(x) => Err(anyhow!("Command failed with exit code {x}")),
         None => Err(anyhow!("Command terminated by signal")),
+    }?;
+
+    ui.info("Running test commands");
+    let install = package.get_install(version, &ArchOs::current()).unwrap();
+    let ui2 = ui.nest();
+    for test_command in &install.tests {
+        ui2.info(&format!("Running {test_command:?}"));
+        run_test_command(home_dir, test_command)?;
     }
+    Ok(())
 }
 
 fn check_package_name(package: &Package, path: &Path) -> Result<()> {
@@ -117,7 +152,7 @@ fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
             return Ok(false);
         }
     };
-    check_can_install(ui, &path, &version)?;
+    check_can_install(ui, &package, &path, &version)?;
     Ok(true)
 }
 

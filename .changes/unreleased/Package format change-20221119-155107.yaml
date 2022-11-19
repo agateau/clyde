@@ -1,0 +1,4 @@
+kind: Package format change
+body: Installs can now define test commands using the new `installs.<version>.<arch-os>.tests`
+  entry (#7).
+time: 2022-11-19T15:51:07.233000403+01:00
