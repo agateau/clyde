@@ -1,6 +1,6 @@
 [package]
 name = "clyde"
-version = "0.3.2-alpha.1"
+version = "0.4.0"
 authors = ["Aurélien Gâteau <mail@agateau.com>"]
 edition = "2021"
 description = "A cross-platform package manager for prebuilt applications"

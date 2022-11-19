@@ -1,3 +1,0 @@
-kind: Changed
-body: clydetools check now detects if a package release contains no assets.
-time: 2022-11-18T08:27:02.851482907+01:00

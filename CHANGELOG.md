@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.0 - 2022-11-19
+
+### Added
+
+- It is now possible for assets to be cross-os, cross-arch or both (#29).
+
+### Changed
+
+- `clydetools check` now detects if a package release contains no assets.
+
+### Fixed
+
+- Clyde now ensures only one command is running at a time on a given installation (#3).
+
+### Package format change
+
+- It is now possible to ship extra files with a package. This is useful to provide icon or .desktop files (#9).
+
+- Installs can now define test commands using the new `installs.<version>.<arch-os>.tests` entry (#7).
+
 ## 0.3.1 - 2022-09-07
 
 ### Changed

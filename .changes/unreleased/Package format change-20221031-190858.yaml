@@ -1,4 +1,0 @@
-kind: Package format change
-body: It is now possible to ship extra files with a package. This is useful to provide
-  icon or .desktop files (#9).
-time: 2022-10-31T19:08:58.463458137+01:00
