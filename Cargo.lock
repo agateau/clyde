@@ -230,7 +230,7 @@ dependencies = [
 
 [[package]]
 name = "clyde"
-version = "0.3.2-alpha.1"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "archiver-rs",
