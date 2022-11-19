@@ -113,10 +113,10 @@ def prepare_release3(c):
     # Rebuild to ensure Cargo.lock is updated
     erun("cargo build")
     erun("git add Cargo.toml Cargo.lock CHANGELOG.md .changes")
+    erun(f"git commit -m 'Prepare {version}'")
 
     erun("cargo publish --dry-run")
 
-    erun(f"git commit -m 'Prepare {version}'")
     erun("git push -u origin prep-release")
     create_pr(c)
 
