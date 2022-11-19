@@ -16,6 +16,7 @@ use clyde::file_utils::get_file_name;
 use clyde::package::Package;
 use clyde::store::INDEX_NAME;
 use clyde::ui::Ui;
+use clyde::vars::{expand_vars, VarsMap};
 
 fn check_has_release_assets(package: &Package) -> Result<()> {
     if package.releases.is_empty() {
@@ -70,6 +71,20 @@ fn run_test_command(home_dir: &Path, test_command: &str) -> Result<()> {
     Ok(())
 }
 
+fn create_vars_map() -> VarsMap {
+    // Only add ${exe_ext} for now. We'll see if we need other vars in the future
+    let mut map = VarsMap::new();
+    map.insert(
+        "exe_ext".into(),
+        if cfg!(windows) {
+            ".exe".into()
+        } else {
+            "".into()
+        },
+    );
+    map
+}
+
 fn check_can_install(
     ui: &Ui,
     package: &Package,
@@ -103,10 +118,14 @@ fn check_can_install(
 
     ui.info("Running test commands");
     let install = package.get_install(version, &ArchOs::current()).unwrap();
+
+    let vars = create_vars_map();
+
     let ui2 = ui.nest();
     for test_command in &install.tests {
         ui2.info(&format!("Running {test_command:?}"));
-        run_test_command(home_dir, test_command)?;
+        let test_command = expand_vars(test_command, &vars)?;
+        run_test_command(home_dir, &test_command)?;
     }
     Ok(())
 }
