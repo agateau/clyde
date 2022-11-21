@@ -2,8 +2,6 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-mod common;
-
 use std::env;
 use std::fs;
 use std::path::Path;
@@ -13,6 +11,8 @@ use anyhow::Result;
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
 use clyde::checksum;
+
+use crate::common;
 
 const CLYDE_YAML_TEMPLATE: &str = "
         name: clyde

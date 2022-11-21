@@ -2,9 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-mod common;
-
 use std::fs;
+
+use crate::common;
 
 const PACKAGE_DEFINITION: &str = "
 name: starship
