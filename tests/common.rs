@@ -15,6 +15,17 @@ pub fn run_clyde(clyde_home: &Path, args: &[&str]) {
 
 pub fn run_clydetools(args: &[&str]) -> ExitStatus {
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_clydetools"));
+
+    // Add dir containing clyde binary to $PATH so that clydetools can run it
+    let clyde_path = Path::new(env!("CARGO_BIN_EXE_clyde"));
+    let clyde_dir = clyde_path.parent().unwrap();
+    let path_var = env!("PATH");
+    cmd.env(
+        "PATH",
+        format!("{}:{}", clyde_dir.to_string_lossy(), path_var),
+    );
+    println!("path={}", path_var);
+
     cmd.args(args);
     cmd.status().expect("Failed to run clydetools")
 }
