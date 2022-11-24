@@ -62,19 +62,13 @@ fn clydetools_check_run_test_commands() {
     let test_output1 = temp_dir.join("test-output1");
     let test_output2 = temp_dir.join("test-output2");
     let package_definition = create_package_definition(&[
-        &format!(
-            "starship${{exe_ext}} --version > {}",
-            test_output1.to_string_lossy()
-        ),
-        &format!(
-            "starship${{exe_ext}} --help > {}",
-            test_output2.to_string_lossy()
-        ),
+        "starship${exe_ext} --version > test-output1",
+        "starship${exe_ext} --help > test-output2",
     ]);
     fs::write(&package_path, package_definition).unwrap();
 
     // WHEN `clydetools check` is run against the package file
-    let status = common::run_clydetools(&["check", &package_path.to_string_lossy()]);
+    let status = common::run_clydetools(&["check", &package_path.to_string_lossy()], &temp_dir);
 
     // THEN it succeeds
     assert!(status.success());
@@ -93,7 +87,7 @@ fn clydetools_check_a_failing_test_command_should_fail_the_package() {
     fs::write(&package_path, package_definition).unwrap();
 
     // WHEN `clydetools check` is run against the package file
-    let status = common::run_clydetools(&["check", &package_path.to_string_lossy()]);
+    let status = common::run_clydetools(&["check", &package_path.to_string_lossy()], &temp_dir);
 
     // THEN it fails
     assert!(!status.success());
