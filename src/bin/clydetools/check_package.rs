@@ -8,11 +8,12 @@ use std::process::Command;
 
 use anyhow::{anyhow, Context, Result};
 use semver::Version;
+use shell_words;
 use tempfile::TempDir;
 
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
-use clyde::file_utils::get_file_name;
+use clyde::file_utils::{get_file_name, prepend_dir_to_path};
 use clyde::package::Package;
 use clyde::store::INDEX_NAME;
 use clyde::ui::Ui;
@@ -51,18 +52,20 @@ fn get_latest_version(package: &Package) -> Option<Version> {
 }
 
 fn run_test_command(home_dir: &Path, test_command: &str) -> Result<()> {
-    let script = format!(
-        "
-    export PATH=\"{}/inst/bin:$PATH\"
-    {}
-    ",
-        &home_dir.to_string_lossy(),
-        test_command
-    );
+    let clyde_bin_dir = home_dir.join("inst").join("bin");
 
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(script)
+    let new_path = prepend_dir_to_path(&clyde_bin_dir)?;
+
+    let words = shell_words::split(test_command)?;
+    let mut iter = words.iter();
+    let binary = iter
+        .next()
+        .ok_or_else(|| anyhow!("Test command is empty"))?;
+    let args: Vec<String> = iter.map(|x| x.into()).collect();
+
+    let status = Command::new(binary)
+        .env("PATH", new_path)
+        .args(args)
         .status()
         .map_err(|x| anyhow!("Failed to start command: {}", x))?;
     if !status.success() {
