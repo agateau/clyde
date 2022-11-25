@@ -80,7 +80,7 @@ pub fn run_clyde(clyde_home: &Path, args: &[&str]) {
     assert!(status.success());
 }
 
-pub fn run_clydetools(args: &[&str], cwd: &Path) -> ExitStatus {
+pub fn create_clydetools_command(args: &[&str], cwd: &Path) -> Command {
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_clydetools"));
 
     // Add dir containing clyde binary to $PATH so that clydetools can run it
@@ -94,5 +94,10 @@ pub fn run_clydetools(args: &[&str], cwd: &Path) -> ExitStatus {
 
     cmd.current_dir(cwd);
     cmd.args(args);
+    cmd
+}
+
+pub fn run_clydetools(args: &[&str], cwd: &Path) -> ExitStatus {
+    let mut cmd = create_clydetools_command(args, cwd);
     cmd.status().expect("Failed to run clydetools")
 }
