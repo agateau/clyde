@@ -2,48 +2,11 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::env;
 use std::fs;
-use std::path::Path;
-
-use anyhow::Result;
 
 use clyde::app::App;
-use clyde::arch_os::ArchOs;
-use clyde::checksum;
 
-use crate::common;
-
-const CLYDE_YAML_TEMPLATE: &str = "
-        name: clyde
-        description:
-        homepage:
-        releases:
-          @version@:
-            @arch_os@:
-              url: @url@
-              sha256: @sha256@
-        installs:
-          @version@:
-            any:
-              strip: 0
-              files:
-                clyde${exe_ext}: bin/
-        ";
-
-fn create_clyde_yaml(store_dir: &Path, version: &str) -> Result<()> {
-    let clyde_path = env!("CARGO_BIN_EXE_clyde");
-    let url = format!("file://{clyde_path}").replace('\\', "/");
-    let sha256 = checksum::compute_checksum(Path::new(&clyde_path))?;
-
-    let content = CLYDE_YAML_TEMPLATE
-        .replace("@version@", version)
-        .replace("@arch_os@", &ArchOs::current().to_str())
-        .replace("@url@", &url)
-        .replace("@sha256@", &sha256);
-    fs::write(store_dir.join("clyde.yaml"), content)?;
-    Ok(())
-}
+use crate::common::{self, ClydeYamlWriter};
 
 #[test]
 fn clyde_can_upgrade_itself() {
@@ -52,7 +15,8 @@ fn clyde_can_upgrade_itself() {
 
     let store_dir = clyde_home.join("store");
     fs::create_dir(&store_dir).unwrap();
-    create_clyde_yaml(&store_dir, "0.1.0").unwrap();
+
+    ClydeYamlWriter::new("0.1.0").write(&store_dir).unwrap();
 
     let app = App::new(&clyde_home).unwrap();
     app.database.create().unwrap();
@@ -60,7 +24,7 @@ fn clyde_can_upgrade_itself() {
     common::run_clyde(&clyde_home, &["install", "clyde"]);
 
     // WHEN a new version of Clyde is available
-    create_clyde_yaml(&store_dir, "0.2.0").unwrap();
+    ClydeYamlWriter::new("0.2.0").write(&store_dir).unwrap();
 
     // AND the user runs `clyde install clyde`, using the installed clyde executable, meaning
     // the executable has to replace itself
