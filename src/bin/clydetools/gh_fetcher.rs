@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::fs::{self, File};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use anyhow::{anyhow, Context, Result};
 use regex::Regex;
@@ -12,11 +12,11 @@ use reqwest::header;
 use semver::Version;
 use serde_json::{self, Value};
 
-use clyde::app::App;
 use clyde::package::Package;
 use clyde::ui::Ui;
 
-use crate::add_assets::add_assets;
+use crate::add_assets::select_best_urls;
+use crate::fetch::FetchStatus;
 
 /// Extract GitHub `<repo>/<owner>` for a package, if it's hosted on GitHub.
 /// Returns None if it's not.
@@ -112,53 +112,12 @@ fn extract_build_urls(value: &Value) -> Result<Vec<String>> {
     Ok(urls)
 }
 
-fn gh_update_package(app: &App, ui: &Ui, out_dir: &Path, package_path: &Path) -> Result<()> {
-    let package = Package::from_file(package_path)?;
-
-    let repo_owner = match get_repo_owner(&package)? {
-        Some(x) => x,
-        None => {
-            ui.warn(&format!(
-                "Not updating {}: not hosted on GitHub",
-                package.name
-            ));
-            return Ok(());
-        }
-    };
-    ui.info(&format!(
-        "{} is hosted on GitHub ({repo_owner})",
-        package.name
-    ));
-
-    let ui = ui.nest();
-
-    let release_json = get_release_json(&ui, out_dir, &package, &repo_owner)?;
-    let github_latest_version = extract_version(&release_json)?;
-
-    let package_latest_version = package
-        .get_latest_version()
-        .ok_or_else(|| anyhow!("Can't get latest version of {}", package.name))?;
-
-    if package_latest_version >= &github_latest_version {
-        ui.info("Package is up-to-date");
-        return Ok(());
-    }
-
-    ui.info(&format!("Need update to {}", github_latest_version));
-
-    let urls = extract_build_urls(&release_json)?;
-
-    add_assets(
-        app,
-        &ui,
-        package_path,
-        &github_latest_version,
-        &None, /* arch_os */
-        &urls,
-    )
+pub fn is_hosted_on_github(package: &Package) -> Result<bool> {
+    let repo_owner = get_repo_owner(package)?;
+    Ok(repo_owner.is_some())
 }
 
-pub fn gh_fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
+pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<FetchStatus> {
     let out_dir = Path::new("out");
     if !out_dir.exists() {
         ui.info(&format!("Creating {} dir", out_dir.display()));
@@ -166,15 +125,26 @@ pub fn gh_fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
             .with_context(|| format!("Cannot create {} dir", out_dir.display()))?;
     }
 
-    for path in paths {
-        let result = gh_update_package(app, ui, out_dir, path);
-        if result.is_err() {
-            ui.warn(&format!(
-                "Failed to update {:?}: {}",
-                path,
-                result.unwrap_err()
-            ));
-        }
+    let repo_owner = match get_repo_owner(package)? {
+        Some(x) => x,
+        None => panic!("gh_fetch() should not be called on a package not hosted on GitHub"),
+    };
+
+    let release_json = get_release_json(ui, out_dir, package, &repo_owner)?;
+    let github_latest_version = extract_version(&release_json)?;
+
+    let package_latest_version = package
+        .get_latest_version()
+        .ok_or_else(|| anyhow!("Can't get latest version of {}", package.name))?;
+
+    if package_latest_version >= &github_latest_version {
+        return Ok(FetchStatus::UpToDate);
     }
-    Ok(())
+
+    let urls = select_best_urls(ui, &extract_build_urls(&release_json)?)?;
+
+    Ok(FetchStatus::NeedUpdate {
+        version: github_latest_version,
+        urls,
+    })
 }

@@ -10,6 +10,7 @@ use clap::{Parser, Subcommand};
 
 pub mod add_assets;
 pub mod check_package;
+pub mod fetch;
 pub mod gh_fetcher;
 
 #[macro_use]
@@ -20,7 +21,7 @@ use clyde::ui::Ui;
 
 use add_assets::add_assets_cmd;
 use check_package::check_packages;
-use gh_fetcher::gh_fetch;
+use fetch::fetch;
 
 /// Helper tools for Clyde package authors. These commands are not useful to use Clyde.
 #[derive(Debug, Parser)]
@@ -84,7 +85,7 @@ fn main() -> Result<()> {
         Command::Check { package_files } => check_packages(&ui, &package_files),
         Command::Fetch { package_files } => {
             let app = App::new(&home)?;
-            gh_fetch(&app, &ui, &package_files)
+            fetch(&app, &ui, &package_files)
         }
     }
 }
