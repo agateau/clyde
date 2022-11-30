@@ -26,6 +26,14 @@ fn is_zero(x: &u32) -> bool {
     *x == 0
 }
 
+fn is_vec_empty<T>(vec: &Vec<T>) -> bool {
+    vec.is_empty()
+}
+
+fn is_map_empty<K, V>(map: &BTreeMap<K, V>) -> bool {
+    map.is_empty()
+}
+
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Install {
     #[serde(default)]
@@ -33,8 +41,10 @@ pub struct Install {
     pub strip: u32,
     pub files: BTreeMap<String, String>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "is_map_empty")]
     pub extra_files: BTreeMap<String, String>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "is_vec_empty")]
     pub tests: Vec<String>,
 }
 
