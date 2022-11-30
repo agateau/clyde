@@ -61,6 +61,11 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
             }
         };
 
+        if urls.is_empty() {
+            ui2.error("No assets found");
+            continue;
+        }
+
         let mut release = Release::new();
         for (arch_os, url) in urls {
             add_asset(&ui2, &app.download_cache, &mut release, &arch_os, &url)?;
