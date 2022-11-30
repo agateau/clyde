@@ -1,4 +1,0 @@
-kind: Fixed
-body: Test commands can now use ${exe_ext}, making them more useful to test Windows
-  packages.
-time: 2022-11-23T08:42:50.288961381+01:00

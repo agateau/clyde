@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.4.1 - 2022-11-30
+
+### Fixed
+
+- Test commands can now use the `${exe_ext}` variable, making them more useful to test Windows packages.
+
+- `clydetools fetch` no longer adds a release if no assets can be found.
+
+- `clydetools` no longer adds empty `tests` and `extra-files` entries.
+
 ## 0.4.0 - 2022-11-19
 
 ### Added
