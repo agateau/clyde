@@ -103,7 +103,7 @@ fn is_supported_name(name: &str) -> bool {
     true
 }
 
-fn add_asset(
+pub fn add_asset(
     ui: &Ui,
     cache: &FileCache,
     release: &mut Release,
@@ -174,7 +174,7 @@ fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
 }
 
 /// Given a bunch of asset URLs returns the best URL per arch-os
-fn select_best_urls(ui: &Ui, urls: &Vec<String>) -> Result<HashMap<ArchOs, String>> {
+pub fn select_best_urls(ui: &Ui, urls: &Vec<String>) -> Result<HashMap<ArchOs, String>> {
     let mut best_urls = HashMap::<ArchOs, String>::new();
     for url in urls {
         let lname = get_lname(url)?;

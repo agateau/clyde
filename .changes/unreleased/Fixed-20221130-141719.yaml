@@ -1,0 +1,3 @@
+kind: Fixed
+body: '`clydetools fetch` no longer adds a release if no assets can be found.'
+time: 2022-11-30T14:17:19.430790052+01:00
