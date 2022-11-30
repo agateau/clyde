@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 export RUST_BACKTRACE=1
-cargo test
+cargo test --release
 
 for tst in functests/*.sh ; do
     echo "=== Running $tst ==="

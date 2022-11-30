@@ -8,14 +8,16 @@ use std::process::Command;
 
 use anyhow::{anyhow, Context, Result};
 use semver::Version;
+use shell_words;
 use tempfile::TempDir;
 
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
-use clyde::file_utils::get_file_name;
+use clyde::file_utils::{get_file_name, prepend_dir_to_path};
 use clyde::package::Package;
 use clyde::store::INDEX_NAME;
 use clyde::ui::Ui;
+use clyde::vars::{expand_vars, VarsMap};
 
 fn check_has_release_assets(package: &Package) -> Result<()> {
     if package.releases.is_empty() {
@@ -50,24 +52,40 @@ fn get_latest_version(package: &Package) -> Option<Version> {
 }
 
 fn run_test_command(home_dir: &Path, test_command: &str) -> Result<()> {
-    let script = format!(
-        "
-    export PATH=\"{}/inst/bin:$PATH\"
-    {}
-    ",
-        &home_dir.to_string_lossy(),
-        test_command
-    );
+    let clyde_bin_dir = home_dir.join("inst").join("bin");
 
-    let status = Command::new("sh")
-        .arg("-c")
-        .arg(script)
+    let new_path = prepend_dir_to_path(&clyde_bin_dir)?;
+
+    let words = shell_words::split(test_command)?;
+    let mut iter = words.iter();
+    let binary = iter
+        .next()
+        .ok_or_else(|| anyhow!("Test command is empty"))?;
+    let args: Vec<String> = iter.map(|x| x.into()).collect();
+
+    let status = Command::new(binary)
+        .env("PATH", new_path)
+        .args(args)
         .status()
         .map_err(|x| anyhow!("Failed to start command: {}", x))?;
     if !status.success() {
         return Err(anyhow!("Command failed: {status}"));
     }
     Ok(())
+}
+
+fn create_vars_map() -> VarsMap {
+    // Only add ${exe_ext} for now. We'll see if we need other vars in the future
+    let mut map = VarsMap::new();
+    map.insert(
+        "exe_ext".into(),
+        if cfg!(windows) {
+            ".exe".into()
+        } else {
+            "".into()
+        },
+    );
+    map
 }
 
 fn check_can_install(
@@ -103,10 +121,14 @@ fn check_can_install(
 
     ui.info("Running test commands");
     let install = package.get_install(version, &ArchOs::current()).unwrap();
+
+    let vars = create_vars_map();
+
     let ui2 = ui.nest();
     for test_command in &install.tests {
         ui2.info(&format!("Running {test_command:?}"));
-        run_test_command(home_dir, test_command)?;
+        let test_command = expand_vars(test_command, &vars)?;
+        run_test_command(home_dir, &test_command)?;
     }
     Ok(())
 }

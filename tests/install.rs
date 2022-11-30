@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-mod common;
-
 use std::fs;
 use std::path::Path;
+
+use crate::common;
 
 fn setup_clyde(clyde_home: &Path) {
     common::run_clyde(clyde_home, &["setup"]);

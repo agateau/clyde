@@ -10,6 +10,11 @@ homepage = "https://github.com/agateau/clyde"
 repository = "https://github.com/agateau/clyde"
 license = "GPL-3.0-or-later"
 categories = ["command-line-utilities"]
+autotests = false
+
+[[test]]
+name = "integration"
+path = "tests/tests.rs"
 
 [dependencies]
 anyhow = "1.0.64"
