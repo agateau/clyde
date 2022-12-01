@@ -15,9 +15,10 @@ use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
 use crate::gh_fetcher::{gh_fetch, is_hosted_on_github};
+use crate::gitlab_fetcher::{gitlab_fetch, is_hosted_on_gitlab};
 
 #[derive(Debug)]
-pub enum FetchStatus {
+pub enum UpdateStatus {
     NoFetcher,
     UpToDate,
     NeedUpdate {
@@ -26,11 +27,14 @@ pub enum FetchStatus {
     },
 }
 
-fn fetch_package(ui: &Ui, package: &Package) -> Result<FetchStatus> {
+fn fetch_update(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
+    if is_hosted_on_gitlab(package)? {
+        return gitlab_fetch(ui, package);
+    }
     if is_hosted_on_github(package)? {
         return gh_fetch(ui, package);
     }
-    Ok(FetchStatus::NoFetcher)
+    Ok(UpdateStatus::NoFetcher)
 }
 
 pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
@@ -38,7 +42,7 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
         let package = Package::from_file(path)?;
         ui.info(&format!("Fetching updates for {}", package.name));
         let ui2 = ui.nest();
-        let fetch_status = match fetch_package(&ui2, &package) {
+        let fetch_status = match fetch_update(&ui2, &package) {
             Ok(x) => x,
             Err(x) => {
                 ui2.error(&format!("Could not fetch updates: {}", x));
@@ -47,15 +51,15 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
         };
 
         let (version, urls) = match fetch_status {
-            FetchStatus::NoFetcher => {
+            UpdateStatus::NoFetcher => {
                 ui2.info("Don't know how to fetch updates for this package");
                 continue;
             }
-            FetchStatus::UpToDate => {
+            UpdateStatus::UpToDate => {
                 ui2.info("Package is up-to-date");
                 continue;
             }
-            FetchStatus::NeedUpdate { version, urls } => {
+            UpdateStatus::NeedUpdate { version, urls } => {
                 ui2.info(&format!("Package can be updated to version {}", version));
                 (version, urls)
             }

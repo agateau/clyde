@@ -12,6 +12,7 @@ pub mod add_assets;
 pub mod check_package;
 pub mod fetch;
 pub mod gh_fetcher;
+pub mod gitlab_fetcher;
 
 #[macro_use]
 extern crate lazy_static;

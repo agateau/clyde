@@ -18,13 +18,10 @@ use clyde::ui::Ui;
 use crate::add_assets::select_best_urls;
 use crate::fetch::UpdateStatus;
 
-/// Extract GitHub `<repo>/<owner>` for a package, if it's hosted on GitHub.
+/// Extract GitLab `<repo>/<owner>` for a package, if it's hosted on GitLab.
 /// Returns None if it's not.
-///
-/// Can be simplified once https://github.com/agateau/clyde/issues/67 is done and all packages have
-/// been updated.
 fn get_repo_owner(package: &Package) -> Result<Option<String>> {
-    let rx = Regex::new("https://github.com/(?P<repo_owner>([^/]+)/([^/]+))").unwrap();
+    let rx = Regex::new("https://gitlab.com/(?P<repo_owner>([^/]+)/([^/]+))").unwrap();
 
     let repo_owner = rx
         .captures(&package.repository)
@@ -32,9 +29,10 @@ fn get_repo_owner(package: &Package) -> Result<Option<String>> {
     Ok(repo_owner)
 }
 
-/// Query GitHub REST API for the latest release, store the response in `release_file`
+/// Query GitLab REST API for the latest release, store the response in `release_file`
 fn get_latest_release(release_file: &Path, repo_owner: &str) -> Result<()> {
-    let url = format!("https://api.github.com/repos/{repo_owner}/releases/latest");
+    let id = repo_owner.replace('/', "%2F");
+    let url = format!("https://gitlab.com/api/v4/projects/{id}/releases/permalink/latest");
 
     let client = Client::new();
 
@@ -57,7 +55,7 @@ fn get_latest_release(release_file: &Path, repo_owner: &str) -> Result<()> {
 fn get_release_json(ui: &Ui, out_dir: &Path, package: &Package, repo_owner: &str) -> Result<Value> {
     let release_file = out_dir.join(format!("{}.json", package.name));
     if !release_file.exists() {
-        ui.info("Querying GitHub");
+        ui.info("Querying GitLab");
         get_latest_release(&release_file, repo_owner)?;
     }
     let file = File::open(release_file)?;
@@ -98,26 +96,29 @@ fn extract_version(value: &Value) -> Result<Version> {
 
 fn extract_build_urls(value: &Value) -> Result<Vec<String>> {
     let assets = value["assets"]
-        .as_array()
+        .as_object()
         .expect("No 'assets' element in release JSON");
-    let urls = assets
+    let links = assets["links"]
+        .as_array()
+        .expect("No 'assets.links' element in release JSON");
+    let urls = links
         .iter()
         .map(|asset| {
-            asset["browser_download_url"]
+            asset["direct_asset_url"]
                 .as_str()
-                .expect("No 'browser_download_url' in release JSON asset")
+                .expect("No 'direct_asset_url' in release JSON links")
                 .to_string()
         })
         .collect();
     Ok(urls)
 }
 
-pub fn is_hosted_on_github(package: &Package) -> Result<bool> {
+pub fn is_hosted_on_gitlab(package: &Package) -> Result<bool> {
     let repo_owner = get_repo_owner(package)?;
     Ok(repo_owner.is_some())
 }
 
-pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
+pub fn gitlab_fetch(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
     let out_dir = Path::new("out");
     if !out_dir.exists() {
         ui.info(&format!("Creating {} dir", out_dir.display()));
@@ -127,7 +128,7 @@ pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
 
     let repo_owner = match get_repo_owner(package)? {
         Some(x) => x,
-        None => panic!("gh_fetch() should not be called on a package not hosted on GitHub"),
+        None => panic!("gitlab_fetch() should not be called on a package not hosted on GitLab"),
     };
 
     let release_json = get_release_json(ui, out_dir, package, &repo_owner)?;
