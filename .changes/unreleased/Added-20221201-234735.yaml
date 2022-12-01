@@ -1,0 +1,3 @@
+kind: Added
+body: '`clydetools fetch` can now fetch updates for packages hosted on gitlab.com.'
+time: 2022-12-01T23:47:35.135799577+01:00

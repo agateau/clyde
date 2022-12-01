@@ -15,6 +15,7 @@ use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
 use crate::gh_fetcher::{gh_fetch, is_hosted_on_github};
+use crate::gitlab_fetcher::{gitlab_fetch, is_hosted_on_gitlab};
 
 #[derive(Debug)]
 pub enum UpdateStatus {
@@ -27,6 +28,9 @@ pub enum UpdateStatus {
 }
 
 fn fetch_update(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
+    if is_hosted_on_gitlab(package)? {
+        return gitlab_fetch(ui, package);
+    }
     if is_hosted_on_github(package)? {
         return gh_fetch(ui, package);
     }
