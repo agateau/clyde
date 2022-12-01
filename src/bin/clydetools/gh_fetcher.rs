@@ -16,7 +16,7 @@ use clyde::package::Package;
 use clyde::ui::Ui;
 
 use crate::add_assets::select_best_urls;
-use crate::fetch::FetchStatus;
+use crate::fetch::UpdateStatus;
 
 /// Extract GitHub `<repo>/<owner>` for a package, if it's hosted on GitHub.
 /// Returns None if it's not.
@@ -117,7 +117,7 @@ pub fn is_hosted_on_github(package: &Package) -> Result<bool> {
     Ok(repo_owner.is_some())
 }
 
-pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<FetchStatus> {
+pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
     let out_dir = Path::new("out");
     if !out_dir.exists() {
         ui.info(&format!("Creating {} dir", out_dir.display()));
@@ -138,12 +138,12 @@ pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<FetchStatus> {
         .ok_or_else(|| anyhow!("Can't get latest version of {}", package.name))?;
 
     if package_latest_version >= &github_latest_version {
-        return Ok(FetchStatus::UpToDate);
+        return Ok(UpdateStatus::UpToDate);
     }
 
     let urls = select_best_urls(ui, &extract_build_urls(&release_json)?)?;
 
-    Ok(FetchStatus::NeedUpdate {
+    Ok(UpdateStatus::NeedUpdate {
         version: github_latest_version,
         urls,
     })
