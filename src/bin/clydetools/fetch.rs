@@ -14,7 +14,7 @@ use clyde::package::{Package, Release};
 use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
-use crate::gh_fetcher::{is_hosted_on_github, GitHubFetcher};
+use crate::github_fetcher::{is_hosted_on_github, GitHubFetcher};
 use crate::gitlab_fetcher::{is_hosted_on_gitlab, GitLabFetcher};
 
 #[derive(Debug)]
