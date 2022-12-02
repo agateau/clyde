@@ -16,7 +16,54 @@ use clyde::package::Package;
 use clyde::ui::Ui;
 
 use crate::add_assets::select_best_urls;
-use crate::fetch::UpdateStatus;
+use crate::fetch::{Fetcher, UpdateStatus};
+
+pub struct GitHubFetcher {}
+
+impl GitHubFetcher {
+    pub fn default() -> GitHubFetcher {
+        GitHubFetcher {}
+    }
+}
+
+impl Fetcher for GitHubFetcher {
+    fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus> {
+        let out_dir = Path::new("out");
+        if !out_dir.exists() {
+            ui.info(&format!("Creating {} dir", out_dir.display()));
+            fs::create_dir(out_dir)
+                .with_context(|| format!("Cannot create {} dir", out_dir.display()))?;
+        }
+
+        let repo_owner = match get_repo_owner(package)? {
+            Some(x) => x,
+            None => panic!("gh_fetch() should not be called on a package not hosted on GitHub"),
+        };
+
+        let release_json = get_release_json(ui, out_dir, package, &repo_owner)?;
+        let github_latest_version = extract_version(&release_json)?;
+
+        let package_latest_version = package
+            .get_latest_version()
+            .ok_or_else(|| anyhow!("Can't get latest version of {}", package.name))?;
+
+        if package_latest_version >= &github_latest_version {
+            return Ok(UpdateStatus::UpToDate);
+        }
+
+        let urls = select_best_urls(ui, &extract_build_urls(&release_json)?)?;
+
+        Ok(UpdateStatus::NeedUpdate {
+            version: github_latest_version,
+            urls,
+        })
+    }
+}
+
+pub fn is_hosted_on_github(package: &Package) -> Result<bool> {
+    let repo_owner = get_repo_owner(package)?;
+    Ok(repo_owner.is_some())
+}
 
 /// Extract GitHub `<repo>/<owner>` for a package, if it's hosted on GitHub.
 /// Returns None if it's not.
@@ -110,41 +157,4 @@ fn extract_build_urls(value: &Value) -> Result<Vec<String>> {
         })
         .collect();
     Ok(urls)
-}
-
-pub fn is_hosted_on_github(package: &Package) -> Result<bool> {
-    let repo_owner = get_repo_owner(package)?;
-    Ok(repo_owner.is_some())
-}
-
-pub fn gh_fetch(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
-    let out_dir = Path::new("out");
-    if !out_dir.exists() {
-        ui.info(&format!("Creating {} dir", out_dir.display()));
-        fs::create_dir(out_dir)
-            .with_context(|| format!("Cannot create {} dir", out_dir.display()))?;
-    }
-
-    let repo_owner = match get_repo_owner(package)? {
-        Some(x) => x,
-        None => panic!("gh_fetch() should not be called on a package not hosted on GitHub"),
-    };
-
-    let release_json = get_release_json(ui, out_dir, package, &repo_owner)?;
-    let github_latest_version = extract_version(&release_json)?;
-
-    let package_latest_version = package
-        .get_latest_version()
-        .ok_or_else(|| anyhow!("Can't get latest version of {}", package.name))?;
-
-    if package_latest_version >= &github_latest_version {
-        return Ok(UpdateStatus::UpToDate);
-    }
-
-    let urls = select_best_urls(ui, &extract_build_urls(&release_json)?)?;
-
-    Ok(UpdateStatus::NeedUpdate {
-        version: github_latest_version,
-        urls,
-    })
 }
