@@ -14,12 +14,11 @@ use clyde::package::{Package, Release};
 use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
-use crate::gh_fetcher::{gh_fetch, is_hosted_on_github};
-use crate::gitlab_fetcher::{gitlab_fetch, is_hosted_on_gitlab};
+use crate::github_fetcher::GitHubFetcher;
+use crate::gitlab_fetcher::GitLabFetcher;
 
 #[derive(Debug)]
 pub enum UpdateStatus {
-    NoFetcher,
     UpToDate,
     NeedUpdate {
         version: Version,
@@ -27,22 +26,39 @@ pub enum UpdateStatus {
     },
 }
 
-fn fetch_update(ui: &Ui, package: &Package) -> Result<UpdateStatus> {
-    if is_hosted_on_gitlab(package)? {
-        return gitlab_fetch(ui, package);
-    }
-    if is_hosted_on_github(package)? {
-        return gh_fetch(ui, package);
-    }
-    Ok(UpdateStatus::NoFetcher)
+/// A Fetcher knows how to fetch updates for a package
+pub trait Fetcher {
+    fn can_fetch(&self, package: &Package) -> bool;
+    fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus>;
+}
+
+fn find_fetcher<'a>(
+    fetchers: &'a [Box<dyn Fetcher>],
+    package: &Package,
+) -> Option<&'a dyn Fetcher> {
+    fetchers
+        .iter()
+        .find(|&x| x.can_fetch(package))
+        .map(|x| &**x)
 }
 
 pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
+    let fetchers: [Box<dyn Fetcher>; 2] = [
+        Box::new(GitLabFetcher::default()),
+        Box::new(GitHubFetcher::default()),
+    ];
     for path in paths {
         let package = Package::from_file(path)?;
         ui.info(&format!("Fetching updates for {}", package.name));
         let ui2 = ui.nest();
-        let fetch_status = match fetch_update(&ui2, &package) {
+        let fetcher = match find_fetcher(&fetchers, &package) {
+            Some(x) => x,
+            None => {
+                ui2.info("Don't know how to fetch updates for this package");
+                continue;
+            }
+        };
+        let fetch_status = match fetcher.fetch(&ui2, &package) {
             Ok(x) => x,
             Err(x) => {
                 ui2.error(&format!("Could not fetch updates: {}", x));
@@ -51,10 +67,6 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
         };
 
         let (version, urls) = match fetch_status {
-            UpdateStatus::NoFetcher => {
-                ui2.info("Don't know how to fetch updates for this package");
-                continue;
-            }
             UpdateStatus::UpToDate => {
                 ui2.info("Package is up-to-date");
                 continue;
