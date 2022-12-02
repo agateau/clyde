@@ -14,8 +14,8 @@ use clyde::package::{Package, Release};
 use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
-use crate::github_fetcher::{is_hosted_on_github, GitHubFetcher};
-use crate::gitlab_fetcher::{is_hosted_on_gitlab, GitLabFetcher};
+use crate::github_fetcher::GitHubFetcher;
+use crate::gitlab_fetcher::GitLabFetcher;
 
 #[derive(Debug)]
 pub enum UpdateStatus {
@@ -28,25 +28,30 @@ pub enum UpdateStatus {
 
 /// A Fetcher knows how to fetch updates for a package
 pub trait Fetcher {
+    fn can_fetch(&self, package: &Package) -> bool;
     fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus>;
 }
 
-fn find_fetcher(package: &Package) -> Result<Option<Box<dyn Fetcher>>> {
-    if is_hosted_on_gitlab(package)? {
-        return Ok(Some(Box::new(GitLabFetcher::default())));
-    }
-    if is_hosted_on_github(package)? {
-        return Ok(Some(Box::new(GitHubFetcher::default())));
-    }
-    Ok(None)
+fn find_fetcher<'a>(
+    fetchers: &'a [Box<dyn Fetcher>],
+    package: &Package,
+) -> Option<&'a dyn Fetcher> {
+    fetchers
+        .iter()
+        .find(|&x| x.can_fetch(package))
+        .map(|x| &**x)
 }
 
 pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
+    let fetchers: [Box<dyn Fetcher>; 2] = [
+        Box::new(GitLabFetcher::default()),
+        Box::new(GitHubFetcher::default()),
+    ];
     for path in paths {
         let package = Package::from_file(path)?;
         ui.info(&format!("Fetching updates for {}", package.name));
         let ui2 = ui.nest();
-        let fetcher = match find_fetcher(&package)? {
+        let fetcher = match find_fetcher(&fetchers, &package) {
             Some(x) => x,
             None => {
                 ui2.info("Don't know how to fetch updates for this package");

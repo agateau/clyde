@@ -27,6 +27,11 @@ impl GitLabFetcher {
 }
 
 impl Fetcher for GitLabFetcher {
+    fn can_fetch(&self, package: &Package) -> bool {
+        let repo_owner = get_repo_owner(package);
+        repo_owner.is_some()
+    }
+
     fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus> {
         let out_dir = Path::new("out");
         if !out_dir.exists() {
@@ -35,7 +40,7 @@ impl Fetcher for GitLabFetcher {
                 .with_context(|| format!("Cannot create {} dir", out_dir.display()))?;
         }
 
-        let repo_owner = match get_repo_owner(package)? {
+        let repo_owner = match get_repo_owner(package) {
             Some(x) => x,
             None => panic!("gitlab_fetch() should not be called on a package not hosted on GitLab"),
         };
@@ -60,20 +65,13 @@ impl Fetcher for GitLabFetcher {
     }
 }
 
-pub fn is_hosted_on_gitlab(package: &Package) -> Result<bool> {
-    let repo_owner = get_repo_owner(package)?;
-    Ok(repo_owner.is_some())
-}
-
 /// Extract GitLab `<repo>/<owner>` for a package, if it's hosted on GitLab.
 /// Returns None if it's not.
-fn get_repo_owner(package: &Package) -> Result<Option<String>> {
+fn get_repo_owner(package: &Package) -> Option<String> {
     let rx = Regex::new("https://gitlab.com/(?P<repo_owner>([^/]+)/([^/]+))").unwrap();
 
-    let repo_owner = rx
-        .captures(&package.repository)
-        .map(|captures| captures["repo_owner"].to_string());
-    Ok(repo_owner)
+    rx.captures(&package.repository)
+        .map(|captures| captures["repo_owner"].to_string())
 }
 
 /// Query GitLab REST API for the latest release, store the response in `release_file`

@@ -27,6 +27,11 @@ impl GitHubFetcher {
 }
 
 impl Fetcher for GitHubFetcher {
+    fn can_fetch(&self, package: &Package) -> bool {
+        let repo_owner = get_repo_owner(package);
+        repo_owner.is_some()
+    }
+
     fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus> {
         let out_dir = Path::new("out");
         if !out_dir.exists() {
@@ -35,7 +40,7 @@ impl Fetcher for GitHubFetcher {
                 .with_context(|| format!("Cannot create {} dir", out_dir.display()))?;
         }
 
-        let repo_owner = match get_repo_owner(package)? {
+        let repo_owner = match get_repo_owner(package) {
             Some(x) => x,
             None => panic!("gh_fetch() should not be called on a package not hosted on GitHub"),
         };
@@ -60,23 +65,13 @@ impl Fetcher for GitHubFetcher {
     }
 }
 
-pub fn is_hosted_on_github(package: &Package) -> Result<bool> {
-    let repo_owner = get_repo_owner(package)?;
-    Ok(repo_owner.is_some())
-}
-
 /// Extract GitHub `<repo>/<owner>` for a package, if it's hosted on GitHub.
 /// Returns None if it's not.
-///
-/// Can be simplified once https://github.com/agateau/clyde/issues/67 is done and all packages have
-/// been updated.
-fn get_repo_owner(package: &Package) -> Result<Option<String>> {
+fn get_repo_owner(package: &Package) -> Option<String> {
     let rx = Regex::new("https://github.com/(?P<repo_owner>([^/]+)/([^/]+))").unwrap();
 
-    let repo_owner = rx
-        .captures(&package.repository)
-        .map(|captures| captures["repo_owner"].to_string());
-    Ok(repo_owner)
+    rx.captures(&package.repository)
+        .map(|captures| captures["repo_owner"].to_string())
 }
 
 /// Query GitHub REST API for the latest release, store the response in `release_file`
