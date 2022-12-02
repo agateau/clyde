@@ -9,7 +9,6 @@ use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use reqwest::blocking::Client;
 use reqwest::header;
-use semver::Version;
 use serde_json::{self, Value};
 
 use clyde::package::Package;
@@ -17,6 +16,7 @@ use clyde::ui::Ui;
 
 use crate::add_assets::select_best_urls;
 use crate::fetch::{Fetcher, UpdateStatus};
+use crate::version_utils::version_from_tag;
 
 pub struct GitHubFetcher {}
 
@@ -46,7 +46,10 @@ impl Fetcher for GitHubFetcher {
         };
 
         let release_json = get_release_json(ui, out_dir, package, &repo_owner)?;
-        let github_latest_version = extract_version(&release_json)?;
+        let tag = release_json["tag_name"]
+            .as_str()
+            .expect("No 'tag_name' in release JSON");
+        let github_latest_version = version_from_tag(tag)?;
 
         let package_latest_version = package
             .get_latest_version()
@@ -105,37 +108,6 @@ fn get_release_json(ui: &Ui, out_dir: &Path, package: &Package, repo_owner: &str
     let file = File::open(release_file)?;
     let json = serde_json::from_reader(&file)?;
     Ok(json)
-}
-
-fn count_chars(txt: &str, wanted: char) -> u32 {
-    let mut count = 0;
-    for ch in txt.chars() {
-        if ch == wanted {
-            count += 1;
-        }
-    }
-    count
-}
-
-/// Extract the version of the release by parsing the `tag_name` field
-fn extract_version(value: &Value) -> Result<Version> {
-    let tag = value["tag_name"]
-        .as_str()
-        .expect("No 'tag_name' in release JSON");
-    let version_str = if tag.starts_with('v') {
-        tag.get(1..).unwrap()
-    } else {
-        tag
-    };
-
-    let mut version_str = version_str.to_string();
-
-    while count_chars(&version_str, '.') < 2 {
-        version_str.push_str(".0");
-    }
-
-    let version = Version::parse(&version_str)?;
-    Ok(version)
 }
 
 fn extract_build_urls(value: &Value) -> Result<Vec<String>> {
