@@ -10,7 +10,7 @@ use semver::Version;
 
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
-use clyde::package::{Package, Release};
+use clyde::package::{FetcherConfig, Package, Release};
 use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
@@ -33,20 +33,30 @@ pub trait Fetcher {
 }
 
 fn find_fetcher<'a>(
-    fetchers: &'a [Box<dyn Fetcher>],
+    fetchers: &'a HashMap<FetcherConfig, Box<dyn Fetcher>>,
     package: &Package,
 ) -> Option<&'a dyn Fetcher> {
-    fetchers
-        .iter()
-        .find(|&x| x.can_fetch(package))
-        .map(|x| &**x)
+    match &package.fetcher {
+        FetcherConfig::Auto => fetchers
+            .values()
+            .find(|&x| x.can_fetch(package))
+            .map(|x| &**x),
+        FetcherConfig::Off => None,
+        fetcher_config => match fetchers.get(fetcher_config) {
+            Some(x) => Some(&**x),
+            None => None,
+        },
+    }
 }
 
 pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
-    let fetchers: [Box<dyn Fetcher>; 2] = [
-        Box::<GitLabFetcher>::default(),
-        Box::<GitHubFetcher>::default(),
-    ];
+    let ghf: Box<dyn Fetcher> = Box::<GitHubFetcher>::default();
+    let glf: Box<dyn Fetcher> = Box::<GitLabFetcher>::default();
+    let fetchers = HashMap::<FetcherConfig, Box<dyn Fetcher>>::from([
+        (FetcherConfig::GitHub, ghf),
+        (FetcherConfig::GitLab, glf),
+    ]);
+
     for path in paths {
         let package = Package::from_file(path)?;
         ui.info(&format!("Fetching updates for {}", package.name));
