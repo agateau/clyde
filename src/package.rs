@@ -26,6 +26,10 @@ fn is_zero(x: &u32) -> bool {
     *x == 0
 }
 
+fn is_none<T>(x: &Option<T>) -> bool {
+    x.is_none()
+}
+
 fn is_vec_empty<T>(vec: &Vec<T>) -> bool {
     vec.is_empty()
 }
@@ -82,8 +86,22 @@ struct InternalPackage {
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Hash, Serialize)]
 pub enum FetcherConfig {
     Auto,
-    GitHub,
-    GitLab,
+    GitHub {
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        arch: Option<String>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        os: Option<String>,
+    },
+    GitLab {
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        arch: Option<String>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        os: Option<String>,
+    },
     Off,
 }
 

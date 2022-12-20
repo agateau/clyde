@@ -75,9 +75,13 @@ fn find_in_iter(iter: Iter<'_, (&'static str, &'static str)>, name: &str) -> Opt
     None
 }
 
-fn extract_arch_os(name: &str) -> Option<ArchOs> {
-    let arch = find_in_iter(ARCH_VEC.iter(), name)?;
-    let os = find_in_iter(OS_VEC.iter(), name)?;
+fn extract_arch_os(
+    name: &str,
+    default_arch: Option<&str>,
+    default_os: Option<&str>,
+) -> Option<ArchOs> {
+    let arch = find_in_iter(ARCH_VEC.iter(), name).or(default_arch)?;
+    let os = find_in_iter(OS_VEC.iter(), name).or(default_os)?;
     Some(ArchOs::new(arch, os))
 }
 
@@ -174,7 +178,12 @@ fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
 }
 
 /// Given a bunch of asset URLs returns the best URL per arch-os
-pub fn select_best_urls(ui: &Ui, urls: &Vec<String>) -> Result<HashMap<ArchOs, String>> {
+pub fn select_best_urls(
+    ui: &Ui,
+    urls: &Vec<String>,
+    default_arch: Option<&str>,
+    default_os: Option<&str>,
+) -> Result<HashMap<ArchOs, String>> {
     let mut best_urls = HashMap::<ArchOs, String>::new();
     for url in urls {
         let lname = get_lname(url)?;
@@ -182,7 +191,7 @@ pub fn select_best_urls(ui: &Ui, urls: &Vec<String>) -> Result<HashMap<ArchOs, S
             continue;
         }
 
-        let arch_os = match extract_arch_os(&lname) {
+        let arch_os = match extract_arch_os(&lname, default_arch, default_os) {
             Some(x) => x,
             None => {
                 ui.warn(&format!("Can't extract arch-os from {lname}, skipping"));
@@ -221,7 +230,7 @@ pub fn add_assets(
         let arch_os = ArchOs::parse(arch_os)?;
         add_asset(ui, &app.download_cache, &mut release, &arch_os, url)?;
     } else {
-        let urls_for_arch_os = select_best_urls(ui, urls)?;
+        let urls_for_arch_os = select_best_urls(ui, urls, None, None)?;
         for (arch_os, url) in urls_for_arch_os {
             ui.info(&format!("{arch_os}: {url}"));
             let result = add_asset(
@@ -265,7 +274,7 @@ mod tests {
     use super::*;
 
     fn check_extract_arch_os(filename: &str, expected: Option<ArchOs>) {
-        let result = extract_arch_os(filename);
+        let result = extract_arch_os(filename, None, None);
         assert_eq!(result, expected);
     }
 
@@ -292,6 +301,12 @@ mod tests {
             Some(ArchOs::new(ANY, OS_MACOS)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
+    }
+
+    #[test]
+    fn test_extract_arch_os_default_values() {
+        let result = extract_arch_os("ninja-windows.zip", Some(ARCH_X86_64), None);
+        assert_eq!(result, Some(ArchOs::new(ARCH_X86_64, OS_WINDOWS)));
     }
 
     #[test]
