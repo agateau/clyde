@@ -11,14 +11,14 @@ use anyhow::{anyhow, Result};
 use semver::Version;
 
 use clyde::app::App;
-use clyde::arch_os::{Arch, ArchOs, OS_LINUX, OS_MACOS, OS_WINDOWS};
+use clyde::arch_os::{Arch, ArchOs, Os};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Asset, Package, Release};
 use clyde::ui::Ui;
 
 type MatchingArchPair = (&'static str, Arch);
-type MatchingPair = (&'static str, &'static str);
+type MatchingOsPair = (&'static str, Os);
 
 lazy_static! {
     // Order matters: x86_64 must be looked for before x86
@@ -35,14 +35,14 @@ lazy_static! {
         ("64bit", Arch::X86_64),
         ("universal", Arch::Any),
     ];
-    static ref OS_VEC: Vec<MatchingPair> = vec![
-        ("linux", OS_LINUX),
-        ("darwin", OS_MACOS),
-        ("apple", OS_MACOS),
-        ("macos", OS_MACOS),
-        ("windows", OS_WINDOWS),
-        ("win32", OS_WINDOWS),
-        ("win", OS_WINDOWS),
+    static ref OS_VEC: Vec<MatchingOsPair> = vec![
+        ("linux", Os::Linux),
+        ("darwin", Os::MacOs),
+        ("apple", Os::MacOs),
+        ("macos", Os::MacOs),
+        ("windows", Os::Windows),
+        ("win32", Os::Windows),
+        ("win", Os::Windows),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
 
@@ -65,16 +65,17 @@ fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String>
 }
 
 // Must take an iterator as argument because each *_VEC is a unique type
-fn find_in_iter(iter: Iter<'_, (&'static str, &'static str)>, name: &str) -> Option<&'static str> {
+// FIXME: use a template
+fn find_in_iter2(iter: Iter<'_, (&'static str, Arch)>, name: &str) -> Option<Arch> {
     for (token, key) in iter {
         if name.contains(token) {
-            return Some(key);
+            return Some(*key);
         }
     }
     None
 }
 
-fn find_in_iter2(iter: Iter<'_, (&'static str, Arch)>, name: &str) -> Option<Arch> {
+fn find_in_iter3(iter: Iter<'_, (&'static str, Os)>, name: &str) -> Option<Os> {
     for (token, key) in iter {
         if name.contains(token) {
             return Some(*key);
@@ -86,10 +87,10 @@ fn find_in_iter2(iter: Iter<'_, (&'static str, Arch)>, name: &str) -> Option<Arc
 fn extract_arch_os(
     name: &str,
     default_arch: Option<Arch>,
-    default_os: Option<&str>,
+    default_os: Option<Os>,
 ) -> Option<ArchOs> {
     let arch = find_in_iter2(ARCH_VEC.iter(), name).or(default_arch)?;
-    let os = find_in_iter(OS_VEC.iter(), name).or(default_os)?;
+    let os = find_in_iter3(OS_VEC.iter(), name).or(default_os)?;
     Some(ArchOs::new2(arch, os))
 }
 
@@ -190,7 +191,7 @@ pub fn select_best_urls(
     ui: &Ui,
     urls: &Vec<String>,
     default_arch: Option<Arch>,
-    default_os: Option<&str>,
+    default_os: Option<Os>,
 ) -> Result<HashMap<ArchOs, String>> {
     let mut best_urls = HashMap::<ArchOs, String>::new();
     for url in urls {
@@ -290,23 +291,23 @@ mod tests {
     fn test_extract_arch_os() {
         check_extract_arch_os(
             "foo-1.2-linux-arm64.tar.gz",
-            Some(ArchOs::new2(Arch::Aarch64, OS_LINUX)),
+            Some(ArchOs::new2(Arch::Aarch64, Os::Linux)),
         );
         check_extract_arch_os(
             "node-v16.16.0-win-x86.zip",
-            Some(ArchOs::new2(Arch::X86, OS_WINDOWS)),
+            Some(ArchOs::new2(Arch::X86, Os::Windows)),
         );
         check_extract_arch_os(
             "node-v16.16.0-darwin-x64.tar.gz",
-            Some(ArchOs::new2(Arch::X86_64, OS_MACOS)),
+            Some(ArchOs::new2(Arch::X86_64, Os::MacOs)),
         );
         check_extract_arch_os(
             "bat-v0.21.0-i686-pc-windows-msvc.zip",
-            Some(ArchOs::new2(Arch::X86, OS_WINDOWS)),
+            Some(ArchOs::new2(Arch::X86, Os::Windows)),
         );
         check_extract_arch_os(
             "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
-            Some(ArchOs::new2(Arch::Any, OS_MACOS)),
+            Some(ArchOs::new2(Arch::Any, Os::MacOs)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }
@@ -314,7 +315,7 @@ mod tests {
     #[test]
     fn test_extract_arch_os_default_values() {
         let result = extract_arch_os("ninja-windows.zip", Some(Arch::X86_64), None);
-        assert_eq!(result, Some(ArchOs::new2(Arch::X86_64, OS_WINDOWS)));
+        assert_eq!(result, Some(ArchOs::new2(Arch::X86_64, Os::Windows)));
     }
 
     #[test]

@@ -10,10 +10,6 @@ use serde::{Deserialize, Serialize};
 
 pub const ANY: &str = "any";
 
-pub const OS_LINUX: &str = "linux";
-pub const OS_MACOS: &str = "macos";
-pub const OS_WINDOWS: &str = "windows";
-
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Arch {
@@ -29,15 +25,30 @@ impl fmt::Display for Arch {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Os {
+    Any,
+    Linux,
+    MacOs,
+    Windows,
+}
+
+impl fmt::Display for Os {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", serde_yaml::to_string(self).unwrap().trim(),)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct ArchOs {
     pub arch: Arch,
-    pub os: String,
+    pub os: Os,
 }
 
 impl fmt::Display for ArchOs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}-{}", self.arch, self.os)
+        write!(f, "{}", self.to_str())
     }
 }
 
@@ -45,34 +56,31 @@ impl ArchOs {
     pub fn new(arch: &str, os: &str) -> ArchOs {
         ArchOs {
             arch: serde_yaml::from_str(arch).unwrap(),
-            os: os.into(),
+            os: serde_yaml::from_str(os).unwrap(),
         }
     }
 
-    pub fn new2(arch: Arch, os: &str) -> ArchOs {
-        ArchOs {
-            arch,
-            os: os.into(),
-        }
+    pub fn new2(arch: Arch, os: Os) -> ArchOs {
+        ArchOs { arch, os }
     }
 
     pub fn with_any_arch(&self) -> ArchOs {
         ArchOs {
             arch: Arch::Any,
-            os: self.os.clone(),
+            os: self.os,
         }
     }
 
     pub fn with_any_os(&self) -> ArchOs {
         ArchOs {
             arch: self.arch,
-            os: ANY.into(),
+            os: Os::Any,
         }
     }
 
     pub fn parse(text: &str) -> Result<ArchOs> {
         if text == ANY {
-            return Ok(ArchOs::new2(Arch::Any, ANY));
+            return Ok(ArchOs::new2(Arch::Any, Os::Any));
         }
 
         let mut iter = text.split('-');
@@ -108,11 +116,19 @@ mod tests {
     fn test_parse() {
         assert_eq!(
             ArchOs::parse("x86_64-linux").unwrap(),
-            ArchOs::new2(Arch::X86_64, "linux")
+            ArchOs::new2(Arch::X86_64, Os::Linux)
         );
         assert_eq!(
             ArchOs::parse("x86_64-unknown-linux-gnu").unwrap(),
-            ArchOs::new2(Arch::X86_64, "linux")
+            ArchOs::new2(Arch::X86_64, Os::Linux)
+        );
+    }
+
+    #[test]
+    fn test_to_str() {
+        assert_eq!(
+            ArchOs::new2(Arch::X86_64, Os::Linux).to_str(),
+            "x86_64-linux"
         );
     }
 }

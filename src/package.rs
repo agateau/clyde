@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::arch_os::{Arch, ArchOs, ANY};
+use crate::arch_os::{Arch, ArchOs, Os, ANY};
 
 const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
@@ -92,7 +92,7 @@ pub enum FetcherConfig {
         arch: Option<Arch>,
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        os: Option<String>,
+        os: Option<Os>,
     },
     GitLab {
         #[serde(default)]
@@ -100,7 +100,7 @@ pub enum FetcherConfig {
         arch: Option<Arch>,
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        os: Option<String>,
+        os: Option<Os>,
     },
     Off,
 }
@@ -247,7 +247,7 @@ impl Package {
                 return asset;
             }
         }
-        if arch_os.os != ANY {
+        if arch_os.os != Os::Any {
             let asset = release.get(&arch_os.with_any_os());
             if asset.is_some() {
                 return asset;
@@ -269,7 +269,7 @@ impl Package {
                 return install;
             }
         }
-        if arch_os.os != ANY {
+        if arch_os.os != Os::Any {
             // Probably less useful than the previous check, but you never know
             let install = self.get_install_internal(wanted_version, &arch_os.with_any_os());
             if install.is_some() {

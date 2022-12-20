@@ -55,7 +55,7 @@ impl Fetcher for GitHubFetcher {
         }
 
         let (default_arch, default_os) = match &package.fetcher {
-            FetcherConfig::GitHub { arch, os } => (*arch, os.as_ref().map(|x| &**x)),
+            FetcherConfig::GitHub { arch, os } => (*arch, *os),
             _ => (None, None),
         };
 
