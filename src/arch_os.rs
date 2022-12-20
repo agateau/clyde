@@ -53,7 +53,7 @@ impl fmt::Display for ArchOs {
 }
 
 impl ArchOs {
-    fn new(arch: &str, os: &str) -> ArchOs {
+    fn from_strings(arch: &str, os: &str) -> ArchOs {
         ArchOs {
             arch: serde_yaml::from_str(arch).unwrap(),
             os: serde_yaml::from_str(os).unwrap(),
@@ -61,10 +61,10 @@ impl ArchOs {
     }
 
     pub fn any() -> ArchOs {
-        ArchOs::new2(Arch::Any, Os::Any)
+        ArchOs::new(Arch::Any, Os::Any)
     }
 
-    pub fn new2(arch: Arch, os: Os) -> ArchOs {
+    pub fn new(arch: Arch, os: Os) -> ArchOs {
         ArchOs { arch, os }
     }
 
@@ -84,7 +84,7 @@ impl ArchOs {
 
     pub fn parse(text: &str) -> Result<ArchOs> {
         if text == ANY {
-            return Ok(ArchOs::new2(Arch::Any, Os::Any));
+            return Ok(ArchOs::new(Arch::Any, Os::Any));
         }
 
         let mut iter = text.split('-');
@@ -100,11 +100,11 @@ impl ArchOs {
                 .ok_or_else(|| anyhow!("Could not find OS in {}", text))?,
             x => x,
         };
-        Ok(ArchOs::new(arch, os))
+        Ok(ArchOs::from_strings(arch, os))
     }
 
     pub fn current() -> ArchOs {
-        ArchOs::new(consts::ARCH, consts::OS)
+        ArchOs::from_strings(consts::ARCH, consts::OS)
     }
 
     pub fn to_str(&self) -> String {
@@ -120,18 +120,18 @@ mod tests {
     fn test_parse() {
         assert_eq!(
             ArchOs::parse("x86_64-linux").unwrap(),
-            ArchOs::new2(Arch::X86_64, Os::Linux)
+            ArchOs::new(Arch::X86_64, Os::Linux)
         );
         assert_eq!(
             ArchOs::parse("x86_64-unknown-linux-gnu").unwrap(),
-            ArchOs::new2(Arch::X86_64, Os::Linux)
+            ArchOs::new(Arch::X86_64, Os::Linux)
         );
     }
 
     #[test]
     fn test_to_str() {
         assert_eq!(
-            ArchOs::new2(Arch::X86_64, Os::Linux).to_str(),
+            ArchOs::new(Arch::X86_64, Os::Linux).to_str(),
             "x86_64-linux"
         );
     }

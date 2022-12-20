@@ -91,7 +91,7 @@ fn extract_arch_os(
 ) -> Option<ArchOs> {
     let arch = find_in_iter2(ARCH_VEC.iter(), name).or(default_arch)?;
     let os = find_in_iter3(OS_VEC.iter(), name).or(default_os)?;
-    Some(ArchOs::new2(arch, os))
+    Some(ArchOs::new(arch, os))
 }
 
 fn get_extension(name: &str) -> Option<&str> {
@@ -291,23 +291,23 @@ mod tests {
     fn test_extract_arch_os() {
         check_extract_arch_os(
             "foo-1.2-linux-arm64.tar.gz",
-            Some(ArchOs::new2(Arch::Aarch64, Os::Linux)),
+            Some(ArchOs::new(Arch::Aarch64, Os::Linux)),
         );
         check_extract_arch_os(
             "node-v16.16.0-win-x86.zip",
-            Some(ArchOs::new2(Arch::X86, Os::Windows)),
+            Some(ArchOs::new(Arch::X86, Os::Windows)),
         );
         check_extract_arch_os(
             "node-v16.16.0-darwin-x64.tar.gz",
-            Some(ArchOs::new2(Arch::X86_64, Os::MacOs)),
+            Some(ArchOs::new(Arch::X86_64, Os::MacOs)),
         );
         check_extract_arch_os(
             "bat-v0.21.0-i686-pc-windows-msvc.zip",
-            Some(ArchOs::new2(Arch::X86, Os::Windows)),
+            Some(ArchOs::new(Arch::X86, Os::Windows)),
         );
         check_extract_arch_os(
             "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
-            Some(ArchOs::new2(Arch::Any, Os::MacOs)),
+            Some(ArchOs::new(Arch::Any, Os::MacOs)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }
@@ -315,7 +315,7 @@ mod tests {
     #[test]
     fn test_extract_arch_os_default_values() {
         let result = extract_arch_os("ninja-windows.zip", Some(Arch::X86_64), None);
-        assert_eq!(result, Some(ArchOs::new2(Arch::X86_64, Os::Windows)));
+        assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::Windows)));
     }
 
     #[test]

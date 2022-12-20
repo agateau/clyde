@@ -447,7 +447,7 @@ mod tests {
         let install = package
             .get_install(
                 &Version::new(1, 0, 0),
-                &ArchOs::new2(Arch::X86_64, Os::MacOs),
+                &ArchOs::new(Arch::X86_64, Os::MacOs),
             )
             .unwrap();
 
