@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::arch_os::{Arch, ArchOs, Os, ANY};
+use crate::arch_os::{Arch, ArchOs, Os};
 
 const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
@@ -253,7 +253,7 @@ impl Package {
                 return asset;
             }
         }
-        release.get(&ArchOs::new(ANY, ANY))
+        release.get(&ArchOs::any())
     }
 
     /// Return files definition for wanted_version
@@ -276,7 +276,7 @@ impl Package {
                 return install;
             }
         }
-        self.get_install_internal(wanted_version, &ArchOs::new(ANY, ANY))
+        self.get_install_internal(wanted_version, &ArchOs::any())
     }
 
     fn get_install_internal(&self, wanted_version: &Version, arch_os: &ArchOs) -> Option<&Install> {
@@ -445,7 +445,10 @@ mod tests {
 
         // WHEN installing on macos
         let install = package
-            .get_install(&Version::new(1, 0, 0), &ArchOs::new("x86_64", "macos"))
+            .get_install(
+                &Version::new(1, 0, 0),
+                &ArchOs::new2(Arch::X86_64, Os::MacOs),
+            )
             .unwrap();
 
         // THEN the any-macos install is used
@@ -475,7 +478,7 @@ mod tests {
 
         // AND strip is 0
         let install = package
-            .get_install(&Version::new(1, 0, 0), &ArchOs::new(ANY, ANY))
+            .get_install(&Version::new(1, 0, 0), &ArchOs::any())
             .unwrap();
         assert_eq!(install.strip, 0);
     }

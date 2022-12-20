@@ -8,7 +8,7 @@ use std::fmt;
 use anyhow::{anyhow, Result};
 use serde::{Deserialize, Serialize};
 
-pub const ANY: &str = "any";
+const ANY: &str = "any";
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -53,11 +53,15 @@ impl fmt::Display for ArchOs {
 }
 
 impl ArchOs {
-    pub fn new(arch: &str, os: &str) -> ArchOs {
+    fn new(arch: &str, os: &str) -> ArchOs {
         ArchOs {
             arch: serde_yaml::from_str(arch).unwrap(),
             os: serde_yaml::from_str(os).unwrap(),
         }
+    }
+
+    pub fn any() -> ArchOs {
+        ArchOs::new2(Arch::Any, Os::Any)
     }
 
     pub fn new2(arch: Arch, os: Os) -> ArchOs {
