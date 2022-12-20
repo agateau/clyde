@@ -17,12 +17,9 @@ use clyde::file_cache::FileCache;
 use clyde::package::{Asset, Package, Release};
 use clyde::ui::Ui;
 
-type MatchingArchPair = (&'static str, Arch);
-type MatchingOsPair = (&'static str, Os);
-
 lazy_static! {
     // Order matters: x86_64 must be looked for before x86
-    static ref ARCH_VEC: Vec<MatchingArchPair> = vec![
+    static ref ARCH_VEC: Vec<(&'static str, Arch)> = vec![
         ("x86_64", Arch::X86_64),
         ("amd64", Arch::X86_64),
         ("x64", Arch::X86_64),
@@ -35,7 +32,7 @@ lazy_static! {
         ("64bit", Arch::X86_64),
         ("universal", Arch::Any),
     ];
-    static ref OS_VEC: Vec<MatchingOsPair> = vec![
+    static ref OS_VEC: Vec<(&'static str, Os)> = vec![
         ("linux", Os::Linux),
         ("darwin", Os::MacOs),
         ("apple", Os::MacOs),
@@ -65,17 +62,7 @@ fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String>
 }
 
 // Must take an iterator as argument because each *_VEC is a unique type
-// FIXME: use a template
-fn find_in_iter2(iter: Iter<'_, (&'static str, Arch)>, name: &str) -> Option<Arch> {
-    for (token, key) in iter {
-        if name.contains(token) {
-            return Some(*key);
-        }
-    }
-    None
-}
-
-fn find_in_iter3(iter: Iter<'_, (&'static str, Os)>, name: &str) -> Option<Os> {
+fn find_in_iter<T: Copy>(iter: Iter<'_, (&'static str, T)>, name: &str) -> Option<T> {
     for (token, key) in iter {
         if name.contains(token) {
             return Some(*key);
@@ -89,8 +76,8 @@ fn extract_arch_os(
     default_arch: Option<Arch>,
     default_os: Option<Os>,
 ) -> Option<ArchOs> {
-    let arch = find_in_iter2(ARCH_VEC.iter(), name).or(default_arch)?;
-    let os = find_in_iter3(OS_VEC.iter(), name).or(default_os)?;
+    let arch = find_in_iter(ARCH_VEC.iter(), name).or(default_arch)?;
+    let os = find_in_iter(OS_VEC.iter(), name).or(default_os)?;
     Some(ArchOs::new(arch, os))
 }
 
