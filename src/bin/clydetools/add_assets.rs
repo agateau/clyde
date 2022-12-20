@@ -11,30 +11,29 @@ use anyhow::{anyhow, Result};
 use semver::Version;
 
 use clyde::app::App;
-use clyde::arch_os::{
-    ArchOs, ANY, ARCH_AARCH64, ARCH_X86, ARCH_X86_64, OS_LINUX, OS_MACOS, OS_WINDOWS,
-};
+use clyde::arch_os::{Arch, ArchOs, OS_LINUX, OS_MACOS, OS_WINDOWS};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
 use clyde::package::{Asset, Package, Release};
 use clyde::ui::Ui;
 
+type MatchingArchPair = (&'static str, Arch);
 type MatchingPair = (&'static str, &'static str);
 
 lazy_static! {
     // Order matters: x86_64 must be looked for before x86
-    static ref ARCH_VEC: Vec<MatchingPair> = vec![
-        ("x86_64", ARCH_X86_64),
-        ("amd64", ARCH_X86_64),
-        ("x64", ARCH_X86_64),
-        ("x86", ARCH_X86),
-        ("386", ARCH_X86),
-        ("686", ARCH_X86),
-        ("aarch64", ARCH_AARCH64),
-        ("arm64", ARCH_AARCH64),
-        ("32bit", ARCH_X86),
-        ("64bit", ARCH_X86_64),
-        ("universal", ANY),
+    static ref ARCH_VEC: Vec<MatchingArchPair> = vec![
+        ("x86_64", Arch::X86_64),
+        ("amd64", Arch::X86_64),
+        ("x64", Arch::X86_64),
+        ("x86", Arch::X86),
+        ("386", Arch::X86),
+        ("686", Arch::X86),
+        ("aarch64", Arch::Aarch64),
+        ("arm64", Arch::Aarch64),
+        ("32bit", Arch::X86),
+        ("64bit", Arch::X86_64),
+        ("universal", Arch::Any),
     ];
     static ref OS_VEC: Vec<MatchingPair> = vec![
         ("linux", OS_LINUX),
@@ -75,14 +74,23 @@ fn find_in_iter(iter: Iter<'_, (&'static str, &'static str)>, name: &str) -> Opt
     None
 }
 
+fn find_in_iter2(iter: Iter<'_, (&'static str, Arch)>, name: &str) -> Option<Arch> {
+    for (token, key) in iter {
+        if name.contains(token) {
+            return Some(*key);
+        }
+    }
+    None
+}
+
 fn extract_arch_os(
     name: &str,
-    default_arch: Option<&str>,
+    default_arch: Option<Arch>,
     default_os: Option<&str>,
 ) -> Option<ArchOs> {
-    let arch = find_in_iter(ARCH_VEC.iter(), name).or(default_arch)?;
+    let arch = find_in_iter2(ARCH_VEC.iter(), name).or(default_arch)?;
     let os = find_in_iter(OS_VEC.iter(), name).or(default_os)?;
-    Some(ArchOs::new(arch, os))
+    Some(ArchOs::new2(arch, os))
 }
 
 fn get_extension(name: &str) -> Option<&str> {
@@ -181,7 +189,7 @@ fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
 pub fn select_best_urls(
     ui: &Ui,
     urls: &Vec<String>,
-    default_arch: Option<&str>,
+    default_arch: Option<Arch>,
     default_os: Option<&str>,
 ) -> Result<HashMap<ArchOs, String>> {
     let mut best_urls = HashMap::<ArchOs, String>::new();
@@ -282,31 +290,31 @@ mod tests {
     fn test_extract_arch_os() {
         check_extract_arch_os(
             "foo-1.2-linux-arm64.tar.gz",
-            Some(ArchOs::new(ARCH_AARCH64, OS_LINUX)),
+            Some(ArchOs::new2(Arch::Aarch64, OS_LINUX)),
         );
         check_extract_arch_os(
             "node-v16.16.0-win-x86.zip",
-            Some(ArchOs::new(ARCH_X86, OS_WINDOWS)),
+            Some(ArchOs::new2(Arch::X86, OS_WINDOWS)),
         );
         check_extract_arch_os(
             "node-v16.16.0-darwin-x64.tar.gz",
-            Some(ArchOs::new(ARCH_X86_64, OS_MACOS)),
+            Some(ArchOs::new2(Arch::X86_64, OS_MACOS)),
         );
         check_extract_arch_os(
             "bat-v0.21.0-i686-pc-windows-msvc.zip",
-            Some(ArchOs::new(ARCH_X86, OS_WINDOWS)),
+            Some(ArchOs::new2(Arch::X86, OS_WINDOWS)),
         );
         check_extract_arch_os(
             "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
-            Some(ArchOs::new(ANY, OS_MACOS)),
+            Some(ArchOs::new2(Arch::Any, OS_MACOS)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }
 
     #[test]
     fn test_extract_arch_os_default_values() {
-        let result = extract_arch_os("ninja-windows.zip", Some(ARCH_X86_64), None);
-        assert_eq!(result, Some(ArchOs::new(ARCH_X86_64, OS_WINDOWS)));
+        let result = extract_arch_os("ninja-windows.zip", Some(Arch::X86_64), None);
+        assert_eq!(result, Some(ArchOs::new2(Arch::X86_64, OS_WINDOWS)));
     }
 
     #[test]

@@ -6,20 +6,32 @@ use std::env::consts;
 use std::fmt;
 
 use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 
 pub const ANY: &str = "any";
-
-pub const ARCH_X86_64: &str = "x86_64";
-pub const ARCH_X86: &str = "x86";
-pub const ARCH_AARCH64: &str = "aarch64";
 
 pub const OS_LINUX: &str = "linux";
 pub const OS_MACOS: &str = "macos";
 pub const OS_WINDOWS: &str = "windows";
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Arch {
+    Any,
+    X86_64,
+    X86,
+    Aarch64,
+}
+
+impl fmt::Display for Arch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", serde_yaml::to_string(self).unwrap().trim(),)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct ArchOs {
-    pub arch: String,
+    pub arch: Arch,
     pub os: String,
 }
 
@@ -32,28 +44,35 @@ impl fmt::Display for ArchOs {
 impl ArchOs {
     pub fn new(arch: &str, os: &str) -> ArchOs {
         ArchOs {
-            arch: arch.into(),
+            arch: serde_yaml::from_str(arch).unwrap(),
+            os: os.into(),
+        }
+    }
+
+    pub fn new2(arch: Arch, os: &str) -> ArchOs {
+        ArchOs {
+            arch,
             os: os.into(),
         }
     }
 
     pub fn with_any_arch(&self) -> ArchOs {
         ArchOs {
-            arch: ANY.into(),
+            arch: Arch::Any,
             os: self.os.clone(),
         }
     }
 
     pub fn with_any_os(&self) -> ArchOs {
         ArchOs {
-            arch: self.arch.clone(),
+            arch: self.arch,
             os: ANY.into(),
         }
     }
 
     pub fn parse(text: &str) -> Result<ArchOs> {
         if text == ANY {
-            return Ok(ArchOs::new(ANY, ANY));
+            return Ok(ArchOs::new2(Arch::Any, ANY));
         }
 
         let mut iter = text.split('-');
@@ -89,11 +108,11 @@ mod tests {
     fn test_parse() {
         assert_eq!(
             ArchOs::parse("x86_64-linux").unwrap(),
-            ArchOs::new("x86_64", "linux")
+            ArchOs::new2(Arch::X86_64, "linux")
         );
         assert_eq!(
             ArchOs::parse("x86_64-unknown-linux-gnu").unwrap(),
-            ArchOs::new("x86_64", "linux")
+            ArchOs::new2(Arch::X86_64, "linux")
         );
     }
 }

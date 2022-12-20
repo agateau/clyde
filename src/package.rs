@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::arch_os::{ArchOs, ANY};
+use crate::arch_os::{Arch, ArchOs, ANY};
 
 const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
@@ -89,7 +89,7 @@ pub enum FetcherConfig {
     GitHub {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        arch: Option<String>,
+        arch: Option<Arch>,
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
         os: Option<String>,
@@ -97,7 +97,7 @@ pub enum FetcherConfig {
     GitLab {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        arch: Option<String>,
+        arch: Option<Arch>,
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
         os: Option<String>,
@@ -241,7 +241,7 @@ impl Package {
         if asset.is_some() {
             return asset;
         }
-        if arch_os.arch != ANY {
+        if arch_os.arch != Arch::Any {
             let asset = release.get(&arch_os.with_any_arch());
             if asset.is_some() {
                 return asset;
@@ -263,7 +263,7 @@ impl Package {
         if install.is_some() {
             return install;
         }
-        if arch_os.arch != ANY {
+        if arch_os.arch != Arch::Any {
             let install = self.get_install_internal(wanted_version, &arch_os.with_any_arch());
             if install.is_some() {
                 return install;
@@ -312,6 +312,9 @@ mod tests {
           tests:
             - foo --help
             - foo --version
+    fetcher: !GitHub
+      arch: x86_64
+      os: linux
     ";
 
     #[test]
