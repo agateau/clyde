@@ -56,7 +56,7 @@ fn create_activate_script(app: &App) -> Result<String> {
     let script_path = scripts_dir.join("activate.sh");
 
     fs::create_dir_all(&scripts_dir)?;
-    fs::write(&script_path, &content)?;
+    fs::write(&script_path, content)?;
 
     let shell_script_path = shell_path_from_path(&script_path)?;
     Ok(shell_script_path)
