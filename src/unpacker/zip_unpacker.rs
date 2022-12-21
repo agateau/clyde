@@ -60,7 +60,7 @@ impl Unpacker for ZipUnpacker {
                 None => continue,
             };
 
-            let dst_path = dst_dir.join(&dst_sub_path);
+            let dst_path = dst_dir.join(dst_sub_path);
 
             if (*file.name()).ends_with('/') {
                 fs::create_dir_all(&dst_path)

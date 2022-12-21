@@ -18,13 +18,8 @@ use crate::add_assets::select_best_urls;
 use crate::fetch::{Fetcher, UpdateStatus};
 use crate::version_utils::version_from_tag;
 
+#[derive(Default)]
 pub struct GitLabFetcher {}
-
-impl GitLabFetcher {
-    pub fn default() -> GitLabFetcher {
-        GitLabFetcher {}
-    }
-}
 
 impl Fetcher for GitLabFetcher {
     fn can_fetch(&self, package: &Package) -> bool {

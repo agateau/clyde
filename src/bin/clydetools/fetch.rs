@@ -44,8 +44,8 @@ fn find_fetcher<'a>(
 
 pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
     let fetchers: [Box<dyn Fetcher>; 2] = [
-        Box::new(GitLabFetcher::default()),
-        Box::new(GitHubFetcher::default()),
+        Box::<GitLabFetcher>::default(),
+        Box::<GitHubFetcher>::default(),
     ];
     for path in paths {
         let package = Package::from_file(path)?;
