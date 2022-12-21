@@ -1,0 +1,4 @@
+kind: Package format change
+body: 'A new entry has been added: `fetcher`. It lets you explicitly define the fetcher
+  to use, and provide default values for the architecture and/or OS.'
+time: 2022-12-20T19:12:03.540316363+01:00

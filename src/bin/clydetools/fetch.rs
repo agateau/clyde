@@ -10,7 +10,7 @@ use semver::Version;
 
 use clyde::app::App;
 use clyde::arch_os::ArchOs;
-use clyde::package::{Package, Release};
+use clyde::package::{FetcherConfig, Package, Release};
 use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
@@ -32,26 +32,42 @@ pub trait Fetcher {
     fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus>;
 }
 
-fn find_fetcher<'a>(
-    fetchers: &'a [Box<dyn Fetcher>],
-    package: &Package,
-) -> Option<&'a dyn Fetcher> {
-    fetchers
-        .iter()
-        .find(|&x| x.can_fetch(package))
-        .map(|x| &**x)
+struct FetcherFinder {
+    github_fetcher: GitHubFetcher,
+    gitlab_fetcher: GitLabFetcher,
+}
+
+impl FetcherFinder {
+    fn new() -> FetcherFinder {
+        FetcherFinder {
+            github_fetcher: GitHubFetcher::default(),
+            gitlab_fetcher: GitLabFetcher::default(),
+        }
+    }
+
+    fn find(&self, package: &Package) -> Option<&dyn Fetcher> {
+        let auto_fetchers: [&dyn Fetcher; 2] = [&self.github_fetcher, &self.gitlab_fetcher];
+
+        match &package.fetcher {
+            FetcherConfig::Auto => auto_fetchers
+                .iter()
+                .find(|&x| x.can_fetch(package))
+                .map(|x| &**x),
+            FetcherConfig::Off => None,
+            FetcherConfig::GitHub { arch: _a, os: _o } => Some(&self.github_fetcher),
+            FetcherConfig::GitLab { arch: _a, os: _o } => Some(&self.gitlab_fetcher),
+        }
+    }
 }
 
 pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
-    let fetchers: [Box<dyn Fetcher>; 2] = [
-        Box::<GitLabFetcher>::default(),
-        Box::<GitHubFetcher>::default(),
-    ];
+    let fetcher_finder = FetcherFinder::new();
+
     for path in paths {
         let package = Package::from_file(path)?;
         ui.info(&format!("Fetching updates for {}", package.name));
         let ui2 = ui.nest();
-        let fetcher = match find_fetcher(&fetchers, &package) {
+        let fetcher = match fetcher_finder.find(&package) {
             Some(x) => x,
             None => {
                 ui2.info("Don't know how to fetch updates for this package");

@@ -26,6 +26,10 @@ fn is_zero(x: &u32) -> bool {
     *x == 0
 }
 
+fn is_none<T>(x: &Option<T>) -> bool {
+    x.is_none()
+}
+
 fn is_vec_empty<T>(vec: &Vec<T>) -> bool {
     vec.is_empty()
 }
@@ -58,6 +62,8 @@ pub struct Package {
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
     pub extra_files_dir: PathBuf,
+
+    pub fetcher: FetcherConfig,
 }
 
 /// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
@@ -71,8 +77,38 @@ struct InternalPackage {
     pub repository: String,
     pub releases: Option<BTreeMap<String, BTreeMap<String, Asset>>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
+    #[serde(default)]
+    pub fetcher: FetcherConfig,
     #[serde(skip)]
     pub extra_files_dir: PathBuf,
+}
+
+#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Hash, Serialize)]
+pub enum FetcherConfig {
+    Auto,
+    GitHub {
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        arch: Option<String>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        os: Option<String>,
+    },
+    GitLab {
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        arch: Option<String>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        os: Option<String>,
+    },
+    Off,
+}
+
+impl Default for FetcherConfig {
+    fn default() -> Self {
+        FetcherConfig::Auto
+    }
 }
 
 impl InternalPackage {
@@ -105,6 +141,7 @@ impl InternalPackage {
             releases: Some(releases),
             installs: Some(installs),
             extra_files_dir: package.extra_files_dir.clone(),
+            fetcher: package.fetcher.clone(),
         }
     }
 
@@ -141,6 +178,7 @@ impl InternalPackage {
             releases,
             installs,
             extra_files_dir: self.extra_files_dir.clone(),
+            fetcher: self.fetcher.clone(),
         })
     }
 }
@@ -181,6 +219,7 @@ impl Package {
             releases,
             installs: self.installs.clone(),
             extra_files_dir: self.extra_files_dir.clone(),
+            fetcher: self.fetcher.clone(),
         }
     }
 

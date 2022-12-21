@@ -11,7 +11,7 @@ use reqwest::blocking::Client;
 use reqwest::header;
 use serde_json::{self, Value};
 
-use clyde::package::Package;
+use clyde::package::{FetcherConfig, Package};
 use clyde::ui::Ui;
 
 use crate::add_assets::select_best_urls;
@@ -54,7 +54,19 @@ impl Fetcher for GitLabFetcher {
             return Ok(UpdateStatus::UpToDate);
         }
 
-        let urls = select_best_urls(ui, &extract_build_urls(&release_json)?)?;
+        let (default_arch, default_os) = match &package.fetcher {
+            FetcherConfig::GitHub { arch, os } => {
+                (arch.as_ref().map(|x| &**x), os.as_ref().map(|x| &**x))
+            }
+            _ => (None, None),
+        };
+
+        let urls = select_best_urls(
+            ui,
+            &extract_build_urls(&release_json)?,
+            default_arch,
+            default_os,
+        )?;
 
         Ok(UpdateStatus::NeedUpdate {
             version: github_latest_version,

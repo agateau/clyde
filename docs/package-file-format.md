@@ -131,6 +131,31 @@ The following variables are available:
 - `${doc_dir}`: Directory storing the package documentation. Set to "share/doc/<package_name>/".
 - `${exe_ext}`: Executable extension for the target OS. Set to ".exe" on Windows and "" on other OSes.
 
+## fetcher
+
+The optional `fetcher` mapping tells `clydetools fetch` how to fetch package updates. It looks like this:
+
+```yaml
+fetcher: !<type>
+  # type-specific entries
+```
+
+Where `<type>` must be one of `Auto` (default), `GitHub`, `GitLab` and `Off`.
+
+### GitHub fetcher
+
+This fetcher accepts the following entries:
+
+- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
+- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+
+### GitLab fetcher
+
+This fetcher accepts the following entries:
+
+- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
+- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+
 ## Environment variables
 
 Clyde activation scripts define a `$CLYDE_INST_DIR` environment variable pointing to Clyde prefix. This means Clyde `opt` directory for example, can be referred to as `$CLYDE_INST_DIR/opt`. Launcher scripts installed via `extra_files` can make use of the `$CLYDE_INST_DIR` environment variable to refer to a file installed in `$CLYDE_INST_DIR/opt/<package_name>`.
