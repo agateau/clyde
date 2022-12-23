@@ -6,54 +6,85 @@ use std::env::consts;
 use std::fmt;
 
 use anyhow::{anyhow, Result};
+use serde::{Deserialize, Serialize};
 
-pub const ANY: &str = "any";
+const ANY: &str = "any";
 
-pub const ARCH_X86_64: &str = "x86_64";
-pub const ARCH_X86: &str = "x86";
-pub const ARCH_AARCH64: &str = "aarch64";
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Arch {
+    Any,
+    X86_64,
+    X86,
+    Aarch64,
+}
 
-pub const OS_LINUX: &str = "linux";
-pub const OS_MACOS: &str = "macos";
-pub const OS_WINDOWS: &str = "windows";
+impl fmt::Display for Arch {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", serde_yaml::to_string(self).unwrap().trim(),)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Os {
+    Any,
+    Linux,
+    MacOs,
+    Windows,
+}
+
+impl fmt::Display for Os {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", serde_yaml::to_string(self).unwrap().trim(),)
+    }
+}
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub struct ArchOs {
-    pub arch: String,
-    pub os: String,
+    pub arch: Arch,
+    pub os: Os,
 }
 
 impl fmt::Display for ArchOs {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}-{}", self.arch, self.os)
+        write!(f, "{}", self.to_str())
     }
 }
 
 impl ArchOs {
-    pub fn new(arch: &str, os: &str) -> ArchOs {
+    fn from_strings(arch: &str, os: &str) -> ArchOs {
         ArchOs {
-            arch: arch.into(),
-            os: os.into(),
+            arch: serde_yaml::from_str(arch).unwrap(),
+            os: serde_yaml::from_str(os).unwrap(),
         }
+    }
+
+    pub fn any() -> ArchOs {
+        ArchOs::new(Arch::Any, Os::Any)
+    }
+
+    pub fn new(arch: Arch, os: Os) -> ArchOs {
+        ArchOs { arch, os }
     }
 
     pub fn with_any_arch(&self) -> ArchOs {
         ArchOs {
-            arch: ANY.into(),
-            os: self.os.clone(),
+            arch: Arch::Any,
+            os: self.os,
         }
     }
 
     pub fn with_any_os(&self) -> ArchOs {
         ArchOs {
-            arch: self.arch.clone(),
-            os: ANY.into(),
+            arch: self.arch,
+            os: Os::Any,
         }
     }
 
     pub fn parse(text: &str) -> Result<ArchOs> {
         if text == ANY {
-            return Ok(ArchOs::new(ANY, ANY));
+            return Ok(ArchOs::new(Arch::Any, Os::Any));
         }
 
         let mut iter = text.split('-');
@@ -69,11 +100,11 @@ impl ArchOs {
                 .ok_or_else(|| anyhow!("Could not find OS in {}", text))?,
             x => x,
         };
-        Ok(ArchOs::new(arch, os))
+        Ok(ArchOs::from_strings(arch, os))
     }
 
     pub fn current() -> ArchOs {
-        ArchOs::new(consts::ARCH, consts::OS)
+        ArchOs::from_strings(consts::ARCH, consts::OS)
     }
 
     pub fn to_str(&self) -> String {
@@ -89,11 +120,19 @@ mod tests {
     fn test_parse() {
         assert_eq!(
             ArchOs::parse("x86_64-linux").unwrap(),
-            ArchOs::new("x86_64", "linux")
+            ArchOs::new(Arch::X86_64, Os::Linux)
         );
         assert_eq!(
             ArchOs::parse("x86_64-unknown-linux-gnu").unwrap(),
-            ArchOs::new("x86_64", "linux")
+            ArchOs::new(Arch::X86_64, Os::Linux)
+        );
+    }
+
+    #[test]
+    fn test_to_str() {
+        assert_eq!(
+            ArchOs::new(Arch::X86_64, Os::Linux).to_str(),
+            "x86_64-linux"
         );
     }
 }

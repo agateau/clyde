@@ -10,7 +10,7 @@ use anyhow::{anyhow, Result};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
-use crate::arch_os::{ArchOs, ANY};
+use crate::arch_os::{Arch, ArchOs, Os};
 
 const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
@@ -89,18 +89,18 @@ pub enum FetcherConfig {
     GitHub {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        arch: Option<String>,
+        arch: Option<Arch>,
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        os: Option<String>,
+        os: Option<Os>,
     },
     GitLab {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        arch: Option<String>,
+        arch: Option<Arch>,
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
-        os: Option<String>,
+        os: Option<Os>,
     },
     Off,
 }
@@ -241,19 +241,19 @@ impl Package {
         if asset.is_some() {
             return asset;
         }
-        if arch_os.arch != ANY {
+        if arch_os.arch != Arch::Any {
             let asset = release.get(&arch_os.with_any_arch());
             if asset.is_some() {
                 return asset;
             }
         }
-        if arch_os.os != ANY {
+        if arch_os.os != Os::Any {
             let asset = release.get(&arch_os.with_any_os());
             if asset.is_some() {
                 return asset;
             }
         }
-        release.get(&ArchOs::new(ANY, ANY))
+        release.get(&ArchOs::any())
     }
 
     /// Return files definition for wanted_version
@@ -263,20 +263,20 @@ impl Package {
         if install.is_some() {
             return install;
         }
-        if arch_os.arch != ANY {
+        if arch_os.arch != Arch::Any {
             let install = self.get_install_internal(wanted_version, &arch_os.with_any_arch());
             if install.is_some() {
                 return install;
             }
         }
-        if arch_os.os != ANY {
+        if arch_os.os != Os::Any {
             // Probably less useful than the previous check, but you never know
             let install = self.get_install_internal(wanted_version, &arch_os.with_any_os());
             if install.is_some() {
                 return install;
             }
         }
-        self.get_install_internal(wanted_version, &ArchOs::new(ANY, ANY))
+        self.get_install_internal(wanted_version, &ArchOs::any())
     }
 
     fn get_install_internal(&self, wanted_version: &Version, arch_os: &ArchOs) -> Option<&Install> {
@@ -312,6 +312,9 @@ mod tests {
           tests:
             - foo --help
             - foo --version
+    fetcher: !GitHub
+      arch: x86_64
+      os: linux
     ";
 
     #[test]
@@ -442,7 +445,10 @@ mod tests {
 
         // WHEN installing on macos
         let install = package
-            .get_install(&Version::new(1, 0, 0), &ArchOs::new("x86_64", "macos"))
+            .get_install(
+                &Version::new(1, 0, 0),
+                &ArchOs::new(Arch::X86_64, Os::MacOs),
+            )
             .unwrap();
 
         // THEN the any-macos install is used
@@ -472,7 +478,7 @@ mod tests {
 
         // AND strip is 0
         let install = package
-            .get_install(&Version::new(1, 0, 0), &ArchOs::new(ANY, ANY))
+            .get_install(&Version::new(1, 0, 0), &ArchOs::any())
             .unwrap();
         assert_eq!(install.strip, 0);
     }
