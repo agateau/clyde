@@ -37,6 +37,7 @@ lazy_static! {
         ("darwin", Os::MacOs),
         ("apple", Os::MacOs),
         ("macos(|10|11)", Os::MacOs),
+        ("mac", Os::MacOs),
         ("win(|dows|32|64)", Os::Windows),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
@@ -328,6 +329,9 @@ mod tests {
     fn test_extract_arch_os_default_values() {
         let result = extract_arch_os("ninja-windows.zip", Some(Arch::X86_64), None);
         assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::Windows)));
+
+        let result = extract_arch_os("ninja-mac.zip", Some(Arch::X86_64), None);
+        assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::MacOs)));
     }
 
     #[test]
