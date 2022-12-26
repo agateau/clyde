@@ -269,9 +269,32 @@ pub fn add_assets_cmd(
 mod tests {
     use super::*;
 
+    use std::fs;
+
+    use clyde::test_file_utils::get_fixture_path;
+
     fn check_extract_arch_os(filename: &str, expected: Option<ArchOs>) {
         let result = extract_arch_os(filename, None, None);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_extract_arch_os_from_store() {
+        let yaml_path = get_fixture_path("store_arch_os.csv");
+        let content = fs::read(yaml_path).unwrap();
+        let content = String::from_utf8(content).unwrap();
+        let mut ok = true;
+        for line in content.lines() {
+            let (name, arch_os_str) = line.trim().split_once(",").unwrap();
+            let expected = ArchOs::parse(arch_os_str).unwrap();
+
+            let result = extract_arch_os(name, None, None);
+            if result != Some(expected) {
+                eprintln!("Failure: name={} arch_os_str={}", name, arch_os_str);
+                ok = false;
+            }
+        }
+        assert!(ok);
     }
 
     #[test]
