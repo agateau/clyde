@@ -8,6 +8,7 @@ use std::path::Path;
 use std::slice::Iter;
 
 use anyhow::{anyhow, Result};
+use regex::Regex;
 use semver::Version;
 
 use clyde::app::App;
@@ -24,8 +25,7 @@ lazy_static! {
         ("amd64", Arch::X86_64),
         ("x64", Arch::X86_64),
         ("x86", Arch::X86),
-        ("386", Arch::X86),
-        ("686", Arch::X86),
+        ("i?[36]86", Arch::X86),
         ("aarch64", Arch::Aarch64),
         ("arm64", Arch::Aarch64),
         ("32bit", Arch::X86),
@@ -36,10 +36,8 @@ lazy_static! {
         ("linux", Os::Linux),
         ("darwin", Os::MacOs),
         ("apple", Os::MacOs),
-        ("macos", Os::MacOs),
-        ("windows", Os::Windows),
-        ("win32", Os::Windows),
-        ("win", Os::Windows),
+        ("macos(|10|11)", Os::MacOs),
+        ("win(|dows|32|64)", Os::Windows),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
 
@@ -55,6 +53,8 @@ lazy_static! {
     ];
 }
 
+const ARCH_OS_SEPARATOR_PATTERN: &str = "(\\b|[-_.])";
+
 fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
     let path = cache.download(ui, url)?;
     ui.info("Computing checksum");
@@ -63,8 +63,10 @@ fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String>
 
 // Must take an iterator as argument because each *_VEC is a unique type
 fn find_in_iter<T: Copy>(iter: Iter<'_, (&'static str, T)>, name: &str) -> Option<T> {
-    for (token, key) in iter {
-        if name.contains(token) {
+    for (pattern, key) in iter {
+        let pattern = format!("{ARCH_OS_SEPARATOR_PATTERN}{pattern}{ARCH_OS_SEPARATOR_PATTERN}");
+        let rx = Regex::new(&pattern).unwrap();
+        if rx.is_match(name) {
             return Some(*key);
         }
     }
