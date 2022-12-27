@@ -11,7 +11,8 @@ setup_cross() {
     CARGO_CMD=$(command -v cross || true)
     if [ -z "$CARGO_CMD" ] ; then
         echo "Installing cross $CROSS_VERSION"
-        cargo install cross --version $CROSS_VERSION
+        # Use --locked because of https://github.com/cross-rs/cross/issues/1177
+        cargo install cross --version $CROSS_VERSION --locked
     fi
     CARGO_CMD=$(command -v cross || true)
     if [ -z "$CARGO_CMD" ] ; then
