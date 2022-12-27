@@ -38,6 +38,7 @@ lazy_static! {
         ("apple", Os::MacOs),
         ("macos(|10|11)", Os::MacOs),
         ("mac", Os::MacOs),
+        ("osx", Os::MacOs),
         ("win(|dows|32|64)", Os::Windows),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
@@ -321,6 +322,10 @@ mod tests {
         check_extract_arch_os(
             "cmake-3.24.0-rc5-macos10.10-universal.tar.gz",
             Some(ArchOs::new(Arch::Any, Os::MacOs)),
+        );
+        check_extract_arch_os(
+            "rclone-v1.61.1-osx-arm64.zip",
+            Some(ArchOs::new(Arch::Aarch64, Os::MacOs)),
         );
         check_extract_arch_os("bar-3.14.tar.gz", None);
     }
