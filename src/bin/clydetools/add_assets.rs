@@ -8,6 +8,7 @@ use std::path::Path;
 use std::slice::Iter;
 
 use anyhow::{anyhow, Result};
+use regex::Regex;
 use semver::Version;
 
 use clyde::app::App;
@@ -24,8 +25,7 @@ lazy_static! {
         ("amd64", Arch::X86_64),
         ("x64", Arch::X86_64),
         ("x86", Arch::X86),
-        ("386", Arch::X86),
-        ("686", Arch::X86),
+        ("i?[36]86", Arch::X86),
         ("aarch64", Arch::Aarch64),
         ("arm64", Arch::Aarch64),
         ("32bit", Arch::X86),
@@ -36,10 +36,9 @@ lazy_static! {
         ("linux", Os::Linux),
         ("darwin", Os::MacOs),
         ("apple", Os::MacOs),
-        ("macos", Os::MacOs),
-        ("windows", Os::Windows),
-        ("win32", Os::Windows),
-        ("win", Os::Windows),
+        ("macos(|10|11)", Os::MacOs),
+        ("mac", Os::MacOs),
+        ("win(|dows|32|64)", Os::Windows),
     ];
     static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
 
@@ -55,6 +54,8 @@ lazy_static! {
     ];
 }
 
+const ARCH_OS_SEPARATOR_PATTERN: &str = "(\\b|[-_.])";
+
 fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
     let path = cache.download(ui, url)?;
     ui.info("Computing checksum");
@@ -63,8 +64,10 @@ fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String>
 
 // Must take an iterator as argument because each *_VEC is a unique type
 fn find_in_iter<T: Copy>(iter: Iter<'_, (&'static str, T)>, name: &str) -> Option<T> {
-    for (token, key) in iter {
-        if name.contains(token) {
+    for (pattern, key) in iter {
+        let pattern = format!("{ARCH_OS_SEPARATOR_PATTERN}{pattern}{ARCH_OS_SEPARATOR_PATTERN}");
+        let rx = Regex::new(&pattern).unwrap();
+        if rx.is_match(name) {
             return Some(*key);
         }
     }
@@ -269,9 +272,32 @@ pub fn add_assets_cmd(
 mod tests {
     use super::*;
 
+    use std::fs;
+
+    use clyde::test_file_utils::get_fixture_path;
+
     fn check_extract_arch_os(filename: &str, expected: Option<ArchOs>) {
         let result = extract_arch_os(filename, None, None);
         assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_extract_arch_os_from_store() {
+        let yaml_path = get_fixture_path("store_arch_os.csv");
+        let content = fs::read(yaml_path).unwrap();
+        let content = String::from_utf8(content).unwrap();
+        let mut ok = true;
+        for line in content.lines() {
+            let (name, arch_os_str) = line.trim().split_once(",").unwrap();
+            let expected = ArchOs::parse(arch_os_str).unwrap();
+
+            let result = extract_arch_os(name, None, None);
+            if result != Some(expected) {
+                eprintln!("Failure: name={} arch_os_str={}", name, arch_os_str);
+                ok = false;
+            }
+        }
+        assert!(ok);
     }
 
     #[test]
@@ -303,6 +329,9 @@ mod tests {
     fn test_extract_arch_os_default_values() {
         let result = extract_arch_os("ninja-windows.zip", Some(Arch::X86_64), None);
         assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::Windows)));
+
+        let result = extract_arch_os("ninja-mac.zip", Some(Arch::X86_64), None);
+        assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::MacOs)));
     }
 
     #[test]
