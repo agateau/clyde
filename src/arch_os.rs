@@ -53,11 +53,10 @@ impl fmt::Display for ArchOs {
 }
 
 impl ArchOs {
-    fn from_strings(arch: &str, os: &str) -> ArchOs {
-        ArchOs {
-            arch: serde_yaml::from_str(arch).unwrap(),
-            os: serde_yaml::from_str(os).unwrap(),
-        }
+    fn from_strings(arch: &str, os: &str) -> Result<ArchOs> {
+        let arch = serde_yaml::from_str(arch)?;
+        let os = serde_yaml::from_str(os)?;
+        Ok(ArchOs { arch, os })
     }
 
     pub fn any() -> ArchOs {
@@ -100,11 +99,11 @@ impl ArchOs {
                 .ok_or_else(|| anyhow!("Could not find OS in {}", text))?,
             x => x,
         };
-        Ok(ArchOs::from_strings(arch, os))
+        ArchOs::from_strings(arch, os)
     }
 
     pub fn current() -> ArchOs {
-        ArchOs::from_strings(consts::ARCH, consts::OS)
+        ArchOs::from_strings(consts::ARCH, consts::OS).unwrap()
     }
 
     pub fn to_str(&self) -> String {
