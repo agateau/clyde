@@ -91,7 +91,7 @@ fn get_package_path(path: &Path) -> Option<PathBuf> {
 impl Store for GitStore {
     fn setup(&self) -> Result<()> {
         let mut cmd = Command::new("git");
-        cmd.args(["clone", &self.url]);
+        cmd.args(["clone", "--depth", "1", &self.url]);
         cmd.arg(self.dir.as_os_str());
 
         let status = match cmd.status() {

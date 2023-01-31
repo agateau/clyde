@@ -1,0 +1,3 @@
+kind: Changed
+body: '`clyde setup` now creates a shallow clone of the store, making it faster (#17).'
+time: 2023-01-31T09:10:54.728386631+01:00
