@@ -33,6 +33,9 @@ enum Command {
         /// Update the activation scripts of an existing installation.
         #[clap(short, long)]
         update_scripts: bool,
+        /// URL of the Git repository to use for the store.
+        #[clap(long = "--url")]
+        store_url: Option<String>,
     },
     /// Update Clyde store
     Update {},
@@ -86,7 +89,10 @@ impl Cli {
         let _instance = App::create_single_instance(&home)?;
 
         match self.command {
-            Command::Setup { update_scripts } => setup(&ui, &home, update_scripts),
+            Command::Setup {
+                update_scripts,
+                store_url,
+            } => setup(&ui, &home, update_scripts, store_url.as_deref()),
             Command::Update {} => {
                 let app = App::new(&home)?;
                 update(&app, &ui)

@@ -71,10 +71,12 @@ fn update_activate_script(ui: &Ui, home: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn setup(ui: &Ui, home: &Path, update_scripts: bool) -> Result<()> {
+pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> Result<()> {
     if update_scripts {
         return update_activate_script(ui, home);
     }
+
+    let url = url.unwrap_or(CLYDE_STORE_URL);
 
     if home.exists() {
         return Err(anyhow!("Clyde directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
@@ -86,7 +88,8 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool) -> Result<()> {
 
     let app = App::new(home)?;
 
-    app.store.setup(CLYDE_STORE_URL)?;
+    ui.info(&format!("Cloning Clyde store from {}", &url));
+    app.store.setup(url)?;
 
     ui.info("Creating Clyde database");
     app.database.create()?;
