@@ -18,8 +18,6 @@ use crate::file_cache::FileCache;
 use crate::store::{GitStore, Store};
 use crate::ui::Ui;
 
-const CLYDE_STORE_URL: &str = "https://github.com/agateau/clyde-store";
-
 pub struct App {
     pub download_cache: FileCache,
     pub home: PathBuf,
@@ -75,7 +73,7 @@ impl App {
             ));
         }
         let store_dir = home.join("store");
-        let store = GitStore::new(CLYDE_STORE_URL, &store_dir);
+        let store = GitStore::new(&store_dir);
 
         let db_path = home.join("clyde.sqlite");
         let database = Database::new_from_path(&db_path)?;

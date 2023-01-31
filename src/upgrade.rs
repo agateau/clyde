@@ -80,7 +80,7 @@ mod tests {
     }
 
     impl Store for FakeStore {
-        fn setup(&self) -> Result<()> {
+        fn setup(&self, _url: &str) -> Result<()> {
             Ok(())
         }
         fn update(&self) -> Result<()> {

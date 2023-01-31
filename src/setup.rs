@@ -16,6 +16,8 @@ use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
 
+const CLYDE_STORE_URL: &str = "https://github.com/agateau/clyde-store";
+
 fn posix_shell_path_from_path(path: &Path) -> String {
     quote(path.to_str().unwrap()).to_string()
 }
@@ -84,7 +86,7 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool) -> Result<()> {
 
     let app = App::new(home)?;
 
-    app.store.setup()?;
+    app.store.setup(CLYDE_STORE_URL)?;
 
     ui.info("Creating Clyde database");
     app.database.create()?;
