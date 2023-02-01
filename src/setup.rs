@@ -82,7 +82,7 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> R
         return Err(anyhow!("Clyde directory ({:?}) already exists, not doing anything. Delete it if you want to start over.",
             home));
     }
-    ui.info(&format!("Setting up Clyde in {:?}", home));
+    ui.info(&format!("Setting up Clyde in {home:?}"));
 
     fs::create_dir_all(home)?;
 

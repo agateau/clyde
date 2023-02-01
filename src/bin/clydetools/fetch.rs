@@ -77,7 +77,7 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
         let fetch_status = match fetcher.fetch(&ui2, &package) {
             Ok(x) => x,
             Err(x) => {
-                ui2.error(&format!("Could not fetch updates: {}", x));
+                ui2.error(&format!("Could not fetch updates: {x}"));
                 continue;
             }
         };
@@ -88,7 +88,7 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
                 continue;
             }
             UpdateStatus::NeedUpdate { version, urls } => {
-                ui2.info(&format!("Package can be updated to version {}", version));
+                ui2.info(&format!("Package can be updated to version {version}"));
                 (version, urls)
             }
         };

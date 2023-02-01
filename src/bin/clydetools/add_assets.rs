@@ -241,10 +241,7 @@ pub fn add_assets(
                 &url,
             );
             if let Err(err) = result {
-                ui.error(&format!(
-                    "Can't add {:?} build from {}: {}",
-                    arch_os, url, err
-                ));
+                ui.error(&format!("Can't add {arch_os:?} build from {url}: {err}"));
                 return Err(err);
             };
         }

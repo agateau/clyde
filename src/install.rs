@@ -152,7 +152,7 @@ fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
         },
     );
 
-    map.insert("doc_dir".into(), format!("share/doc/{}/", package_name));
+    map.insert("doc_dir".into(), format!("share/doc/{package_name}/"));
     if let Some(asset_name) = asset_name {
         map.insert("asset_name".into(), asset_name.clone());
     }

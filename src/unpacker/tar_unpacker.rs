@@ -39,7 +39,7 @@ impl Unpacker for TarUnpacker {
         cmd.arg("-C");
         cmd.arg(dst_dir);
         if strip > 0 {
-            cmd.arg(format!("--strip-components={}", strip));
+            cmd.arg(format!("--strip-components={strip}"));
         }
         cmd.arg("-xf");
         cmd.arg(self.archive.canonicalize()?);
