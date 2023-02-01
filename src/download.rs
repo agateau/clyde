@@ -84,7 +84,7 @@ pub fn download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
 
 fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     let name = file_utils::get_file_name(dst_path)?;
-    ui.info(&format!("Downloading {}", name));
+    ui.info(&format!("Downloading {name}"));
 
     // Prepare partial file
     let partial_path = dst_path.with_file_name(name.to_string() + ".partial");
@@ -112,7 +112,7 @@ fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
         // Server does not support ranges (otherwise status() would be
         // StatusCode::PARTIAL_CONTENT). Reset partial file.
         ui.info("Server does not support ranges. Restarting download.");
-        file.seek(SeekFrom::Start(0))?;
+        file.rewind()?;
         partial_size = 0;
     }
     if let Some(total_size) = response.content_length() {

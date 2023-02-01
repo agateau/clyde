@@ -10,7 +10,7 @@ pub type VarsMap = HashMap<String, String>;
 
 /// Replace all occurrences of `${key}` with `value` in `src`
 pub fn expand_var(src: &str, key: &str, value: &str) -> String {
-    let from = format!("${{{}}}", key);
+    let from = format!("${{{key}}}");
     src.replace(&from, value)
 }
 

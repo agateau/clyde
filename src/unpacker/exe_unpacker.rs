@@ -60,7 +60,7 @@ impl Unpacker for ExeUnpacker {
             .with_context(|| format!("Error with {:?}", self.archive_path))?;
 
         let mut dst_file =
-            File::create(&dst_path).with_context(|| format!("Can't create {:?}", dst_path))?;
+            File::create(&dst_path).with_context(|| format!("Can't create {dst_path:?}"))?;
 
         io::copy(&mut src_file, &mut dst_file)?;
 

@@ -108,7 +108,7 @@ fn check_can_install(
 
     cmd.env("CLYDE_HOME", home_dir.as_os_str())
         .arg("install")
-        .arg(format!("{}@={}", package_str, version));
+        .arg(format!("{package_str}@={version}"));
 
     ui.info(&format!("Executing {cmd:?}"));
     let status = cmd.status().context("Failed to execute command")?;
@@ -180,7 +180,7 @@ fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
 
 fn print_summary_line(header: &str, packages: &[&str]) {
     let joined = packages.join(", ");
-    println!("{}: {}", header, joined);
+    println!("{header}: {joined}");
 }
 
 pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {

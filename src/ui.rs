@@ -28,7 +28,7 @@ impl Ui {
 
     pub fn println(&self, msg: &str) {
         self.print_indent();
-        eprintln!("{}", msg);
+        eprintln!("{msg}");
     }
 
     pub fn info(&self, msg: &str) {
@@ -45,6 +45,6 @@ impl Ui {
 
     fn print_with_indicator(&self, indicator: StyledObject<&str>, msg: &str) {
         self.print_indent();
-        eprintln!("{indicator} {}", msg);
+        eprintln!("{indicator} {msg}");
     }
 }
