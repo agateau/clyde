@@ -21,14 +21,13 @@ pub struct SearchHit {
 }
 
 pub trait Store {
-    fn setup(&self) -> Result<()>;
+    fn setup(&self, url: &str) -> Result<()>;
     fn update(&self) -> Result<()>;
     fn get_package(&self, name: &str) -> Result<Package>;
     fn search(&self, query: &str) -> Result<Vec<SearchHit>>;
 }
 
 pub struct GitStore {
-    url: String,
     dir: PathBuf,
 }
 
@@ -42,9 +41,8 @@ impl SearchHit {
 }
 
 impl GitStore {
-    pub fn new(url: &str, dir: &Path) -> GitStore {
+    pub fn new(dir: &Path) -> GitStore {
         GitStore {
-            url: url.to_string(),
             dir: dir.to_path_buf(),
         }
     }
@@ -89,9 +87,9 @@ fn get_package_path(path: &Path) -> Option<PathBuf> {
 }
 
 impl Store for GitStore {
-    fn setup(&self) -> Result<()> {
+    fn setup(&self, url: &str) -> Result<()> {
         let mut cmd = Command::new("git");
-        cmd.args(["clone", &self.url]);
+        cmd.args(["clone", "--depth", "1", url]);
         cmd.arg(self.dir.as_os_str());
 
         let status = match cmd.status() {
@@ -215,7 +213,7 @@ mod tests {
         let dir = assert_fs::TempDir::new().unwrap();
 
         // GIVEN a store with 3 packages foo, bar and baz (whose description contains Foo)
-        let store = GitStore::new("https://example.com", &dir);
+        let store = GitStore::new(&dir);
 
         create_package_file(&dir, "foo");
         create_package_file(&dir, "bar");
@@ -235,7 +233,7 @@ mod tests {
         // GIVEN an empty store
         let dir = assert_fs::TempDir::new().unwrap();
         let store_dir = dir.join("store");
-        let store = GitStore::new("https://example.com", &store_dir);
+        let store = GitStore::new(&store_dir);
 
         // AND a file called foo in the current dir
         fs::write(dir.join("foo"), "").unwrap();
