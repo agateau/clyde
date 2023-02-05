@@ -258,8 +258,6 @@ pub fn install_with_package_and_requested_version(
     ui.info("Cleaning");
     fs::remove_dir_all(&unpack_dir)
         .with_context(|| format!("Failed to delete {}", unpack_dir.display()))?;
-    fs::remove_file(&asset_path)
-        .with_context(|| format!("Failed to delete {}", asset_path.display()))?;
 
     Ok(())
 }
