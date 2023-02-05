@@ -208,10 +208,12 @@ pub fn install_with_package_and_requested_version(
             version
         ));
     }
-    ui.info(&format!("Installing {} {}", &package.name, version));
+    ui.info(&format!("Installing {} {}", &package.name, &version));
 
     let ui = ui.nest();
-    let asset_path = app.download_cache.download(&ui, &build.url)?;
+    let asset_path = app
+        .download_cache
+        .download(&ui, &package.name, version, &build.url)?;
 
     ui.info("Verifying asset integrity");
     verify_checksum(&asset_path, &build.sha256)?;
