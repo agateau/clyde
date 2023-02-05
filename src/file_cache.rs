@@ -49,7 +49,11 @@ impl FileCache {
 
         let archive_path = download_dir.join(OsString::from(name));
 
-        if !archive_path.exists() {
+        if archive_path.exists() {
+            ui.info(&format!(
+                "{package_name} {version} has already been downloaded"
+            ));
+        } else {
             download(ui, url, &archive_path)?;
         }
 
