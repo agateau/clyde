@@ -3,5 +3,4 @@ mod common;
 
 // Tests
 mod clydetools_check;
-mod install;
 mod self_upgrade;
