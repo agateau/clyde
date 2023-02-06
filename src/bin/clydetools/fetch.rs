@@ -100,7 +100,15 @@ pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
 
         let mut release = Release::new();
         for (arch_os, url) in urls {
-            add_asset(&ui2, &app.download_cache, &mut release, &arch_os, &url)?;
+            add_asset(
+                &ui2,
+                &app.download_cache,
+                &package,
+                &version,
+                &mut release,
+                &arch_os,
+                &url,
+            )?;
         }
         let new_package = package.replace_release(&version, release);
         new_package.to_file(path)?;

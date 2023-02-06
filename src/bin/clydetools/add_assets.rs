@@ -57,8 +57,14 @@ lazy_static! {
 
 const ARCH_OS_SEPARATOR_PATTERN: &str = "(\\b|[-_.])";
 
-fn compute_url_checksum(ui: &Ui, cache: &FileCache, url: &str) -> Result<String> {
-    let path = cache.download(ui, url)?;
+fn compute_url_checksum(
+    ui: &Ui,
+    cache: &FileCache,
+    package: &Package,
+    version: &Version,
+    url: &str,
+) -> Result<String> {
+    let path = cache.download(ui, &package.name, version, url)?;
     ui.info("Computing checksum");
     compute_checksum(&path)
 }
@@ -110,11 +116,13 @@ fn is_supported_name(name: &str) -> bool {
 pub fn add_asset(
     ui: &Ui,
     cache: &FileCache,
+    package: &Package,
+    version: &Version,
     release: &mut Release,
     arch_os: &ArchOs,
     url: &str,
 ) -> Result<()> {
-    let checksum = compute_url_checksum(ui, cache, url)?;
+    let checksum = compute_url_checksum(ui, cache, package, version, url)?;
 
     let asset = Asset {
         url: url.to_string(),
@@ -228,7 +236,15 @@ pub fn add_assets(
         }
         let url = urls.first().unwrap();
         let arch_os = ArchOs::parse(arch_os)?;
-        add_asset(ui, &app.download_cache, &mut release, &arch_os, url)?;
+        add_asset(
+            ui,
+            &app.download_cache,
+            &package,
+            version,
+            &mut release,
+            &arch_os,
+            url,
+        )?;
     } else {
         let urls_for_arch_os = select_best_urls(ui, urls, None, None)?;
         for (arch_os, url) in urls_for_arch_os {
@@ -236,6 +252,8 @@ pub fn add_assets(
             let result = add_asset(
                 &ui.nest(),
                 &app.download_cache,
+                &package,
+                version,
                 &mut release,
                 &arch_os,
                 &url,
