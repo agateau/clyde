@@ -45,6 +45,7 @@ define_version() {
 }
 
 cd $(dirname $0)/..
+ROOT_DIR=$PWD
 
 init_system_vars
 init_archive_vars
@@ -56,12 +57,14 @@ DATA_FILES="README.md CHANGELOG.md LICENSE"
 
 define_version
 
+VERSION_ARCH_OS=$VERSION-$ARCH-$OS_NAME
+
 ARTIFACTS_DIR=$PWD/artifacts
 ARCHIVE_DIR=$APP_NAME-$VERSION
-ARCHIVE_NAME=$APP_NAME-$VERSION-$ARCH-$OS_NAME$ARCHIVE_EXT
+ARCHIVE_NAME=$APP_NAME-$VERSION_ARCH_OS$ARCHIVE_EXT
 
 # If $CARGO_BUILD_TARGET is defined it must be included in the exe dir
-EXE_DIR=target/${CARGO_BUILD_TARGET:-}/release
+EXE_DIR=$ROOT_DIR/target/${CARGO_BUILD_TARGET:-}/release
 
 rm -rf $ARTIFACTS_DIR
 mkdir -p $ARTIFACTS_DIR/$ARCHIVE_DIR
@@ -78,6 +81,10 @@ cp $DATA_FILES $ARTIFACTS_DIR/$ARCHIVE_DIR
 echo "Creating archive $ARTIFACTS_DIR/$ARCHIVE_NAME"
 cd $ARTIFACTS_DIR
 $ARCHIVE_CMD $ARCHIVE_CMD_ARGS $ARCHIVE_NAME $ARCHIVE_DIR
+rm -rf $ARCHIVE_DIR
 
-echo "Computing checksum"
-$CHECKSUM_CMD $ARCHIVE_NAME
+echo "Copying standalone clyde executable"
+cp $EXE_DIR/clyde${EXE_EXT} $ARTIFACTS_DIR/clyde-$VERSION_ARCH_OS$EXE_EXT
+
+echo "Computing checksums"
+$CHECKSUM_CMD *
