@@ -43,7 +43,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           # Use `fetch-depth: 0` otherwise `git describe` does not see valid
-          # tags, causing ci/create-archive to create snapshot archives. This
+          # tags, causing ci/prepare-artifacts to create snapshot archives. This
           # also requires the "Fix actions/checkout bug" step below to work.
           fetch-depth: 0
 
@@ -62,16 +62,15 @@ jobs:
       - name: Run tests
         run: ci/run-tests
 
-      - name: Create archive
-        run: ci/create-archive
+      - name: Prepare artifacts
+        run: ci/prepare-artifacts
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
           name: artifacts
           path: |
-            artifacts/*.gz
-            artifacts/*.zip
+            artifacts/clyde-*
 
   server-upload:
     needs:
