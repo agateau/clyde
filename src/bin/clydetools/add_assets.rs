@@ -26,7 +26,7 @@ lazy_static! {
         ("x64", Arch::X86_64),
         ("x86", Arch::X86),
         ("i?[36]86", Arch::X86),
-        ("aarch64", Arch::Aarch64),
+        ("aarch_?64", Arch::Aarch64),
         ("arm64", Arch::Aarch64),
         ("32bit", Arch::X86),
         ("64bit", Arch::X86_64),
