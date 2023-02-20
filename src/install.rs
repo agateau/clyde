@@ -216,7 +216,13 @@ pub fn install_with_package_and_requested_version(
         .download(&ui, &package.name, version, &build.url)?;
 
     ui.info("Verifying asset integrity");
-    verify_checksum(&asset_path, &build.sha256)?;
+    match verify_checksum(&asset_path, &build.sha256) {
+        Ok(()) => {}
+        Err(err) => {
+            fs::remove_file(&asset_path)?;
+            return Err(err);
+        }
+    };
 
     let unpack_dir = app.tmp_dir.join(&package.name);
     if unpack_dir.exists() {
