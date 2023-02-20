@@ -8,8 +8,8 @@ use std::path::Path;
 
 use anyhow::{anyhow, Context, Result};
 use indicatif::{ProgressBar, ProgressStyle};
-use reqwest::blocking::ClientBuilder;
-use reqwest::{header, StatusCode, Url};
+use reqwest::blocking::Client;
+use reqwest::{header, Error as ReqwestError, StatusCode, Url};
 
 use crate::file_utils;
 use crate::ui::Ui;
@@ -17,6 +17,8 @@ use crate::ui::Ui;
 const FILE_PREFIX: &str = "file://";
 
 const PROGRESS_BAR_TEMPLATE: &str = "[{bar:40}] {bytes} / {total_bytes} - {bytes_per_sec}";
+
+const DOWNLOAD_ATTEMPTS: u64 = 3;
 
 struct ProgressWriter<W: Write> {
     writer: W,
@@ -82,27 +84,17 @@ pub fn download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     }
 }
 
-fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
-    let name = file_utils::get_file_name(dst_path)?;
-    ui.info(&format!("Downloading {name}"));
-
-    // Prepare partial file
-    let partial_path = dst_path.with_file_name(name.to_string() + ".partial");
+fn https_download_internal(ui: &Ui, client: &Client, url: &Url, partial_path: &Path) -> Result<()> {
     let mut file = OpenOptions::new()
         .create(true)
         .append(true)
-        .open(&partial_path)
+        .open(partial_path)
         .with_context(|| format!("Could not create {partial_path:?}"))?;
     file.seek(SeekFrom::End(0))?;
     let mut partial_size = file.stream_position().unwrap_or(0);
 
-    // Send request
-    let url = Url::parse(url_str)?;
-    let client_builder = ClientBuilder::new();
-    let client = client_builder.build()?;
-
     let request = client
-        .get(url)
+        .get(url.clone())
         .header(header::RANGE, format!("bytes={partial_size}-"))
         .send()?;
     let mut response = request.error_for_status()?;
@@ -116,10 +108,41 @@ fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
         partial_size = 0;
     }
     if let Some(total_size) = response.content_length() {
-        let mut writer = ProgressWriter::new(&ui.nest(), &mut file, partial_size, total_size);
+        let mut writer = ProgressWriter::new(&ui.nest(), file, partial_size, total_size);
         response.copy_to(&mut writer)?;
     } else {
         response.copy_to(&mut file)?;
+    }
+    Ok(())
+}
+
+fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
+    let name = file_utils::get_file_name(dst_path)?;
+    let partial_path = dst_path.with_file_name(name.to_string() + ".partial");
+
+    let url = Url::parse(url_str)?;
+    let client = Client::new();
+
+    for attempt in 1..(DOWNLOAD_ATTEMPTS + 1) {
+        if attempt > 1 {
+            ui.warn("Timeout while downloading, retrying");
+        }
+        ui.info(&format!(
+            "Downloading {name} (attempt {attempt} / {DOWNLOAD_ATTEMPTS})"
+        ));
+        match https_download_internal(ui, &client, &url, &partial_path) {
+            Ok(()) => break,
+            Err(err) => match err.downcast_ref::<ReqwestError>() {
+                Some(req_err) => {
+                    if !req_err.is_timeout() {
+                        return Err(err);
+                    }
+                }
+                None => {
+                    return Err(err);
+                }
+            },
+        };
     }
 
     // Done
