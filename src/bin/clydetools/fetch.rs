@@ -14,6 +14,7 @@ use clyde::package::{FetcherConfig, Package, Release};
 use clyde::ui::Ui;
 
 use crate::add_assets::add_asset;
+use crate::forgejo_fetcher::ForgejoFetcher;
 use crate::github_fetcher::GitHubFetcher;
 use crate::gitlab_fetcher::GitLabFetcher;
 use crate::script_fetcher::ScriptFetcher;
@@ -37,6 +38,7 @@ struct FetcherFinder {
     github_fetcher: GitHubFetcher,
     gitlab_fetcher: GitLabFetcher,
     script_fetcher: ScriptFetcher,
+    forgejo_fetcher: ForgejoFetcher,
 }
 
 impl FetcherFinder {
@@ -45,6 +47,7 @@ impl FetcherFinder {
             github_fetcher: GitHubFetcher::default(),
             gitlab_fetcher: GitLabFetcher::default(),
             script_fetcher: ScriptFetcher::default(),
+            forgejo_fetcher: ForgejoFetcher::default(),
         }
     }
 
@@ -60,6 +63,7 @@ impl FetcherFinder {
             FetcherConfig::GitHub { arch: _a, os: _o } => Some(&self.github_fetcher),
             FetcherConfig::GitLab { arch: _a, os: _o } => Some(&self.gitlab_fetcher),
             FetcherConfig::Script { .. } => Some(&self.script_fetcher),
+            FetcherConfig::Forgejo { .. } => Some(&self.forgejo_fetcher),
         }
     }
 }
