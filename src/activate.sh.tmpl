@@ -11,3 +11,11 @@ export CLYDE_INST_DIR="@INSTALL_DIR@"
 export PATH="$CLYDE_INST_DIR/bin:$PATH"
 export MANPATH="$CLYDE_INST_DIR/share/man:${MANPATH-}"
 export XDG_DATA_DIRS="$CLYDE_INST_DIR/share:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
+
+case "$SHELL" in
+    */zsh)
+        fpath=($CLYDE_INST_DIR/share/zsh-completions $fpath)
+        ;;
+    *)
+        ;;
+esac
