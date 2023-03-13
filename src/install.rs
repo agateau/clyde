@@ -153,6 +153,12 @@ fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
     );
 
     map.insert("doc_dir".into(), format!("share/doc/{package_name}/"));
+    map.insert(
+        "bash_comp_dir".into(),
+        // The extra "/completions/" is required by bash-completions
+        "share/bash-completions/completions/".into(),
+    );
+    map.insert("zsh_comp_dir".into(), "share/zsh-completions/".into());
     if let Some(asset_name) = asset_name {
         map.insert("asset_name".into(), asset_name.clone());
     }
