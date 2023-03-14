@@ -83,8 +83,9 @@ struct InternalPackage {
     pub extra_files_dir: PathBuf,
 }
 
-#[derive(Clone, Debug, Deserialize, Eq, PartialEq, Hash, Serialize)]
+#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Hash, Serialize)]
 pub enum FetcherConfig {
+    #[default]
     Auto,
     GitHub {
         #[serde(default)]
@@ -103,12 +104,6 @@ pub enum FetcherConfig {
         os: Option<Os>,
     },
     Off,
-}
-
-impl Default for FetcherConfig {
-    fn default() -> Self {
-        FetcherConfig::Auto
-    }
 }
 
 impl InternalPackage {
