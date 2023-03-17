@@ -3,7 +3,7 @@ set -euo pipefail
 export RUST_BACKTRACE=1
 cargo test --release
 
-for tst in functests/*.sh ; do
-    echo "=== Running $tst ==="
-    $tst
-done
+if ! command -v pytest ; then
+    pip install pytest
+fi
+pytest functests -vs
