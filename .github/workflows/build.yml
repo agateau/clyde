@@ -8,6 +8,7 @@ on:
       # are built twice
       - main
     tags:
+      - '[0-9]*'
   workflow_dispatch:
 
 jobs:
