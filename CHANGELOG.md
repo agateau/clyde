@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.5.0 - 2023-03-20
+
+### Added
+
+- `clydetools fetch` can now fetch updates for packages hosted on gitlab.com.
+
+- `clyde setup` learned the `--url` option to define the URL of the store.
+
+- Clyde packages can now install Bash and Zsh completion using the new `${bash_comp_dir}` and `${zsh_comp_dir}` variables (#20).
+
+- `clyde install` learned the `--reinstall` option.
+
+### Changed
+
+- `clydetools` learned new patterns to extract arch-os from URLs.
+
+- `clyde setup` now creates a shallow clone of the store, making it faster (#17).
+
+- When a download times out, Clyde now retries 2 times before giving up.
+
+### Fixed
+
+- `clydetools fetch` could sometimes confuse cached assets if their name did not include the version number.
+
+### Package format change
+
+- A new entry has been added: `fetcher`. It makes it possible for the package to define the fetcher to use, and default values for the architecture and/or OS.
+
 ## 0.4.1 - 2022-11-30
 
 ### Fixed

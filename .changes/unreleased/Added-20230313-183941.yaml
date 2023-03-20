@@ -1,4 +1,0 @@
-kind: Added
-body: Clyde packages can now install Bash and Zsh completion using the new ${bash_comp_dir}
-  and ${zsh_comp_dir} variables (#20).
-time: 2023-03-13T18:39:41.32851723+01:00
