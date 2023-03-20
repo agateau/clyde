@@ -1,4 +1,0 @@
-kind: Fixed
-body: '`clydetools fetch` could sometimes confuse cached assets if their name did
-  not include the version number.'
-time: 2023-02-06T19:37:06.707260983+01:00
