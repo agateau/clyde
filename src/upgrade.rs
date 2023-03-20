@@ -44,6 +44,7 @@ pub fn upgrade(app: &App, ui: &Ui) -> Result<()> {
         install_with_package_and_requested_version(
             app,
             &ui.nest(),
+            false, /* reinstall */
             &info.name,
             &info.requested_version,
         )

@@ -166,10 +166,16 @@ fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
     map
 }
 
-pub fn install(app: &App, ui: &Ui, package_name_args: &Vec<String>) -> Result<()> {
+pub fn install(app: &App, ui: &Ui, reinstall: bool, package_name_args: &Vec<String>) -> Result<()> {
     for package_name_arg in package_name_args {
         let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-        install_with_package_and_requested_version(app, ui, package_name, &requested_version)?;
+        install_with_package_and_requested_version(
+            app,
+            ui,
+            reinstall,
+            package_name,
+            &requested_version,
+        )?;
     }
     Ok(())
 }
@@ -177,6 +183,7 @@ pub fn install(app: &App, ui: &Ui, package_name_args: &Vec<String>) -> Result<()
 pub fn install_with_package_and_requested_version(
     app: &App,
     ui: &Ui,
+    reinstall: bool,
     package_path: &str,
     requested_version: &VersionReq,
 ) -> Result<()> {
@@ -207,7 +214,7 @@ pub fn install_with_package_and_requested_version(
         .ok_or_else(|| anyhow!("No files instruction for {}", &package.name))?;
 
     let installed_version = db.get_package_version(&package.name)?;
-    if installed_version == Some(version.clone()) {
+    if !reinstall && installed_version == Some(version.clone()) {
         return Err(anyhow!(
             "{} {} is already installed",
             &package.name,
@@ -239,7 +246,8 @@ pub fn install_with_package_and_requested_version(
     let asset_name = unpack(&asset_path, &unpack_dir, install.strip)?;
 
     if installed_version.is_some() {
-        // A different version is already installed, uninstall it first
+        // The package is already installed: either it's a different version, or we were called
+        // with --reinstall. Uninstall it first.
         uninstall_package(app, &ui, &package.name)?;
     }
 

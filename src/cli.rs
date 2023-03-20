@@ -41,6 +41,9 @@ enum Command {
     Update {},
     /// Install applications
     Install {
+        /// Uninstall then reinstall already installed packages
+        #[clap(short, long)]
+        reinstall: bool,
         /// Application name, optionally suffixed with @version
         ///
         /// @version must follow Cargo's interpretation of Semantic Versioning:
@@ -97,9 +100,12 @@ impl Cli {
                 let app = App::new(&home)?;
                 update(&app, &ui)
             }
-            Command::Install { package_names } => {
+            Command::Install {
+                reinstall,
+                package_names,
+            } => {
                 let app = App::new(&home)?;
-                install(&app, &ui, &package_names)
+                install(&app, &ui, reinstall, &package_names)
             }
             Command::Uninstall { package_names } => {
                 let app = App::new(&home)?;

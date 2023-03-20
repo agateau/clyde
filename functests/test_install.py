@@ -32,3 +32,21 @@ def test_uninstall_package(clyde_home):
 
     # THEN the starship binary no longer exists
     assert not starship_path.exists()
+
+
+def test_reinstall_package(clyde_home):
+    # GIVEN the starship package is installed
+    starship_path = get_bin_path("starship")
+
+    run_clyde("install", "starship")
+    assert starship_path.exists()
+
+    # AND its binary has been removed
+    starship_path.unlink()
+    assert not starship_path.exists()
+
+    # WHEN running `clyde install --reinstall starship`
+    run_clyde("install", "--reinstall", "starship")
+
+    # THEN the binary is back
+    assert starship_path.exists()
