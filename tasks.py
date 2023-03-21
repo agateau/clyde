@@ -115,8 +115,12 @@ def prepare_release3(c):
     erun("git add Cargo.toml Cargo.lock CHANGELOG.md .changes")
     erun(f"git commit -m 'Prepare {version}'")
 
-    erun("cargo publish --dry-run")
+    prepare_release4(c)
 
+
+@task
+def prepare_release4(c):
+    erun("cargo publish --dry-run")
     erun("git push -u origin prep-release")
     create_pr(c)
 
