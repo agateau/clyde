@@ -187,7 +187,7 @@ def update_store(c):
         cerun(c, "git checkout main")
         cerun(c, "git pull")
         cerun(c, "git checkout -b update-clyde")
-        cerun(c, f"clydetools fetch clyde.yaml", pty=True)
+        cerun(c, "clydetools fetch clyde.yaml", pty=True)
         cerun(c, "git add clyde.yaml")
         cerun(c, f"git commit -m 'Update clyde to {version}'")
         cerun(c, "git push -u origin update-clyde")
