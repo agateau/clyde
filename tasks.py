@@ -13,6 +13,7 @@ import shutil
 import sys
 
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import List
 
 from invoke import task, run
@@ -115,8 +116,12 @@ def prepare_release3(c):
     erun("git add Cargo.toml Cargo.lock CHANGELOG.md .changes")
     erun(f"git commit -m 'Prepare {version}'")
 
-    erun("cargo publish --dry-run")
+    prepare_release4(c)
 
+
+@task
+def prepare_release4(c):
+    erun("cargo publish --dry-run")
     erun("git push -u origin prep-release")
     create_pr(c)
 
@@ -152,11 +157,26 @@ def download_artifacts(c):
     erun(f"gh run download --dir {ARTIFACTS_DIR}", pty=True)
 
 
+def prepare_release_notes(version_md: Path) -> str:
+    """
+    Take the content of $VERSION.md and return it ready to use as GitHub release notes:
+    - Remove header
+    - Turn all h3 into h2
+    """
+    content = re.sub("^## .*", "", version_md.read_text())
+    content = re.sub("^### ", "## ", content, flags=re.MULTILINE)
+    return content.strip() + "\n"
+
+
 @task
 def publish(c):
     version = get_version()
     files_str = " ".join(str(x) for x in get_artifact_list())
-    erun(f"gh release create {version} -F.changes/{version}.md {files_str}")
+    with NamedTemporaryFile() as tmp_file:
+        content = prepare_release_notes(Path(".changes") / f"{version}.md")
+        tmp_file.write(content.encode("utf-8"))
+        tmp_file.flush()
+        erun(f"gh release create {version} -F{tmp_file.name} {files_str}")
     erun("cargo publish")
 
 
@@ -167,7 +187,7 @@ def update_store(c):
         cerun(c, "git checkout main")
         cerun(c, "git pull")
         cerun(c, "git checkout -b update-clyde")
-        cerun(c, f"clydetools fetch clyde.yaml", pty=True)
+        cerun(c, "clydetools fetch clyde.yaml", pty=True)
         cerun(c, "git add clyde.yaml")
         cerun(c, f"git commit -m 'Update clyde to {version}'")
         cerun(c, "git push -u origin update-clyde")
