@@ -155,16 +155,19 @@ fn check_package_name(package: &Package, path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// The bool indicates if an asset was available
-fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
+fn load_package(path: &Path) -> Result<Package> {
     let path = path.canonicalize()?;
     let package = Package::from_file(&path)?;
-
     check_package_name(&package, &path)?;
-    check_has_release_assets(&package)?;
-    check_has_installs(&package)?;
+    Ok(package)
+}
 
-    let version = match get_latest_version(&package) {
+/// The bool indicates if an asset was available
+fn check_package(ui: &Ui, package: &Package, path: &Path) -> Result<bool> {
+    check_has_release_assets(package)?;
+    check_has_installs(package)?;
+
+    let version = match get_latest_version(package) {
         Some(x) => x,
         None => {
             ui.info(&format!(
@@ -174,25 +177,35 @@ fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
             return Ok(false);
         }
     };
-    check_can_install(ui, &package, &path, &version)?;
+    check_can_install(ui, package, path, &version)?;
     Ok(true)
 }
 
-fn print_summary_line(header: &str, packages: &[&str]) {
+fn print_summary_line(header: &str, packages: &[String]) {
     let joined = packages.join(", ");
     println!("{header}: {joined}");
 }
 
 pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
-    let mut ok_packages = Vec::<&str>::new();
-    let mut not_on_arch_os_packages = Vec::<&str>::new();
-    let mut failed_packages = Vec::<&str>::new();
+    let mut ok_packages = Vec::<String>::new();
+    let mut not_on_arch_os_packages = Vec::<String>::new();
+    let mut failed_packages = Vec::<String>::new();
 
     for path in paths {
-        let name = path.file_stem().unwrap().to_str().unwrap();
+        let package = match load_package(path) {
+            Ok(x) => x,
+            Err(message) => {
+                ui.error(&format!(
+                    "Can't load package from {}: {message}",
+                    path.display()
+                ));
+                continue;
+            }
+        };
+        let name = package.name.clone();
         ui.info(&format!("Checking {name}"));
         let ui2 = ui.nest();
-        match check_package(&ui2, path) {
+        match check_package(&ui2, &package, path) {
             Ok(true) => ok_packages.push(name),
             Ok(false) => not_on_arch_os_packages.push(name),
             Err(message) => {
