@@ -4,7 +4,7 @@ Clyde is a package manager for prebuilt applications.
 
 It works on Linux, macOS and Windows.
 
-[![Clyde demo](https://asciinema.org/a/bbNhN0xG779gAFvWjAJMlVeai.svg)](https://asciinema.org/a/bbNhN0xG779gAFvWjAJMlVeai)
+[![Clyde demo](https://asciinema.org/a/571122.svg)](https://asciinema.org/a/571122)
 
 ## Motivation
 
@@ -20,15 +20,15 @@ You want to pin the tool versions to create a reproducible platform.
 
 You are concerned about supply-chain attacks (see Security section).
 
-## Installation
+## Getting started
 
 ### Installing Clyde
 
 To get started, you need to download the Clyde binary yourself. Clyde can update itself, but it needs to be installed manually first. You can either:
 
-- Get an archive from the [releases page](http://github.com/agateau/clyde/releases).
+- Download a pre-built archive from the [releases page](http://github.com/agateau/clyde/releases).
 
-- Get a main build from <https://builds.agateau.com/clyde>.
+- Download a pre-built archive of the `main` branch from <https://builds.agateau.com/clyde>.
 
 - Build it yourself. Clyde is written in Rust, so if you have the Rust tool-chain installed, then you can clone its source code and install it with `clyde install --path .`.
 
@@ -39,20 +39,38 @@ Next, make sure these tools are installed:
 
 This requirement list might get smaller in the future if more features are implemented internally.
 
-## Getting started
+### Setting up your Clyde home
 
-Assuming the `clyde` binary is in your PATH.
+Clyde installs all applications in "Clyde home directory": a directory created in the default cache directory of your home directory.
 
-1. Run `clyde setup`.
+Assuming you downloaded a Clyde archive, unpacked it and changed to its directory.
 
-2. Add the created activation script to your shell startup script.
+Run `./clyde setup`. This creates Clyde home directory, and clones the [Clyde Store](https://github.com/agateau/clyde-store) in it.
 
-3. Restart your shell.
+```
+$ ./clyde setup
+[I] Setting up Clyde in "/home/demo/.cache/clyde"
+Cloning into '/home/demo/.cache/clyde/store'...
+remote: Enumerating objects: 1790, done.
+remote: Counting objects: 100% (1790/1790), done.
+remote: Compressing objects: 100% (653/653), done.
+remote: Total 1790 (delta 1132), reused 1745 (delta 1113), pack-reused 0
+Receiving objects: 100% (1790/1790), 499.73 KiB | 123.00 KiB/s, done.
+Resolving deltas: 100% (1132/1132), done.
+[I] Creating Clyde database
+[I] Creating activation script
+
+All set! To activate your Clyde installation, add this line to your shell startup script:
+
+. /home/demo/.cache/clyde/scripts/activate.sh
+```
+
+Add the created activation script to your shell startup script and restart your shell.
 
 You are now ready to use Clyde. Let's install ripgrep:
 
 ```
-clyde install ripgrep
+./clyde install ripgrep
 ```
 
 Check it works:
@@ -67,10 +85,18 @@ Check you can read its man page:
 man rg
 ```
 
+Check auto-completion works:
+
+```
+$ rg --regex<tab>
+--regexp            -- specify pattern
+--regex-size-limit  -- specify upper size limit of compiled regex
+```
+
 To ensure you always run the latest version of Clyde, install it with itself!
 
 ```
-clyde install clyde
+./clyde install clyde
 ```
 
 ## Commands
@@ -81,9 +107,9 @@ Setup Clyde: setup the Clyde store, and creates an activation script. All change
 
 The Clyde store contains the list of all packages Clyde can install.
 
-### `clyde update`
+### `clyde search foobar`
 
-Updates Clyde store so that Clyde is aware of the availability of new packages or new versions of existing packages.
+Searches Clyde store for a package matching "foobar" in its name or description.
 
 ### `clyde install foobar[@version]`
 
@@ -107,9 +133,9 @@ Uninstalls the `foobar` package. Can also be called as `clyde remove foobar`.
 
 Shows details about `foobar` package.
 
-### `clyde search foobar`
+### `clyde update`
 
-Searches Clyde store for a package matching "foobar" in its name or description.
+Updates Clyde store so that Clyde is aware of the availability of new packages or new versions of existing packages.
 
 ### `clyde upgrade`
 

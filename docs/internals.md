@@ -12,17 +12,17 @@ The default location for Clyde home depends on your OS:
 
 The home location can be overridden using the `$CLYDE_HOME` environment variable.
 
-## Folder hierarchy
+## Directory hierarchy
 
 - `$CLYDE_HOME`
-    - `inst`: Clyde "prefix": where files are installed
+    - `inst`: Clyde "prefix": where package files are installed
         - `bin`
         - `share`
         - `opt`
-    - `download`: where Clyde downloads assets
+    - `download`: where Clyde downloads package assets
     - `store`: Clyde store (see below)
     - `scripts`: activation scripts
-    - `tmp_dir`: used while installing
+    - `tmp`: used while installing
     - `clyde.sqlite`: installed packages database (see below)
 
 ## Clyde store
