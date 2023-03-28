@@ -9,9 +9,11 @@ use std::path::Path;
 use std::process::Command;
 
 use anyhow::{anyhow, Result};
+use semver::VersionReq;
 use shell_words::quote;
 
 use crate::app::App;
+use crate::install::install_with_package_and_requested_version;
 use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
@@ -93,6 +95,14 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> R
 
     ui.info("Creating Clyde database");
     app.database.create()?;
+
+    install_with_package_and_requested_version(
+        &app,
+        ui,
+        false, /* reinstall */
+        "clyde",
+        &VersionReq::STAR,
+    )?;
 
     ui.info("Creating activation script");
     let shell_script_path = create_activate_script(&app)?;
