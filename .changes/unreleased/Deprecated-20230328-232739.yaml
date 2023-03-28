@@ -1,0 +1,4 @@
+kind: Deprecated
+body: "The `$CLYDE_INST_DIR` environment variable is now deprecated. `$CLYDE_HOME` is now defined by the activation script, so one can use `$CLYDE_HOME/inst`
+  instead."
+time: 2023-03-28T23:27:39.854183487+02:00

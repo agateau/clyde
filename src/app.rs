@@ -16,7 +16,6 @@ use single_instance::SingleInstance;
 use crate::db::Database;
 use crate::file_cache::FileCache;
 use crate::store::{GitStore, Store};
-use crate::ui::Ui;
 
 pub struct App {
     pub download_cache: FileCache,
@@ -37,9 +36,8 @@ fn create_single_instance_name(home: &Path) -> String {
 }
 
 impl App {
-    pub fn find_home(ui: &Ui) -> Result<PathBuf> {
+    pub fn find_home() -> Result<PathBuf> {
         if let Some(home) = env::var_os("CLYDE_HOME") {
-            ui.info(&format!("Using {home:?} as Clyde home directory"));
             return Ok(Path::new(&home).to_path_buf());
         }
 
@@ -50,7 +48,7 @@ impl App {
         Err(anyhow!("Could not find Clyde home directory"))
     }
 
-    /// Make sure that for a given home directory, only one instance of Clippy is running at a time
+    /// Make sure that for a given home directory, only one instance of Clyde is running at a time
     pub fn create_single_instance(home: &Path) -> Result<SingleInstance> {
         let name = create_single_instance_name(home);
 

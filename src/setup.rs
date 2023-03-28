@@ -9,9 +9,11 @@ use std::path::Path;
 use std::process::Command;
 
 use anyhow::{anyhow, Result};
+use semver::VersionReq;
 use shell_words::quote;
 
 use crate::app::App;
+use crate::install::install_with_package_and_requested_version;
 use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
@@ -51,8 +53,8 @@ fn shell_path_from_path(path: &Path) -> Result<String> {
 }
 
 fn create_activate_script(app: &App) -> Result<String> {
-    let install_dir = shell_path_from_path(&app.install_dir)?;
-    let content = SH_INIT.replace("@INSTALL_DIR@", &install_dir);
+    let clyde_home = shell_path_from_path(&app.home)?;
+    let content = SH_INIT.replace("@CLYDE_HOME@", &clyde_home);
 
     let scripts_dir = app.home.join("scripts");
     let script_path = scripts_dir.join("activate.sh");
@@ -93,6 +95,14 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> R
 
     ui.info("Creating Clyde database");
     app.database.create()?;
+
+    install_with_package_and_requested_version(
+        &app,
+        ui,
+        false, /* reinstall */
+        "clyde",
+        &VersionReq::STAR,
+    )?;
 
     ui.info("Creating activation script");
     let shell_script_path = create_activate_script(&app)?;
