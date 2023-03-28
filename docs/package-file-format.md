@@ -160,4 +160,4 @@ This fetcher accepts the following entries:
 
 ## Environment variables
 
-Clyde activation scripts define a `$CLYDE_INST_DIR` environment variable pointing to Clyde prefix. This means Clyde `opt` directory for example, can be referred to as `$CLYDE_INST_DIR/opt`. Launcher scripts installed via `extra_files` can make use of the `$CLYDE_INST_DIR` environment variable to refer to a file installed in `$CLYDE_INST_DIR/opt/<package_name>`.
+Clyde activation script defines a `$CLYDE_HOME` environment variable pointing to Clyde home. This means Clyde `opt` directory for example, can be referred to as `$CLYDE_HOME/inst/opt`. Launcher scripts installed via `extra_files` can make use of the `$CLYDE_HOME` environment variable to refer to a file installed in `$CLYDE_HOME/inst/opt/<package_name>`.

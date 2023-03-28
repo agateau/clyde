@@ -13,6 +13,7 @@ _clyde_setup() {
     export MANPATH="$inst_dir/share/man:${MANPATH-}"
     export XDG_DATA_DIRS="$inst_dir/share:${XDG_DATA_DIRS-/usr/local/share:/usr/share}"
 
+    # TODO remove once this variable has been deprecated
     export CLYDE_INST_DIR=$inst_dir
 
     case "$SHELL" in
