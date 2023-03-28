@@ -53,8 +53,8 @@ fn shell_path_from_path(path: &Path) -> Result<String> {
 }
 
 fn create_activate_script(app: &App) -> Result<String> {
-    let install_dir = shell_path_from_path(&app.install_dir)?;
-    let content = SH_INIT.replace("@INSTALL_DIR@", &install_dir);
+    let clyde_home = shell_path_from_path(&app.home)?;
+    let content = SH_INIT.replace("@CLYDE_HOME@", &clyde_home);
 
     let scripts_dir = app.home.join("scripts");
     let script_path = scripts_dir.join("activate.sh");

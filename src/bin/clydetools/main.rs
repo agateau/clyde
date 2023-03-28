@@ -71,7 +71,7 @@ enum Command {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     let ui = Ui::default();
-    let home = App::find_home(&ui)?;
+    let home = App::find_home()?;
 
     match cli.command {
         Command::AddAssets {

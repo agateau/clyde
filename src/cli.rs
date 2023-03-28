@@ -87,7 +87,7 @@ struct GlobalOpts {
 impl Cli {
     pub fn exec(self) -> Result<()> {
         let ui = Ui::default();
-        let home = App::find_home(&ui)?;
+        let home = App::find_home()?;
 
         let _instance = App::create_single_instance(&home)?;
 
