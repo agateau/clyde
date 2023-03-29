@@ -18,7 +18,7 @@ path = "tests/tests.rs"
 
 [dependencies]
 anyhow = "1.0.64"
-clap = { version = "3.2.20", features = ["derive"] }
+clap = { version = "4.2.0", features = ["derive"] }
 serde = { version = "1.0.144", features = ["derive"] }
 serde_json = "1.0.85"
 serde_yaml = "0.9.11"

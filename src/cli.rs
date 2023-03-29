@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use anyhow::Result;
-use clap::{Args, Parser, Subcommand};
+use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::app::App;
 use crate::install::install;
@@ -17,12 +17,12 @@ use crate::update::update;
 use crate::upgrade::upgrade;
 
 #[derive(Debug, Parser)]
-#[clap(name = "clyde", version, about)]
+#[command(name = "clyde", version, about)]
 pub struct Cli {
-    #[clap(flatten)]
+    #[command(flatten)]
     global_opts: GlobalOpts,
 
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Command,
 }
 
@@ -31,10 +31,10 @@ enum Command {
     /// Setup Clyde
     Setup {
         /// Update the activation scripts of an existing installation.
-        #[clap(short, long)]
+        #[arg(short, long)]
         update_scripts: bool,
         /// URL of the Git repository to use for the store.
-        #[clap(long = "--url")]
+        #[arg(long = "--url")]
         store_url: Option<String>,
     },
     /// Update Clyde store
@@ -42,26 +42,26 @@ enum Command {
     /// Install applications
     Install {
         /// Uninstall then reinstall already installed packages
-        #[clap(short, long)]
+        #[arg(short, long)]
         reinstall: bool,
         /// Application name, optionally suffixed with @version
         ///
         /// @version must follow Cargo's interpretation of Semantic Versioning:
         /// <https://doc.rust-lang.org/cargo/reference/specifying-dependencies.html>
-        #[clap(required = true, value_name = "APPLICATION_NAME")]
+        #[arg(required = true, value_name = "APPLICATION_NAME")]
         package_names: Vec<String>,
     },
     /// Uninstall applications (alias: remove)
-    #[clap(alias("remove"))]
+    #[command(alias("remove"))]
     Uninstall {
         /// Application name
-        #[clap(required = true, value_name = "APPLICATION_NAME")]
+        #[arg(required = true, value_name = "APPLICATION_NAME")]
         package_names: Vec<String>,
     },
     /// Show details about an application
     Show {
         /// List application files instead of showing information
-        #[clap(short, long)]
+        #[arg(short, long)]
         list: bool,
         /// Application name
         package_name: String,
@@ -80,7 +80,7 @@ enum Command {
 #[derive(Debug, Args)]
 struct GlobalOpts {
     /// Verbosity level (can be specified multiple times)
-    #[clap(long, short, global = true, parse(from_occurrences))]
+    #[arg(long, short, global = true, action = ArgAction::Count)]
     verbose: usize,
 }
 
