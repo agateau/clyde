@@ -27,16 +27,16 @@ use fetch::fetch;
 
 /// Helper tools for Clyde package authors. These commands are not useful to use Clyde.
 #[derive(Debug, Parser)]
-#[clap(name = "clydetools", version)]
+#[command(name = "clydetools", version)]
 pub struct Cli {
-    #[clap(subcommand)]
+    #[command(subcommand)]
     command: Command,
 }
 
 #[derive(Debug, Subcommand)]
 enum Command {
     /// Add assets to a package
-    #[clap(alias("add-build"))]
+    #[command(alias("add-build"))]
     AddAssets {
         /// Path to the package YAML file
         package_file: PathBuf,
@@ -44,7 +44,7 @@ enum Command {
         ///
         /// If the YAML file does not already contain this version, it will be added.
         version: String,
-        #[clap(short, long)]
+        #[arg(short, long)]
         /// arch-os double
         ///
         /// If not set, add-assets tries to deduce it from the archive names. If
@@ -57,13 +57,13 @@ enum Command {
     /// check the latest asset installs (if it can be installed on the running machine)
     Check {
         /// Path to the package YAML files
-        #[clap(required = true)]
+        #[arg(required = true)]
         package_files: Vec<PathBuf>,
     },
     /// Fetch updates for supported packages
     Fetch {
         /// Path to the package YAML files
-        #[clap(required = true)]
+        #[arg(required = true)]
         package_files: Vec<PathBuf>,
     },
 }
