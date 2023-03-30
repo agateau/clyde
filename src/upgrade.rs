@@ -8,7 +8,7 @@ use anyhow::Result;
 
 use crate::app::App;
 use crate::db::{Database, PackageInfo};
-use crate::install::install_with_package_and_requested_version;
+use crate::install::install_package;
 use crate::store::Store;
 use crate::ui::Ui;
 
@@ -41,7 +41,7 @@ pub fn upgrade_cmd(app: &App, ui: &Ui) -> Result<()> {
     }
     for info in to_upgrade {
         ui.info(&format!("Upgrading {}", info.name));
-        install_with_package_and_requested_version(
+        install_package(
             app,
             &ui.nest(),
             false, /* reinstall */

@@ -174,18 +174,12 @@ pub fn install_cmd(
 ) -> Result<()> {
     for package_name_arg in package_name_args {
         let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-        install_with_package_and_requested_version(
-            app,
-            ui,
-            reinstall,
-            package_name,
-            &requested_version,
-        )?;
+        install_package(app, ui, reinstall, package_name, &requested_version)?;
     }
     Ok(())
 }
 
-pub fn install_with_package_and_requested_version(
+pub fn install_package(
     app: &App,
     ui: &Ui,
     reinstall: bool,

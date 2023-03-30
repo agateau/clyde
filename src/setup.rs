@@ -13,7 +13,7 @@ use semver::VersionReq;
 use shell_words::quote;
 
 use crate::app::App;
-use crate::install::install_with_package_and_requested_version;
+use crate::install::install_package;
 use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
@@ -96,7 +96,7 @@ pub fn setup_cmd(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) 
     ui.info("Creating Clyde database");
     app.database.create()?;
 
-    install_with_package_and_requested_version(
+    install_package(
         &app,
         ui,
         false, /* reinstall */
