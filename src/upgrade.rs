@@ -32,7 +32,7 @@ fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<Package
     Ok(upgrades)
 }
 
-pub fn upgrade(app: &App, ui: &Ui) -> Result<()> {
+pub fn upgrade_cmd(app: &App, ui: &Ui) -> Result<()> {
     ui.info("Checking upgrades");
     let to_upgrade = get_upgrades(&ui.nest(), &*app.store, &app.database)?;
     if to_upgrade.is_empty() {

@@ -73,7 +73,7 @@ fn update_activate_script(ui: &Ui, home: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> Result<()> {
+pub fn setup_cmd(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> Result<()> {
     if update_scripts {
         return update_activate_script(ui, home);
     }

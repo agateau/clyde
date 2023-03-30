@@ -40,7 +40,7 @@ fn show_files(app: &App, package_name: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn show(app: &App, app_name: &str, list: bool) -> Result<()> {
+pub fn show_cmd(app: &App, app_name: &str, list: bool) -> Result<()> {
     if list {
         show_files(app, app_name)
     } else {

@@ -7,7 +7,7 @@ use anyhow::Result;
 use crate::app::App;
 use crate::table::Table;
 
-pub fn list(app: &App) -> Result<()> {
+pub fn list_cmd(app: &App) -> Result<()> {
     let table = Table::new(&[40, 12, 12]);
     table.add_row(&["Package", "Installed", "Requested"]);
     table.add_separator();

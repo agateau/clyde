@@ -23,7 +23,7 @@ use clyde::ui::Ui;
 
 use add_assets::add_assets_cmd;
 use check_package::check_packages;
-use fetch::fetch;
+use fetch::fetch_cmd;
 
 /// Helper tools for Clyde package authors. These commands are not useful to use Clyde.
 #[derive(Debug, Parser)]
@@ -87,7 +87,7 @@ fn main() -> Result<()> {
         Command::Check { package_files } => check_packages(&ui, &package_files),
         Command::Fetch { package_files } => {
             let app = App::new(&home)?;
-            fetch(&app, &ui, &package_files)
+            fetch_cmd(&app, &ui, &package_files)
         }
     }
 }

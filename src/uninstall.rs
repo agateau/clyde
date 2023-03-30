@@ -26,7 +26,7 @@ fn path_exists(path: &Path) -> bool {
     path.is_symlink() || path.exists()
 }
 
-pub fn uninstall(app: &App, ui: &Ui, package_names: &Vec<String>) -> Result<()> {
+pub fn uninstall_cmd(app: &App, ui: &Ui, package_names: &Vec<String>) -> Result<()> {
     for package_name in package_names {
         uninstall_package(app, ui, package_name)?;
     }

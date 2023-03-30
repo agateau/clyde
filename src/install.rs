@@ -166,7 +166,12 @@ fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
     map
 }
 
-pub fn install(app: &App, ui: &Ui, reinstall: bool, package_name_args: &Vec<String>) -> Result<()> {
+pub fn install_cmd(
+    app: &App,
+    ui: &Ui,
+    reinstall: bool,
+    package_name_args: &Vec<String>,
+) -> Result<()> {
     for package_name_arg in package_name_args {
         let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
         install_with_package_and_requested_version(
