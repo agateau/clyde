@@ -13,7 +13,7 @@ use semver::VersionReq;
 use shell_words::quote;
 
 use crate::app::App;
-use crate::install::install_package;
+use crate::install::{install_package, InstallRequest};
 use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
@@ -100,8 +100,7 @@ pub fn setup_cmd(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) 
         &app,
         ui,
         false, /* reinstall */
-        "clyde",
-        &VersionReq::STAR,
+        &InstallRequest::new("clyde", VersionReq::STAR),
     )?;
 
     ui.info("Creating activation script");
