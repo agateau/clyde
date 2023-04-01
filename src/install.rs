@@ -17,6 +17,8 @@ use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 
+const CLYDE_PACKAGE_NAME: &str = "clyde";
+
 #[derive(Debug, PartialEq)]
 /// Store the details of an install, used by install_package()
 /// and install_packages()
@@ -202,6 +204,14 @@ pub fn install_packages(
     reinstall: bool,
     install_requests: &Vec<InstallRequest>,
 ) -> Result<()> {
+    if let Some(clyde_request) = install_requests
+        .iter()
+        .find(|x| x.name == CLYDE_PACKAGE_NAME)
+    {
+        ui.warn("The list of packages to install/upgrade includes Clyde itself. To avoid issues, only Clyde is going to be updated. You need to rerun the command after it's installed.");
+        return install_package(app, ui, reinstall, clyde_request);
+    }
+
     for request in install_requests {
         install_package(app, ui, reinstall, request)?;
     }
