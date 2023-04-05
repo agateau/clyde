@@ -3,7 +3,7 @@ die() {
     exit 1
 }
 
-# defines ARCH, EXE_EXT, and OS_NAME
+# defines ARCH, EXE_DIR, EXE_EXT, and OS_NAME
 # optionally defines and exports CARGO_BUILD_TARGET
 init_system_vars() {
     ARCH=$(uname -m)
@@ -29,4 +29,7 @@ init_system_vars() {
         die "Unknown OS. uname printed '$out'"
         ;;
     esac
+
+    # If $CARGO_BUILD_TARGET is defined it must be included in the exe dir
+    EXE_DIR=target/${CARGO_BUILD_TARGET:-}/release
 }
