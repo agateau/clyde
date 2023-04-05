@@ -64,7 +64,7 @@ pub fn uninstall_package(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
             // and leave it there.
             // In the future it would be a good idea to look into really removing it.
             let dst_path = prepend_underscore(&path);
-            ui.info("Moving {path:?} to {dst_path:?}");
+            ui.info(&format!("Moving {path:?} to {dst_path:?}"));
             fs::rename(&path, &dst_path)
                 .with_context(|| format!("Failed to move {path:?} to {dst_path:?}"))?;
         } else {

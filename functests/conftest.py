@@ -4,6 +4,7 @@
 
 import os
 import platform
+import shlex
 import shutil
 import subprocess
 
@@ -44,11 +45,11 @@ STDERR:
 
 def run_clyde(*args, check=True):
     """Run a Clyde command"""
-    cmd = ["cargo", "run", "-r", "--bin", "clyde", *args]
-    return _run(cmd, check=check, cwd=str(ROOT_DIR))
+    cmd = shlex.join(["clyde", *args])
+    return run_in_clyde_home(cmd, check=check)
 
 
-def run_in_clyde_home(cmd, check=True):
+def run_in_clyde_home(cmd: str, check=True):
     """Run a command inside the Clyde home"""
     CLYDE_HOME = os.environ["CLYDE_HOME"]
     script = f". scripts/activate.sh ; {cmd}"
@@ -66,6 +67,16 @@ def get_bin_path(bin_name):
     return Path(os.environ["CLYDE_HOME"]) / "inst" / "bin" / bin_name
 
 
+def _build_clyde() -> Path:
+    """Builds Clyde, returns the path to its binary"""
+    cmd = ["cargo", "build", "-r"]
+    _run(cmd, cwd=str(ROOT_DIR))
+    exe_name = "clyde.exe" if IS_WINDOWS else "clyde"
+    path = ROOT_DIR / "target" / "release" / exe_name
+    assert path.exists()
+    return path
+
+
 @pytest.fixture(scope="session")
 def _setup_clyde_home():
     """Creates a Clyde home and back it up. Used by clyde_home."""
@@ -75,11 +86,17 @@ def _setup_clyde_home():
     except KeyError:
         pass
 
+    clyde_exe = _build_clyde()
+
     with TemporaryDirectory(prefix="clyde-functests") as tmp_dir:
         clyde_home = Path(tmp_dir) / "clyde_home"
         backup_dir = Path(tmp_dir) / "backup"
         os.environ["CLYDE_HOME"] = str(clyde_home)
-        run_clyde("setup")
+        _run([clyde_exe, "setup"])
+
+        # Replace the installed Clyde binary with the one we just built
+        shutil.copy(clyde_exe, get_bin_path("clyde"))
+
         shutil.move(clyde_home, backup_dir)
         yield clyde_home, backup_dir
 

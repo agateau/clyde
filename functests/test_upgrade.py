@@ -6,7 +6,7 @@ import os
 import sqlite3
 from pathlib import Path
 
-from conftest import run_clyde
+from conftest import run_clyde, IS_WINDOWS, get_bin_path
 
 
 def _get_db_connection():
@@ -61,3 +61,8 @@ def test_upgrade_install_clyde_only(clyde_home):
     # THEN it only upgrades clyde
     assert get_package_version("clyde") != "0.1.0"
     assert get_package_version("starship") == "0.1.0"
+
+    # AND on Windows, the old clyde.exe has been renamed to _clyde.exe
+    if IS_WINDOWS:
+        _clyde_exe = get_bin_path("_clyde")
+        assert _clyde_exe.exists()
