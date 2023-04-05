@@ -60,9 +60,6 @@ ARTIFACTS_DIR=$PWD/artifacts
 ARCHIVE_DIR=$APP_NAME-$VERSION
 ARCHIVE_NAME=$APP_NAME-$VERSION-$ARCH-$OS_NAME$ARCHIVE_EXT
 
-# If $CARGO_BUILD_TARGET is defined it must be included in the exe dir
-EXE_DIR=target/${CARGO_BUILD_TARGET:-}/release
-
 rm -rf $ARTIFACTS_DIR
 mkdir -p $ARTIFACTS_DIR/$ARCHIVE_DIR
 

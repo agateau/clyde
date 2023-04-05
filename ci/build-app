@@ -30,3 +30,8 @@ else
 fi
 
 $CARGO_CMD build --verbose --release
+
+# On Linux, it's important to ship a static binary. Check this is the case.
+if [ "$OS_NAME" = "linux" ]; then
+    ldd "$EXE_DIR/clyde" | grep -q statically
+fi
