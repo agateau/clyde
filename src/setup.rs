@@ -13,7 +13,7 @@ use semver::VersionReq;
 use shell_words::quote;
 
 use crate::app::App;
-use crate::install::install_with_package_and_requested_version;
+use crate::install::{install_package, InstallRequest};
 use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
@@ -73,7 +73,7 @@ fn update_activate_script(ui: &Ui, home: &Path) -> Result<()> {
     Ok(())
 }
 
-pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> Result<()> {
+pub fn setup_cmd(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> Result<()> {
     if update_scripts {
         return update_activate_script(ui, home);
     }
@@ -96,12 +96,11 @@ pub fn setup(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) -> R
     ui.info("Creating Clyde database");
     app.database.create()?;
 
-    install_with_package_and_requested_version(
+    install_package(
         &app,
         ui,
         false, /* reinstall */
-        "clyde",
-        &VersionReq::STAR,
+        &InstallRequest::new("clyde", VersionReq::STAR),
     )?;
 
     ui.info("Creating activation script");

@@ -7,13 +7,13 @@ use std::vec::Vec;
 use anyhow::Result;
 
 use crate::app::App;
-use crate::db::{Database, PackageInfo};
-use crate::install::install_with_package_and_requested_version;
+use crate::db::Database;
+use crate::install::{install_packages, InstallRequest};
 use crate::store::Store;
 use crate::ui::Ui;
 
-fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<PackageInfo>> {
-    let mut upgrades = Vec::<PackageInfo>::new();
+fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<InstallRequest>> {
+    let mut upgrades = Vec::<InstallRequest>::new();
 
     for info in db.get_installed_packages()? {
         let package = match store.get_package(&info.name) {
@@ -25,34 +25,22 @@ fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<Package
         };
         if let Some(available_version) = package.get_version_matching(&info.requested_version) {
             if available_version > &info.installed_version {
-                upgrades.push(info);
+                upgrades.push(InstallRequest::new(&info.name, info.requested_version));
             }
         }
     }
     Ok(upgrades)
 }
 
-pub fn upgrade(app: &App, ui: &Ui) -> Result<()> {
+pub fn upgrade_cmd(app: &App, ui: &Ui) -> Result<()> {
     ui.info("Checking upgrades");
     let to_upgrade = get_upgrades(&ui.nest(), &*app.store, &app.database)?;
     if to_upgrade.is_empty() {
         ui.info("No packages to upgrade");
         return Ok(());
     }
-    for info in to_upgrade {
-        ui.info(&format!("Upgrading {}", info.name));
-        install_with_package_and_requested_version(
-            app,
-            &ui.nest(),
-            false, /* reinstall */
-            &info.name,
-            &info.requested_version,
-        )
-        .unwrap_or_else(|x| {
-            ui.error(&format!("Error: Failed to upgrade {}: {}", info.name, x));
-        });
-    }
-    Ok(())
+
+    install_packages(app, ui, false /* reinstall */, &to_upgrade)
 }
 
 #[cfg(test)]
@@ -209,13 +197,6 @@ mod tests {
         let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
         // THEN it returns foo
-        assert_eq!(
-            upgrades,
-            vec![PackageInfo {
-                name: "foo".to_string(),
-                installed_version: Version::new(1, 2, 0),
-                requested_version: VersionReq::STAR
-            }]
-        );
+        assert_eq!(upgrades, vec![InstallRequest::new("foo", VersionReq::STAR)]);
     }
 }

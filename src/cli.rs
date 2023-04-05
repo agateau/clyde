@@ -6,15 +6,15 @@ use anyhow::Result;
 use clap::{ArgAction, Args, Parser, Subcommand};
 
 use crate::app::App;
-use crate::install::install;
-use crate::list::list;
-use crate::search::search;
-use crate::setup::setup;
-use crate::show::show;
+use crate::install::install_cmd;
+use crate::list::list_cmd;
+use crate::search::search_cmd;
+use crate::setup::setup_cmd;
+use crate::show::show_cmd;
 use crate::ui::Ui;
-use crate::uninstall::uninstall;
-use crate::update::update;
-use crate::upgrade::upgrade;
+use crate::uninstall::uninstall_cmd;
+use crate::update::update_cmd;
+use crate::upgrade::upgrade_cmd;
 
 #[derive(Debug, Parser)]
 #[command(name = "clyde", version, about)]
@@ -95,37 +95,37 @@ impl Cli {
             Command::Setup {
                 update_scripts,
                 store_url,
-            } => setup(&ui, &home, update_scripts, store_url.as_deref()),
+            } => setup_cmd(&ui, &home, update_scripts, store_url.as_deref()),
             Command::Update {} => {
                 let app = App::new(&home)?;
-                update(&app, &ui)
+                update_cmd(&app, &ui)
             }
             Command::Install {
                 reinstall,
                 package_names,
             } => {
                 let app = App::new(&home)?;
-                install(&app, &ui, reinstall, &package_names)
+                install_cmd(&app, &ui, reinstall, &package_names)
             }
             Command::Uninstall { package_names } => {
                 let app = App::new(&home)?;
-                uninstall(&app, &ui, &package_names)
+                uninstall_cmd(&app, &ui, &package_names)
             }
             Command::Show { package_name, list } => {
                 let app = App::new(&home)?;
-                show(&app, &package_name, list)
+                show_cmd(&app, &package_name, list)
             }
             Command::Search { query } => {
                 let app = App::new(&home)?;
-                search(&app, &query)
+                search_cmd(&app, &query)
             }
             Command::List {} => {
                 let app = App::new(&home)?;
-                list(&app)
+                list_cmd(&app)
             }
             Command::Upgrade {} => {
                 let app = App::new(&home)?;
-                upgrade(&app, &ui)
+                upgrade_cmd(&app, &ui)
             }
         }
     }

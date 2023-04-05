@@ -60,7 +60,7 @@ impl FetcherFinder {
     }
 }
 
-pub fn fetch(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
+pub fn fetch_cmd(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
     let fetcher_finder = FetcherFinder::new();
 
     for path in paths {

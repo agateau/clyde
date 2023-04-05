@@ -17,6 +17,25 @@ use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 
+const CLYDE_PACKAGE_NAME: &str = "clyde";
+
+#[derive(Debug, PartialEq)]
+/// Store the details of an install, used by install_package()
+/// and install_packages()
+pub struct InstallRequest {
+    pub name: String,
+    pub version: VersionReq,
+}
+
+impl InstallRequest {
+    pub fn new(package_name: &str, version: VersionReq) -> Self {
+        InstallRequest {
+            name: package_name.into(),
+            version,
+        }
+    }
+}
+
 fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<Option<String>> {
     let unpacker = get_unpacker(archive)?;
     unpacker.unpack(pkg_dir, strip)
@@ -127,15 +146,15 @@ fn install_files(
     Ok(())
 }
 
-fn parse_package_name_arg(arg: &str) -> Result<(&str, VersionReq)> {
+fn parse_package_name_arg(arg: &str) -> Result<InstallRequest> {
     let split = arg.split_once('@');
     match split {
-        None => Ok((arg, VersionReq::STAR)),
+        None => Ok(InstallRequest::new(arg, VersionReq::STAR)),
         Some((name, requested_str)) => {
             let version = VersionReq::parse(requested_str).with_context(|| {
-                format!("Failed to parse requested version ('{requested_str}')")
+                format!("Failed to parse requested version ('{requested_str}') from '{arg}'")
             })?;
-            Ok((name, version))
+            Ok(InstallRequest::new(name, version))
         }
     }
 }
@@ -166,38 +185,57 @@ fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
     map
 }
 
-pub fn install(app: &App, ui: &Ui, reinstall: bool, package_name_args: &Vec<String>) -> Result<()> {
-    for package_name_arg in package_name_args {
-        let (package_name, requested_version) = parse_package_name_arg(package_name_arg)?;
-        install_with_package_and_requested_version(
-            app,
-            ui,
-            reinstall,
-            package_name,
-            &requested_version,
-        )?;
+pub fn install_cmd(
+    app: &App,
+    ui: &Ui,
+    reinstall: bool,
+    package_name_args: &[String],
+) -> Result<()> {
+    let install_requests = package_name_args
+        .iter()
+        .map(|name| parse_package_name_arg(name))
+        .collect::<Result<Vec<InstallRequest>>>()?;
+    install_packages(app, ui, reinstall, &install_requests)
+}
+
+pub fn install_packages(
+    app: &App,
+    ui: &Ui,
+    reinstall: bool,
+    install_requests: &Vec<InstallRequest>,
+) -> Result<()> {
+    if let Some(clyde_request) = install_requests
+        .iter()
+        .find(|x| x.name == CLYDE_PACKAGE_NAME)
+    {
+        ui.warn("The list of packages to install/upgrade includes Clyde itself. To avoid issues, only Clyde is going to be updated. You need to rerun the command after it's installed.");
+        return install_package(app, ui, reinstall, clyde_request);
+    }
+
+    for request in install_requests {
+        install_package(app, ui, reinstall, request)?;
     }
     Ok(())
 }
 
-pub fn install_with_package_and_requested_version(
+pub fn install_package(
     app: &App,
     ui: &Ui,
     reinstall: bool,
-    package_path: &str,
-    requested_version: &VersionReq,
+    install_request: &InstallRequest,
 ) -> Result<()> {
     let db = &app.database;
 
     let arch_os = ArchOs::current();
 
-    let package = app.store.get_package(package_path)?;
+    let package = app.store.get_package(&install_request.name)?;
 
     let version = package
-        .get_version_matching(requested_version)
+        .get_version_matching(&install_request.version)
         .ok_or_else(|| {
             anyhow!(
-                "No version matching '{requested_version}' available for {}",
+                "No version matching '{}' available for {}",
+                &install_request.version,
                 &package.name
             )
         })?;
@@ -273,7 +311,12 @@ pub fn install_with_package_and_requested_version(
             &map,
         )?;
     }
-    db.add_package(&package.name, version, requested_version, &installed_files)?;
+    db.add_package(
+        &package.name,
+        version,
+        &install_request.version,
+        &installed_files,
+    )?;
 
     ui.info("Cleaning");
     fs::remove_dir_all(&unpack_dir)
@@ -294,15 +337,15 @@ mod tests {
     fn test_parse_package_name_arg() {
         assert_eq!(
             parse_package_name_arg("foo").unwrap(),
-            ("foo", VersionReq::STAR)
+            InstallRequest::new("foo", VersionReq::STAR)
         );
         assert_eq!(
             parse_package_name_arg("foo@1.2").unwrap(),
-            ("foo", VersionReq::parse("1.2").unwrap())
+            InstallRequest::new("foo", VersionReq::parse("1.2").unwrap())
         );
         assert_eq!(
             parse_package_name_arg("foo@1.*").unwrap(),
-            ("foo", VersionReq::parse("1.*").unwrap())
+            InstallRequest::new("foo", VersionReq::parse("1.*").unwrap())
         );
     }
 

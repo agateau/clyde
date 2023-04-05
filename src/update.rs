@@ -7,7 +7,7 @@ use anyhow::Result;
 use crate::app::App;
 use crate::ui::Ui;
 
-pub fn update(app: &App, ui: &Ui) -> Result<()> {
+pub fn update_cmd(app: &App, ui: &Ui) -> Result<()> {
     ui.info("Updating Clyde store");
     app.store.update()
 }
