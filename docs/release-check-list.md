@@ -1,5 +1,7 @@
 ## Prepare
 
+- [ ] Update all not-updated-automatically packages
+
 - [ ] Setup
 
 ```
