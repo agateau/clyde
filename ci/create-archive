@@ -52,7 +52,7 @@ init_checksum_cmd
 echo "Checksum command: $CHECKSUM_CMD"
 
 APP_NAME=clyde
-DATA_FILES="README.md CHANGELOG.md LICENSE"
+DATA_FILES="README.md CHANGELOG.md LICENSE completions"
 
 define_version
 
@@ -70,7 +70,7 @@ for name in clyde clydetools ; do
 done
 
 echo "Copying data files"
-cp $DATA_FILES $ARTIFACTS_DIR/$ARCHIVE_DIR
+cp -a $DATA_FILES $ARTIFACTS_DIR/$ARCHIVE_DIR
 
 echo "Creating archive $ARTIFACTS_DIR/$ARCHIVE_NAME"
 cd $ARTIFACTS_DIR
