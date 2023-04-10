@@ -25,13 +25,15 @@ fn clydetools_check_run_test_commands() {
     let stderr = String::from_utf8(output.stderr).unwrap();
 
     let output_summary = format!(
-        "status: {}
+        "
+== status =================
+{}
 
 == stdout =================
 {stdout}
-
 == stderr =================
 {stderr}
+===========================
 ",
         output.status
     );
@@ -42,12 +44,12 @@ fn clydetools_check_run_test_commands() {
     // AND the test commands have been executed
     // The output of `clyde help <cmd>` contains the string `clyde <cmd> [OPTIONS]`
     assert!(
-        stdout.contains(&format!(" list [OPTIONS]")),
+        stdout.contains(&format!("List installed applications")),
         "{}",
         output_summary
     );
     assert!(
-        stdout.contains(&format!(" install [OPTIONS]")),
+        stdout.contains(&format!("Install applications")),
         "{}",
         output_summary
     );
