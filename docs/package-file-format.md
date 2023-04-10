@@ -130,6 +130,7 @@ The following variables are available:
 - `${asset_name}`: Name of the unpacked asset if the asset is a single-file asset. A single-file asset is an asset which is either the package executable, or a compressed version of it, compressed with gzip, bzip2 or xz. This variable is only available if the asset is a single-file asset.
 - `${doc_dir}`: Directory storing the package documentation. Set to "share/doc/<package_name>/".
 - `${bash_comp_dir}`: Where to install Bash completion files.
+- `${fish_comp_dir}`: Where to install Fish completion files.
 - `${zsh_comp_dir}`: Where to install Zsh completion files.
 - `${exe_ext}`: Executable extension for the target OS. Set to ".exe" on Windows and "" on other OSes.
 
