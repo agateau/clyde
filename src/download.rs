@@ -125,11 +125,11 @@ fn https_download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
 
     for attempt in 1..(DOWNLOAD_ATTEMPTS + 1) {
         if attempt > 1 {
-            ui.warn("Timeout while downloading, retrying");
+            ui.warn(&format!(
+                "Timeout while downloading, retrying (attempt {attempt} / {DOWNLOAD_ATTEMPTS})"
+            ));
         }
-        ui.info(&format!(
-            "Downloading {name} (attempt {attempt} / {DOWNLOAD_ATTEMPTS})"
-        ));
+        ui.info(&format!("Downloading {name}"));
         match https_download_internal(ui, &client, &url, &partial_path) {
             Ok(()) => break,
             Err(err) => match err.downcast_ref::<ReqwestError>() {
