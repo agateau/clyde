@@ -66,6 +66,10 @@ pub struct Package {
     pub fetcher: FetcherConfig,
 }
 
+fn is_auto_fetcher(x: &FetcherConfig) -> bool {
+    *x == FetcherConfig::Auto
+}
+
 /// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
 /// Package, which has stronger typing
 #[derive(Debug, Deserialize, Serialize)]
@@ -78,6 +82,7 @@ struct InternalPackage {
     pub releases: Option<BTreeMap<String, BTreeMap<String, Asset>>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
     #[serde(default)]
+    #[serde(skip_serializing_if = "is_auto_fetcher")]
     pub fetcher: FetcherConfig,
     #[serde(skip)]
     pub extra_files_dir: PathBuf,
