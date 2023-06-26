@@ -2,13 +2,14 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::env;
 use std::fs::{self, File};
 use std::path::Path;
 
 use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use reqwest::blocking::Client;
-use reqwest::header;
+use reqwest::header::{self, HeaderMap, HeaderValue};
 use serde_json::{self, Value};
 
 use clyde::package::{FetcherConfig, Package};
@@ -82,16 +83,28 @@ fn get_repo_owner(package: &Package) -> Option<String> {
         .map(|captures| captures["repo_owner"].to_string())
 }
 
+/// Returns the GitHub token to use, if set
+fn get_github_token() -> Result<String, env::VarError> {
+    env::var("CLYDE_GITHUB_TOKEN").or_else(|_| env::var("GITHUB_TOKEN"))
+}
+
+/// Create an HeaderMap suitable to send requests to GitHub API
+fn create_headers() -> Result<HeaderMap> {
+    let mut headers = HeaderMap::new();
+    headers.insert(header::USER_AGENT, HeaderValue::from_static("clydetools"));
+
+    if let Ok(token) = get_github_token() {
+        let value = format!("Bearer {token}");
+        headers.insert(header::AUTHORIZATION, HeaderValue::from_str(&value)?);
+    }
+    Ok(headers)
+}
+
 /// Query GitHub REST API for the latest release, store the response in `release_file`
 fn get_latest_release(release_file: &Path, repo_owner: &str) -> Result<()> {
     let url = format!("https://api.github.com/repos/{repo_owner}/releases/latest");
 
-    let client = Client::new();
-
-    let mut response = client
-        .get(url)
-        .header(header::USER_AGENT, "clydetools")
-        .send()?;
+    let mut response = Client::new().get(url).headers(create_headers()?).send()?;
     if !response.status().is_success() {
         let code = response.status().as_u16();
         let body = response
