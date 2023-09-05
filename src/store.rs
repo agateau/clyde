@@ -10,6 +10,7 @@ use std::process::Command;
 
 use anyhow::{anyhow, Result};
 
+use crate::file_utils;
 use crate::package::Package;
 
 pub const INDEX_NAME: &str = "index.yaml";
@@ -83,6 +84,14 @@ fn get_package_path(path: &Path) -> Option<PathBuf> {
     if path.extension() != Some(&OsString::from("yaml")) {
         return None;
     }
+    match file_utils::get_file_name(path) {
+        Ok(name) => {
+            if name.starts_with('.') {
+                return None;
+            }
+        }
+        Err(_) => return None,
+    };
     Some(path.into())
 }
 
@@ -142,7 +151,8 @@ impl Store for GitStore {
                 Some(x) => x,
                 None => continue,
             };
-            let package = Package::from_file(&path).expect("Skipping invalid package");
+            let package = Package::from_file(&path)
+                .map_err(|e| anyhow!("Invalid package: {}. {}", path.display(), e))?;
 
             if package.name.to_lowercase().contains(&query) {
                 name_hits.push(SearchHit::from_package(&package));
