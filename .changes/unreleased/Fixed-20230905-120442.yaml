@@ -1,0 +1,4 @@
+kind: Fixed
+body: Fixed `clyde search` failing because it tried to load the .pre-commit-config.yaml
+  file as a package.
+time: 2023-09-05T12:04:42.029764584+02:00
