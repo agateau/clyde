@@ -14,11 +14,21 @@ pub struct Database {
     conn: Connection,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct PackageInfo {
     pub name: String,
     pub installed_version: Version,
     pub requested_version: VersionReq,
+}
+
+impl PackageInfo {
+    pub fn new(name: &str, installed_version: &Version, requested_version: &VersionReq) -> Self {
+        PackageInfo {
+            name: name.to_string(),
+            installed_version: installed_version.clone(),
+            requested_version: requested_version.clone(),
+        }
+    }
 }
 
 impl Database {
@@ -117,11 +127,11 @@ impl Database {
             let name: String = row.get(0)?;
             let installed_version: String = row.get(1)?;
             let requested_version: String = row.get(2)?;
-            packages.push(PackageInfo {
-                name,
-                installed_version: Version::parse(&installed_version)?,
-                requested_version: VersionReq::parse(&requested_version)?,
-            });
+            packages.push(PackageInfo::new(
+                &name,
+                &Version::parse(&installed_version)?,
+                &VersionReq::parse(&requested_version)?,
+            ));
         }
         Ok(packages)
     }

@@ -5,15 +5,34 @@
 use std::vec::Vec;
 
 use anyhow::Result;
+use semver::{Version, VersionReq};
 
 use crate::app::App;
-use crate::db::Database;
+use crate::db::{Database, PackageInfo};
 use crate::install::{install_packages, InstallRequest};
 use crate::store::Store;
 use crate::ui::Ui;
 
-fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<InstallRequest>> {
-    let mut upgrades = Vec::<InstallRequest>::new();
+#[derive(Debug, PartialEq, Eq, Clone)]
+struct Upgrade {
+    pub package_info: PackageInfo,
+    pub available_version: Version,
+}
+
+impl Upgrade {
+    fn new(package_info: &PackageInfo, available_version: &Version) -> Self {
+        Upgrade {
+            package_info: package_info.clone(),
+            available_version: available_version.clone(),
+        }
+    }
+}
+
+/// Check for upgrades, return a couple of Upgrade vectors. First element contains installable
+/// upgrades, second element contains blocked upgrades.
+fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<(Vec<Upgrade>, Vec<Upgrade>)> {
+    let mut upgrades = Vec::<Upgrade>::new();
+    let mut blocked_upgrades = Vec::<Upgrade>::new();
 
     for info in db.get_installed_packages()? {
         let package = match store.get_package(&info.name) {
@@ -24,23 +43,61 @@ fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<Vec<Install
             }
         };
         if let Some(available_version) = package.get_version_matching(&info.requested_version) {
+            let upgrade = Upgrade::new(&info, available_version);
             if available_version > &info.installed_version {
-                upgrades.push(InstallRequest::new(&info.name, info.requested_version));
+                upgrades.push(upgrade);
+            }
+        } else if let Some(available_version) = package.get_version_matching(&VersionReq::STAR) {
+            let upgrade = Upgrade::new(&info, available_version);
+            if available_version > &info.installed_version {
+                blocked_upgrades.push(upgrade);
             }
         }
     }
-    Ok(upgrades)
+    Ok((upgrades, blocked_upgrades))
 }
 
 pub fn upgrade_cmd(app: &App, ui: &Ui) -> Result<()> {
     ui.info("Checking upgrades");
-    let to_upgrade = get_upgrades(&ui.nest(), &*app.store, &app.database)?;
-    if to_upgrade.is_empty() {
+    let (upgrades, blocked_upgrades) = get_upgrades(&ui.nest(), &*app.store, &app.database)?;
+
+    if !blocked_upgrades.is_empty() {
+        ui.info("Blocked upgrades:");
+        for upgrade in blocked_upgrades {
+            ui.println(&format!(
+                "- {}: can be upgraded to {}, but pinned to {}",
+                upgrade.package_info.name,
+                upgrade.available_version,
+                upgrade.package_info.requested_version
+            ));
+        }
+    }
+
+    if upgrades.is_empty() {
         ui.info("No packages to upgrade");
         return Ok(());
     }
 
-    install_packages(app, ui, false /* reinstall */, &to_upgrade)
+    ui.info("Available upgrades:");
+    for upgrade in &upgrades {
+        ui.println(&format!(
+            "- {}: {} → {}",
+            upgrade.package_info.name,
+            upgrade.package_info.installed_version,
+            upgrade.available_version
+        ));
+    }
+
+    let install_requests = upgrades
+        .iter()
+        .map(|u| {
+            InstallRequest::new(
+                &u.package_info.name,
+                u.package_info.requested_version.clone(),
+            )
+        })
+        .collect();
+    install_packages(app, ui, false /* reinstall */, &install_requests)
 }
 
 #[cfg(test)]
@@ -117,33 +174,30 @@ mod tests {
         store.packages.insert("foo".to_string(), package);
 
         // WHEN get_upgrades() is called
-        let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
+        let (upgrades, blocked_upgrades) = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
-        // THEN it returns an empty vector
-        assert_eq!(upgrades, vec![]);
+        // THEN it returns empty vectors
+        assert!(upgrades.is_empty());
+        assert!(blocked_upgrades.is_empty());
     }
 
     #[test]
-    fn get_upgrades_should_return_an_empty_list_if_upgrade_is_outside_requested_version() {
+    fn get_upgrades_should_return_a_blocked_upgrade_if_upgrade_is_outside_requested_version() {
         // GIVEN a database
         let db = Database::new_in_memory().unwrap();
         db.create().unwrap();
 
         // AND a package foo at version 1.2.0, pinned to 1.2.*
         let files = HashSet::<PathBuf>::new();
-        db.add_package(
-            "foo",
-            &Version::new(1, 2, 0),
-            &VersionReq::parse("1.2.*").unwrap(),
-            &files,
-        )
-        .unwrap();
+        let version_req = VersionReq::parse("1.2.*").unwrap();
+        db.add_package("foo", &Version::new(1, 2, 0), &version_req, &files)
+            .unwrap();
 
         // AND a store with package foo at version 1.3.0
         let mut store = FakeStore::new();
         let package = Package::from_yaml_str(
             "
-            name: test
+            name: foo
             description: desc
             homepage:
             releases:
@@ -158,10 +212,15 @@ mod tests {
         store.packages.insert("foo".to_string(), package);
 
         // WHEN get_upgrades() is called
-        let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
+        let (upgrades, blocked_upgrades) = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
-        // THEN it returns an empty vector
+        // THEN it returns an empty upgrade vector
         assert_eq!(upgrades, vec![]);
+
+        // AND a blocked upgrade in the blocked_upgrades vector
+        let package_info = PackageInfo::new("foo", &Version::new(1, 2, 0), &version_req);
+        let blocked_upgrade = Upgrade::new(&package_info, &Version::new(1, 3, 0));
+        assert_eq!(blocked_upgrades, vec![blocked_upgrade]);
     }
 
     #[test]
@@ -194,9 +253,14 @@ mod tests {
         store.packages.insert("foo".to_string(), package);
 
         // WHEN get_upgrades() is called
-        let upgrades = get_upgrades(&Ui::default(), &store, &db).unwrap();
+        let (upgrades, blocked_upgrades) = get_upgrades(&Ui::default(), &store, &db).unwrap();
 
         // THEN it returns foo
-        assert_eq!(upgrades, vec![InstallRequest::new("foo", VersionReq::STAR)]);
+        let package_info = PackageInfo::new("foo", &Version::new(1, 2, 0), &VersionReq::STAR);
+        assert_eq!(
+            upgrades,
+            vec![Upgrade::new(&package_info, &Version::new(1, 3, 0))]
+        );
+        assert!(blocked_upgrades.is_empty());
     }
 }
