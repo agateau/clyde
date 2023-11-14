@@ -10,6 +10,7 @@ use semver::{Version, VersionReq};
 use crate::app::App;
 use crate::db::{Database, PackageInfo};
 use crate::install::{install_packages, InstallRequest};
+use crate::package::Package;
 use crate::store::Store;
 use crate::ui::Ui;
 
@@ -28,6 +29,19 @@ impl Upgrade {
     }
 }
 
+fn get_newer_version(
+    package: &Package,
+    installed_version: &Version,
+    version_req: &VersionReq,
+) -> Option<Version> {
+    if let Some(version) = package.get_version_matching(version_req) {
+        if version > installed_version {
+            return Some(version.clone());
+        }
+    }
+    None
+}
+
 /// Check for upgrades, return a couple of Upgrade vectors. First element contains installable
 /// upgrades, second element contains blocked upgrades.
 fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<(Vec<Upgrade>, Vec<Upgrade>)> {
@@ -42,16 +56,14 @@ fn get_upgrades(ui: &Ui, store: &dyn Store, db: &Database) -> Result<(Vec<Upgrad
                 continue;
             }
         };
-        if let Some(available_version) = package.get_version_matching(&info.requested_version) {
-            let upgrade = Upgrade::new(&info, available_version);
-            if available_version > &info.installed_version {
-                upgrades.push(upgrade);
-            }
-        } else if let Some(available_version) = package.get_version_matching(&VersionReq::STAR) {
-            let upgrade = Upgrade::new(&info, available_version);
-            if available_version > &info.installed_version {
-                blocked_upgrades.push(upgrade);
-            }
+        if let Some(available_version) =
+            get_newer_version(&package, &info.installed_version, &info.requested_version)
+        {
+            upgrades.push(Upgrade::new(&info, &available_version));
+        } else if let Some(available_version) =
+            get_newer_version(&package, &info.installed_version, &VersionReq::STAR)
+        {
+            blocked_upgrades.push(Upgrade::new(&info, &available_version));
         }
     }
     Ok((upgrades, blocked_upgrades))
@@ -193,7 +205,7 @@ mod tests {
         db.add_package("foo", &Version::new(1, 2, 0), &version_req, &files)
             .unwrap();
 
-        // AND a store with package foo at version 1.3.0
+        // AND a store with package foo at version 1.2.0 and 1.3.0
         let mut store = FakeStore::new();
         let package = Package::from_yaml_str(
             "
@@ -201,6 +213,10 @@ mod tests {
             description: desc
             homepage:
             releases:
+              1.2.0:
+                any:
+                  url: https://example.com
+                  sha256: 1234
               1.3.0:
                 any:
                   url: https://example.com
@@ -234,7 +250,7 @@ mod tests {
         db.add_package("foo", &Version::new(1, 2, 0), &VersionReq::STAR, &files)
             .unwrap();
 
-        // AND a store with package foo at version 1.3.0
+        // AND a store with package foo at version 1.2.0 and 1.3.0
         let mut store = FakeStore::new();
         let package = Package::from_yaml_str(
             "
@@ -242,6 +258,10 @@ mod tests {
             description: desc
             homepage:
             releases:
+              1.2.0:
+                any:
+                  url: https://example.com
+                  sha256: 1234
               1.3.0:
                 any:
                   url: https://example.com
