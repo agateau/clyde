@@ -49,7 +49,7 @@ pub fn exec(cli: Cli) -> Result<()> {
         }
         Command::Search { query } => {
             let app = App::new(&home)?;
-            search_cmd(&app, &query)
+            search_cmd(&app, &ui, &query)
         }
         Command::List {} => {
             let app = App::new(&home)?;
