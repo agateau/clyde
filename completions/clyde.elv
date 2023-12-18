@@ -56,6 +56,8 @@ set edit:completion:arg-completer[clyde] = {|@words|
         &'clyde;show'= {
             cand -l 'List application files instead of showing information'
             cand --list 'List application files instead of showing information'
+            cand -j 'Use JSON output'
+            cand --json 'Use JSON output'
             cand -h 'Print help'
             cand --help 'Print help'
         }

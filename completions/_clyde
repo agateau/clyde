@@ -63,6 +63,8 @@ _arguments "${_arguments_options[@]}" \
 _arguments "${_arguments_options[@]}" \
 '-l[List application files instead of showing information]' \
 '--list[List application files instead of showing information]' \
+'-j[Use JSON output]' \
+'--json[Use JSON output]' \
 '-h[Print help]' \
 '--help[Print help]' \
 ':package_name -- Application name:' \

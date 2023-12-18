@@ -64,6 +64,8 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
         'clyde;show' {
             [CompletionResult]::new('-l', 'l', [CompletionResultType]::ParameterName, 'List application files instead of showing information')
             [CompletionResult]::new('--list', 'list', [CompletionResultType]::ParameterName, 'List application files instead of showing information')
+            [CompletionResult]::new('-j', 'j', [CompletionResultType]::ParameterName, 'Use JSON output')
+            [CompletionResult]::new('--json', 'json', [CompletionResultType]::ParameterName, 'Use JSON output')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

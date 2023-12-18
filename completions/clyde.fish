@@ -17,6 +17,7 @@ complete -c clyde -n "__fish_seen_subcommand_from install" -s r -l reinstall -d 
 complete -c clyde -n "__fish_seen_subcommand_from install" -s h -l help -d 'Print help (see more with \'--help\')'
 complete -c clyde -n "__fish_seen_subcommand_from uninstall" -s h -l help -d 'Print help'
 complete -c clyde -n "__fish_seen_subcommand_from show" -s l -l list -d 'List application files instead of showing information'
+complete -c clyde -n "__fish_seen_subcommand_from show" -s j -l json -d 'Use JSON output'
 complete -c clyde -n "__fish_seen_subcommand_from show" -s h -l help -d 'Print help'
 complete -c clyde -n "__fish_seen_subcommand_from search" -s h -l help -d 'Print help'
 complete -c clyde -n "__fish_seen_subcommand_from list" -s j -l json -d 'Use JSON output'
