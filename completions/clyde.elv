@@ -64,6 +64,8 @@ set edit:completion:arg-completer[clyde] = {|@words|
             cand --help 'Print help'
         }
         &'clyde;list'= {
+            cand -j 'Use JSON output'
+            cand --json 'Use JSON output'
             cand -h 'Print help'
             cand --help 'Print help'
         }

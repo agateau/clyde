@@ -241,7 +241,7 @@ _clyde() {
             return 0
             ;;
         clyde__list)
-            opts="-h --help"
+            opts="-j -h --json --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

@@ -51,9 +51,9 @@ pub fn exec(cli: Cli) -> Result<()> {
             let app = App::new(&home)?;
             search_cmd(&app, &ui, &query)
         }
-        Command::List {} => {
+        Command::List { json } => {
             let app = App::new(&home)?;
-            list_cmd(&app)
+            list_cmd(&app, json)
         }
         Command::Upgrade {} => {
             let app = App::new(&home)?;

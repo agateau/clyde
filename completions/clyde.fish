@@ -19,6 +19,7 @@ complete -c clyde -n "__fish_seen_subcommand_from uninstall" -s h -l help -d 'Pr
 complete -c clyde -n "__fish_seen_subcommand_from show" -s l -l list -d 'List application files instead of showing information'
 complete -c clyde -n "__fish_seen_subcommand_from show" -s h -l help -d 'Print help'
 complete -c clyde -n "__fish_seen_subcommand_from search" -s h -l help -d 'Print help'
+complete -c clyde -n "__fish_seen_subcommand_from list" -s j -l json -d 'Use JSON output'
 complete -c clyde -n "__fish_seen_subcommand_from list" -s h -l help -d 'Print help'
 complete -c clyde -n "__fish_seen_subcommand_from upgrade" -s h -l help -d 'Print help'
 complete -c clyde -n "__fish_seen_subcommand_from help; and not __fish_seen_subcommand_from setup; and not __fish_seen_subcommand_from update; and not __fish_seen_subcommand_from install; and not __fish_seen_subcommand_from uninstall; and not __fish_seen_subcommand_from show; and not __fish_seen_subcommand_from search; and not __fish_seen_subcommand_from list; and not __fish_seen_subcommand_from upgrade; and not __fish_seen_subcommand_from help" -f -a "setup" -d 'Setup Clyde'

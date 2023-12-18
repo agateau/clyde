@@ -74,6 +74,8 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             break
         }
         'clyde;list' {
+            [CompletionResult]::new('-j', 'j', [CompletionResultType]::ParameterName, 'Use JSON output')
+            [CompletionResult]::new('--json', 'json', [CompletionResultType]::ParameterName, 'Use JSON output')
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break

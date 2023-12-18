@@ -60,7 +60,11 @@ pub enum Command {
         query: String,
     },
     /// List installed applications
-    List {},
+    List {
+        /// Use JSON output
+        #[arg(short, long)]
+        json: bool,
+    },
     /// Upgrade all installed applications, enforcing pinning
     Upgrade {},
 }
