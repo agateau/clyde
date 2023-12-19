@@ -51,6 +51,9 @@ pub enum Command {
         /// List application files instead of showing information
         #[arg(short, long)]
         list: bool,
+        /// Use JSON output
+        #[arg(short, long)]
+        json: bool,
         /// Application name
         package_name: String,
     },
@@ -60,7 +63,11 @@ pub enum Command {
         query: String,
     },
     /// List installed applications
-    List {},
+    List {
+        /// Use JSON output
+        #[arg(short, long)]
+        json: bool,
+    },
     /// Upgrade all installed applications, enforcing pinning
     Upgrade {},
 }

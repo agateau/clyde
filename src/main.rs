@@ -43,17 +43,21 @@ pub fn exec(cli: Cli) -> Result<()> {
             let app = App::new(&home)?;
             uninstall_cmd(&app, &ui, &package_names)
         }
-        Command::Show { package_name, list } => {
+        Command::Show {
+            package_name,
+            json,
+            list,
+        } => {
             let app = App::new(&home)?;
-            show_cmd(&app, &package_name, list)
+            show_cmd(&app, &package_name, json, list)
         }
         Command::Search { query } => {
             let app = App::new(&home)?;
             search_cmd(&app, &ui, &query)
         }
-        Command::List {} => {
+        Command::List { json } => {
             let app = App::new(&home)?;
-            list_cmd(&app)
+            list_cmd(&app, json)
         }
         Command::Upgrade {} => {
             let app = App::new(&home)?;

@@ -241,7 +241,7 @@ _clyde() {
             return 0
             ;;
         clyde__list)
-            opts="-h --help"
+            opts="-j -h --json --help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -287,7 +287,7 @@ _clyde() {
             return 0
             ;;
         clyde__show)
-            opts="-l -h --list --help <PACKAGE_NAME>"
+            opts="-l -j -h --list --json --help <PACKAGE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
