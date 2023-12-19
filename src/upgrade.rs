@@ -119,7 +119,7 @@ mod tests {
     use std::collections::{HashMap, HashSet};
     use std::path::PathBuf;
 
-    use anyhow::anyhow;
+    use anyhow::{anyhow, Error};
     use semver::{Version, VersionReq};
 
     use crate::package::Package;
@@ -151,8 +151,8 @@ mod tests {
                 .ok_or_else(|| anyhow!("No such package: {}", name))?;
             Ok(pkg.clone())
         }
-        fn search(&self, _query: &str) -> Result<Vec<SearchHit>> {
-            Ok(vec![])
+        fn search(&self, _query: &str) -> Result<(Vec<SearchHit>, Vec<Error>)> {
+            Ok((vec![], vec![]))
         }
     }
 

@@ -8,7 +8,7 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-use anyhow::{anyhow, Result};
+use anyhow::{anyhow, Error, Result};
 
 use crate::file_utils;
 use crate::package::Package;
@@ -25,7 +25,7 @@ pub trait Store {
     fn setup(&self, url: &str) -> Result<()>;
     fn update(&self) -> Result<()>;
     fn get_package(&self, name: &str) -> Result<Package>;
-    fn search(&self, query: &str) -> Result<Vec<SearchHit>>;
+    fn search(&self, query: &str) -> Result<(Vec<SearchHit>, Vec<Error>)>;
 }
 
 pub struct GitStore {
@@ -136,10 +136,12 @@ impl Store for GitStore {
         Package::from_file(&path)
     }
 
-    fn search(&self, query_: &str) -> Result<Vec<SearchHit>> {
+    fn search(&self, query_: &str) -> Result<(Vec<SearchHit>, Vec<Error>)> {
         let query = query_.to_lowercase();
         let mut name_hits = Vec::<SearchHit>::new();
         let mut description_hits = Vec::<SearchHit>::new();
+
+        let mut errors = Vec::<Error>::new();
 
         // This implementation is very inefficient, but it's good enough for now given the number
         // of available packages. It should be revisited when the number of packages grow.
@@ -151,8 +153,15 @@ impl Store for GitStore {
                 Some(x) => x,
                 None => continue,
             };
-            let package = Package::from_file(&path)
-                .map_err(|e| anyhow!("Invalid package: {}. {}", path.display(), e))?;
+
+            let package = match Package::from_file(&path) {
+                Ok(x) => x,
+                Err(x) => {
+                    let x = x.context(format!("Failed to parse {}", &path.display()));
+                    errors.push(x);
+                    continue;
+                }
+            };
 
             if package.name.to_lowercase().contains(&query) {
                 name_hits.push(SearchHit::from_package(&package));
@@ -162,7 +171,7 @@ impl Store for GitStore {
         }
 
         name_hits.extend_from_slice(&description_hits);
-        Ok(name_hits)
+        Ok((name_hits, errors))
     }
 }
 
@@ -230,7 +239,7 @@ mod tests {
         create_old_package_file_with_desc(&dir, "baz", "Helper package for Foo");
 
         // WHEN I search for fOo
-        let results = store.search("fOo").unwrap();
+        let results = store.search("fOo").unwrap().0;
 
         // THEN foo and baz should be returned
         let result_names: Vec<String> = results.iter().map(|x| x.name.clone()).collect();
@@ -255,5 +264,30 @@ mod tests {
 
         // THEN it should return None
         assert_eq!(path, None);
+    }
+
+    #[test]
+    fn search_should_not_fail_if_there_is_an_invalid_package_file() {
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        // GIVEN a store with a package foo
+        let store = GitStore::new(&dir);
+        create_package_file(&dir, "foo");
+
+        // AND an invalid package bar
+        fs::write(dir.join("bar.yaml"), "name: bar\ndesc").unwrap();
+
+        // WHEN I search for foo
+        let (results, errors) = store.search("foo").unwrap();
+
+        // THEN it finds foo
+        let result_names: Vec<String> = results.iter().map(|x| x.name.clone()).collect();
+        assert_eq!(result_names, vec!["foo"]);
+
+        // AND it provides an error for bar
+        assert_eq!(errors.len(), 1);
+        let error = &errors[0];
+        print!("{}", error.to_string());
+        assert!(error.to_string().contains("bar"));
     }
 }
