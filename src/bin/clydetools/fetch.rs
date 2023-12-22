@@ -16,6 +16,7 @@ use clyde::ui::Ui;
 use crate::add_assets::add_asset;
 use crate::github_fetcher::GitHubFetcher;
 use crate::gitlab_fetcher::GitLabFetcher;
+use crate::script_fetcher::ScriptFetcher;
 
 #[derive(Debug)]
 pub enum UpdateStatus {
@@ -35,6 +36,7 @@ pub trait Fetcher {
 struct FetcherFinder {
     github_fetcher: GitHubFetcher,
     gitlab_fetcher: GitLabFetcher,
+    script_fetcher: ScriptFetcher,
 }
 
 impl FetcherFinder {
@@ -42,6 +44,7 @@ impl FetcherFinder {
         FetcherFinder {
             github_fetcher: GitHubFetcher::default(),
             gitlab_fetcher: GitLabFetcher::default(),
+            script_fetcher: ScriptFetcher::default(),
         }
     }
 
@@ -56,6 +59,7 @@ impl FetcherFinder {
             FetcherConfig::Off => None,
             FetcherConfig::GitHub { arch: _a, os: _o } => Some(&self.github_fetcher),
             FetcherConfig::GitLab { arch: _a, os: _o } => Some(&self.gitlab_fetcher),
+            FetcherConfig::Script { .. } => Some(&self.script_fetcher),
         }
     }
 }

@@ -13,6 +13,7 @@ pub mod check_package;
 pub mod fetch;
 pub mod github_fetcher;
 pub mod gitlab_fetcher;
+pub mod script_fetcher;
 pub mod version_utils;
 
 #[macro_use]

@@ -108,6 +108,9 @@ pub enum FetcherConfig {
         #[serde(skip_serializing_if = "is_none")]
         os: Option<Os>,
     },
+    Script {
+        script: String,
+    },
     Off,
 }
 
