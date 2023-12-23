@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::collections::HashMap;
+use std::fs;
 
 use anyhow::{anyhow, Result};
 use boa_engine::property::Attribute;
@@ -14,10 +15,12 @@ use serde::Deserialize;
 use serde_json;
 
 use clyde::arch_os::ArchOs;
-use clyde::package::{FetcherConfig, Package};
+use clyde::package::Package;
 use clyde::ui::Ui;
 
 use crate::fetch::{Fetcher, UpdateStatus};
+
+const SCRIPT_FILE_NAME: &str = "fetch.js";
 
 /// Adds the custom runtime to the context.
 fn add_runtime(context: &mut Context) {
@@ -63,13 +66,12 @@ impl Fetcher for ScriptFetcher {
     }
 
     fn fetch(&self, ui: &Ui, package: &Package) -> Result<UpdateStatus> {
-        ui.info("Running fetcher script");
-        let script = match &package.fetcher {
-            FetcherConfig::Script { script } => script,
-            _ => panic!("ScriptFetcher should not be called with a FetcherConfig other Script"),
-        };
+        ui.info("Loading fetcher script");
+        let script_path = package.package_dir.join(SCRIPT_FILE_NAME);
+        let script = fs::read_to_string(script_path)?;
 
-        let response = eval_script(script)?;
+        ui.info("Running fetcher script");
+        let response = eval_script(&script)?;
 
         let version = Version::parse(&response.version)?;
         if let Some(latest_version) = package.get_latest_version() {
