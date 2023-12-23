@@ -84,8 +84,6 @@ struct InternalPackage {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_auto_fetcher")]
     pub fetcher: FetcherConfig,
-    #[serde(skip)]
-    pub extra_files_dir: PathBuf,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Hash, Serialize)]
@@ -143,12 +141,11 @@ impl InternalPackage {
             repository: package.repository.clone(),
             releases: Some(releases),
             installs: Some(installs),
-            extra_files_dir: package.extra_files_dir.clone(),
             fetcher: package.fetcher.clone(),
         }
     }
 
-    fn to_package(&self) -> Result<Package> {
+    fn to_package(&self, extra_files_dir: &Path) -> Result<Package> {
         let mut releases = BTreeMap::<Version, Release>::new();
         if let Some(internal_releases) = &self.releases {
             for (version_str, builds_for_arch_os) in internal_releases.iter() {
@@ -180,7 +177,7 @@ impl InternalPackage {
             repository: self.repository.clone(),
             releases,
             installs,
-            extra_files_dir: self.extra_files_dir.clone(),
+            extra_files_dir: extra_files_dir.to_path_buf(),
             fetcher: self.fetcher.clone(),
         })
     }
@@ -189,17 +186,17 @@ impl InternalPackage {
 impl Package {
     pub fn from_file(path: &Path) -> Result<Package> {
         let file = File::open(path)?;
-        let mut internal_package: InternalPackage = serde_yaml::from_reader(file)?;
-        internal_package.extra_files_dir = path
+        let internal_package: InternalPackage = serde_yaml::from_reader(file)?;
+        let extra_files_dir = path
             .parent()
             .ok_or_else(|| anyhow!("No parent dir for package {}", path.display()))?
             .join(EXTRA_FILES_DIR_NAME);
-        internal_package.to_package()
+        internal_package.to_package(&extra_files_dir)
     }
 
     pub fn from_yaml_str(yaml_str: &str) -> Result<Package> {
         let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
-        internal_package.to_package()
+        internal_package.to_package(&PathBuf::new())
     }
 
     pub fn to_file(&self, path: &Path) -> Result<()> {
