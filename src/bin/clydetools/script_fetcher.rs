@@ -7,7 +7,9 @@ use std::fs;
 
 use anyhow::{anyhow, Result};
 use boa_engine::property::Attribute;
-use boa_engine::{js_string, Context, JsObject, JsResult, JsValue, NativeFunction, Source};
+use boa_engine::{
+    js_string, Context, JsError, JsObject, JsResult, JsValue, NativeFunction, Source,
+};
 use boa_runtime::Console;
 use reqwest::blocking::Client;
 use semver::Version;
@@ -38,7 +40,14 @@ fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsR
         .to_string(context)?
         .to_std_string()
         .unwrap();
-    let response = Client::new().get(url).send().unwrap();
+    let response = match Client::new().get(&url).send() {
+        Ok(x) => x,
+        Err(x) => {
+            return Err(JsError::from_opaque(
+                format!("Failed to fetch {url}: {}", x).into(),
+            ));
+        }
+    };
 
     let status = response.status().as_u16();
     let text = response.text().unwrap();
