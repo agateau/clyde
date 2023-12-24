@@ -114,5 +114,63 @@ fn eval_script(script: &str) -> Result<ScriptResponse> {
         Err(x) => return Err(anyhow!("Could not turn results into JSON: {}", x)),
     };
 
+    if json_result.is_null() {
+        return Err(anyhow!("Fetch script did not find any available versions"));
+    }
+
     Ok(serde_json::from_value::<ScriptResponse>(json_result)?)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn eval_script_return_version() {
+        // GIVEN a script which returns a version
+        let script = r#"
+            function main() {
+                return {
+                    "version": "1.2.3",
+                    "urls": {
+                        "x86_64-linux": "https://acme.com/1",
+                        "aarch64-macos": "https://acme.com/2"
+                    }
+                }
+            }
+            main()
+        "#;
+
+        // WHEN eval_script() is called on it
+        let response = eval_script(&script);
+
+        // THEN it returns a ServerResponse object
+        assert!(response.is_ok());
+
+        let response = response.unwrap();
+        assert_eq!(Version::parse(&response.version).unwrap(), Version::new(1, 2, 3));
+
+        let mut expected_urls = HashMap::<String, String>::new();
+        expected_urls.insert("x86_64-linux".to_string(), "https://acme.com/1".to_string());
+        expected_urls.insert("aarch64-macos".to_string(), "https://acme.com/2".to_string());
+        assert_eq!(response.urls, expected_urls);
+    }
+
+    #[test]
+    fn eval_script_return_null() {
+        // GIVEN a script which returns null
+        let script = r#"
+            function main() {
+                return null
+            }
+            main()
+        "#;
+
+        // WHEN eval_script() is called on it
+        let response = eval_script(&script);
+
+        // THEN it returns an error
+        assert!(response.is_err());
+    }
+}
+
