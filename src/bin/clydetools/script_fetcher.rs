@@ -148,11 +148,17 @@ mod tests {
         assert!(response.is_ok());
 
         let response = response.unwrap();
-        assert_eq!(Version::parse(&response.version).unwrap(), Version::new(1, 2, 3));
+        assert_eq!(
+            Version::parse(&response.version).unwrap(),
+            Version::new(1, 2, 3)
+        );
 
         let mut expected_urls = HashMap::<String, String>::new();
         expected_urls.insert("x86_64-linux".to_string(), "https://acme.com/1".to_string());
-        expected_urls.insert("aarch64-macos".to_string(), "https://acme.com/2".to_string());
+        expected_urls.insert(
+            "aarch64-macos".to_string(),
+            "https://acme.com/2".to_string(),
+        );
         assert_eq!(response.urls, expected_urls);
     }
 
@@ -173,4 +179,3 @@ mod tests {
         assert!(response.is_err());
     }
 }
-
