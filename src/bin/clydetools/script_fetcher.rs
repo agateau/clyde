@@ -49,20 +49,14 @@ fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsR
         .to_std_string()
         .unwrap();
 
-    let headers = create_headers().map_err(|x| {
-        return JsError::from_opaque(
-            format!("Failed to create headers {}", x).into(),
-        );
-    })?;
+    let headers = create_headers()
+        .map_err(|x| JsError::from_opaque(format!("Failed to create headers: {}", x).into()))?;
 
-    let response = match Client::new().get(&url).headers(headers).send() {
-        Ok(x) => x,
-        Err(x) => {
-            return Err(JsError::from_opaque(
-                format!("Failed to fetch {url}: {}", x).into(),
-            ));
-        }
-    };
+    let response = Client::new()
+        .get(&url)
+        .headers(headers)
+        .send()
+        .map_err(|x| JsError::from_opaque(format!("Failed to fetch {url}: {}", x).into()))?;
 
     let status = response.status().as_u16();
     let text = response.text().unwrap();
