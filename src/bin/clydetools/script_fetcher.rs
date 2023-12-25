@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::collections::HashMap;
 use std::fs;
+use std::vec::Vec;
 
 use anyhow::{anyhow, Result};
 use boa_engine::property::Attribute;
@@ -16,10 +16,10 @@ use semver::Version;
 use serde::Deserialize;
 use serde_json;
 
-use clyde::arch_os::ArchOs;
 use clyde::package::Package;
 use clyde::ui::Ui;
 
+use crate::add_assets::select_best_urls;
 use crate::fetch::{Fetcher, UpdateStatus};
 
 const SCRIPT_FILE_NAME: &str = "fetch.js";
@@ -65,7 +65,7 @@ pub struct ScriptFetcher {}
 #[derive(Debug, Deserialize)]
 struct ScriptResponse {
     version: String,
-    urls: HashMap<String, String>,
+    urls: Vec<String>,
 }
 
 impl Fetcher for ScriptFetcher {
@@ -89,11 +89,14 @@ impl Fetcher for ScriptFetcher {
             }
         }
 
+        /*
         let urls: HashMap<ArchOs, String> = response
             .urls
             .iter()
             .map(|(arch_os_str, url)| (ArchOs::parse(arch_os_str).unwrap(), url.clone()))
             .collect();
+        */
+        let urls = select_best_urls(ui, &response.urls, None, None)?;
 
         Ok(UpdateStatus::NeedUpdate { version, urls })
     }
@@ -141,10 +144,10 @@ mod tests {
             function main() {
                 return {
                     "version": "1.2.3",
-                    "urls": {
-                        "x86_64-linux": "https://acme.com/1",
-                        "aarch64-macos": "https://acme.com/2"
-                    }
+                    "urls": [
+                        "https://acme.com/1",
+                        "https://acme.com/2"
+                    ]
                 }
             }
             main()
@@ -162,12 +165,10 @@ mod tests {
             Version::new(1, 2, 3)
         );
 
-        let mut expected_urls = HashMap::<String, String>::new();
-        expected_urls.insert("x86_64-linux".to_string(), "https://acme.com/1".to_string());
-        expected_urls.insert(
-            "aarch64-macos".to_string(),
+        let expected_urls = vec![
+            "https://acme.com/1".to_string(),
             "https://acme.com/2".to_string(),
-        );
+        ];
         assert_eq!(response.urls, expected_urls);
     }
 

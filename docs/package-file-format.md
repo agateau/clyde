@@ -170,11 +170,11 @@ This fetcher gets the latest available version of a package by running a JavaScr
 ```
 {
   "version": $VERSION,
-  "urls": {
-    $ARCH_OS1: $URL1,
-    $ARCH_OS2: $URL2,
+  "urls": [
+    $URL1,
+    $URL2,
     …
-  }
+  ]
 }
 ```
 
@@ -182,8 +182,8 @@ If there is an error it must return `null`.
 
 The script can use the `httpGet(url) -> Response` function to synchronously send HTTP GET requests. The `Response` object contains two attributes:
 
-`status`: the HTTP status of the call,
-`text`: the body of the call.
+`status`: the HTTP status of the response,
+`text`: the text of the response.
 
 ## Environment variables
 
