@@ -12,6 +12,7 @@ use boa_engine::{
 };
 use boa_runtime::Console;
 use reqwest::blocking::Client;
+use reqwest::header::{self, HeaderMap, HeaderValue};
 use semver::Version;
 use serde::Deserialize;
 use serde_json;
@@ -33,6 +34,13 @@ fn add_runtime(context: &mut Context) {
         .expect("the console builtin shouldn't exist");
 }
 
+fn create_headers() -> Result<HeaderMap> {
+    let mut headers = HeaderMap::new();
+    headers.insert(header::USER_AGENT, HeaderValue::from_static("clydetools"));
+
+    Ok(headers)
+}
+
 fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsResult<JsValue> {
     let url = args
         .get(0)
@@ -40,7 +48,14 @@ fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsR
         .to_string(context)?
         .to_std_string()
         .unwrap();
-    let response = match Client::new().get(&url).send() {
+
+    let headers = create_headers().map_err(|x| {
+        return JsError::from_opaque(
+            format!("Failed to create headers {}", x).into(),
+        );
+    })?;
+
+    let response = match Client::new().get(&url).headers(headers).send() {
         Ok(x) => x,
         Err(x) => {
             return Err(JsError::from_opaque(
