@@ -4,9 +4,13 @@ This document describes the file format used by Clyde.
 
 Clyde packages are defined as YAML files.
 
-They can be either a directory: `<package_name>/index.yaml` or a plain file: `<package_name>.yaml`.
+They can either use the "directory layout" or the "plain file" layout.
 
-The directory format is supported since 0.4.0.
+In the directory layout, the package file is called: `<package_name>/index.yaml`.
+
+In the plain file layout, the package file id directly: `<package_name>.yaml`.
+
+The directory layout is supported since 0.4.0.
 
 ## Meta information
 
@@ -143,7 +147,7 @@ fetcher: !<type>
   # type-specific entries
 ```
 
-Where `<type>` must be one of `Auto` (default), `GitHub`, `GitLab` and `Off`.
+Where `<type>` must be one of `Auto` (default), `GitHub`, `GitLab`, `Script` or `Off`.
 
 ### GitHub fetcher
 
@@ -158,6 +162,28 @@ This fetcher accepts the following entries:
 
 - `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
 - `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+
+### Script fetcher
+
+This fetcher gets the latest available version of a package by running a JavaScript script. The package must uses a directory layout. The fetcher looks for a file called `fetch.js` in the package directory and executes it. The fetch script must look for the latest available version of the package and return an object of the form:
+
+```
+{
+  "version": $VERSION,
+  "urls": [
+    $URL1,
+    $URL2,
+    …
+  ]
+}
+```
+
+If there is an error it must return `null`.
+
+The script can use the `httpGet(url) -> Response` function to synchronously send HTTP GET requests. The `Response` object contains two attributes:
+
+`status`: the HTTP status of the response,
+`text`: the text of the response.
 
 ## Environment variables
 

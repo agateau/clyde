@@ -38,6 +38,8 @@ console = { version = "0.15.5", default-features = false, features = ["ansi-pars
 regex = "1.7.3"
 archiver-rs = { version = "0.5.1", default-features = false, features = ["bzip", "gzip", "xz"] }
 single-instance = "0.3.3"
+boa_engine = { version = "0.17.3", features = ["deser", "trace"] }
+boa_runtime = "0.17.3"
 
 [build-dependencies]
 clap = { version = "4.2.0", features = ["derive"] }

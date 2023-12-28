@@ -12,7 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::arch_os::{Arch, ArchOs, Os};
 
-const EXTRA_FILES_DIR_NAME: &str = "extra_files";
+pub const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Asset {
@@ -61,7 +61,7 @@ pub struct Package {
     pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
-    pub extra_files_dir: PathBuf,
+    pub package_dir: PathBuf,
 
     pub fetcher: FetcherConfig,
 }
@@ -84,8 +84,6 @@ struct InternalPackage {
     #[serde(default)]
     #[serde(skip_serializing_if = "is_auto_fetcher")]
     pub fetcher: FetcherConfig,
-    #[serde(skip)]
-    pub extra_files_dir: PathBuf,
 }
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Hash, Serialize)]
@@ -108,6 +106,7 @@ pub enum FetcherConfig {
         #[serde(skip_serializing_if = "is_none")]
         os: Option<Os>,
     },
+    Script,
     Off,
 }
 
@@ -140,12 +139,11 @@ impl InternalPackage {
             repository: package.repository.clone(),
             releases: Some(releases),
             installs: Some(installs),
-            extra_files_dir: package.extra_files_dir.clone(),
             fetcher: package.fetcher.clone(),
         }
     }
 
-    fn to_package(&self) -> Result<Package> {
+    fn to_package(&self, package_dir: &Path) -> Result<Package> {
         let mut releases = BTreeMap::<Version, Release>::new();
         if let Some(internal_releases) = &self.releases {
             for (version_str, builds_for_arch_os) in internal_releases.iter() {
@@ -177,7 +175,7 @@ impl InternalPackage {
             repository: self.repository.clone(),
             releases,
             installs,
-            extra_files_dir: self.extra_files_dir.clone(),
+            package_dir: package_dir.to_path_buf(),
             fetcher: self.fetcher.clone(),
         })
     }
@@ -186,17 +184,16 @@ impl InternalPackage {
 impl Package {
     pub fn from_file(path: &Path) -> Result<Package> {
         let file = File::open(path)?;
-        let mut internal_package: InternalPackage = serde_yaml::from_reader(file)?;
-        internal_package.extra_files_dir = path
+        let internal_package: InternalPackage = serde_yaml::from_reader(file)?;
+        let package_dir = path
             .parent()
-            .ok_or_else(|| anyhow!("No parent dir for package {}", path.display()))?
-            .join(EXTRA_FILES_DIR_NAME);
-        internal_package.to_package()
+            .ok_or_else(|| anyhow!("No parent dir for package {}", path.display()))?;
+        internal_package.to_package(package_dir)
     }
 
     pub fn from_yaml_str(yaml_str: &str) -> Result<Package> {
         let internal_package: InternalPackage = serde_yaml::from_str(yaml_str)?;
-        internal_package.to_package()
+        internal_package.to_package(&PathBuf::new())
     }
 
     pub fn to_file(&self, path: &Path) -> Result<()> {
@@ -218,7 +215,7 @@ impl Package {
             repository: self.repository.clone(),
             releases,
             installs: self.installs.clone(),
-            extra_files_dir: self.extra_files_dir.clone(),
+            package_dir: self.package_dir.clone(),
             fetcher: self.fetcher.clone(),
         }
     }
@@ -331,11 +328,8 @@ mod tests {
         // THEN it is loaded as expected
         let package = Package::from_file(&package_file).unwrap();
 
-        // ANd its extra_files_dir is correct
-        assert_eq!(
-            package.extra_files_dir,
-            package_dir.join(EXTRA_FILES_DIR_NAME)
-        );
+        // ANd its package_dir is correct
+        assert_eq!(package.package_dir, package_dir);
 
         // AND its tests are valid
         let version = Version::new(1, 2, 0);
@@ -355,11 +349,8 @@ mod tests {
         // THEN it is loaded as expected
         let package = Package::from_file(&package_file).unwrap();
 
-        // ANd its extra_files_dir is correct
-        assert_eq!(
-            package.extra_files_dir,
-            dir.path().join(EXTRA_FILES_DIR_NAME)
-        );
+        // ANd its package_dir is correct
+        assert_eq!(package.package_dir, dir.path());
 
         // AND its tests are valid
         let version = Version::new(1, 2, 0);

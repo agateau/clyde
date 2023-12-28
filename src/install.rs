@@ -12,6 +12,7 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
+use crate::package::EXTRA_FILES_DIR_NAME;
 use crate::ui::Ui;
 use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
@@ -304,12 +305,14 @@ pub fn install_package(
         &install.files,
         &map,
     )?;
-    if package.extra_files_dir.exists() {
+
+    let extra_files_dir = package.package_dir.join(EXTRA_FILES_DIR_NAME);
+    if extra_files_dir.exists() {
         ui.info("Installing extra files");
         install_files(
             InstallMode::Copy,
             &mut installed_files,
-            &package.extra_files_dir,
+            &extra_files_dir,
             &app.install_dir,
             &install.extra_files,
             &map,
