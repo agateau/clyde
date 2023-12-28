@@ -43,7 +43,7 @@ fn create_headers() -> Result<HeaderMap> {
 
 fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsResult<JsValue> {
     let url = args
-        .get(0)
+        .first()
         .unwrap()
         .to_string(context)?
         .to_std_string()
