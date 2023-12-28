@@ -1,4 +1,0 @@
-kind: Changed
-body: '`clydetools fetch` does not fail anymore to extract version numbers from tags
-  with app name prefixes.'
-time: 2023-12-20T19:36:59.195612609+01:00

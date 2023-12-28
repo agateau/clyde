@@ -1,4 +1,0 @@
-kind: Added
-body: Clyde packages can now install Fish completion using the new `${fish_comp_dir}`
-  variable.
-time: 2023-04-10T16:17:47.998513567+02:00

@@ -1,4 +1,0 @@
-kind: Changed
-body: '`clyde upgrade` now list packages which cannot be upgraded because they are
-  pinned'
-time: 2023-11-13T22:23:19.661000663+01:00

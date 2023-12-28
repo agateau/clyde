@@ -1,4 +1,0 @@
-kind: Added
-body: 'The package format now supports a new type of fetcher: `ScriptFetcher`. This
-  fetcher uses the [Boa JavaScript engine](https://boajs.dev/) to allow fetching from many different sources.'
-time: 2023-12-28T13:07:12.067006793+01:00

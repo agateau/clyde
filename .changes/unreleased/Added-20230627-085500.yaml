@@ -1,4 +1,0 @@
-kind: Added
-body: When downloading from GitHub, `clydetools` now uses a GitHub token if one is
-  set in `$CLYDE_GITHUB_TOKEN` or in `$GITHUB_TOKEN`.
-time: 2023-06-27T08:55:00.192150371+02:00
