@@ -1,4 +1,0 @@
-kind: Changed
-body: 'When a new version of Clyde is available, `clyde upgrade` won''t install any
-  other package than the `clyde` package, ensuring install or upgrade of packages are done with the latest versio of Clyde'
-time: 2023-04-01T13:54:51.727541827+02:00

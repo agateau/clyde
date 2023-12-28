@@ -1,4 +1,0 @@
-kind: Fixed
-body: '`clyde search` is now more robust and won''t fail if a package file cannot
-  be parsed.'
-time: 2023-12-17T10:47:55.924348319+01:00

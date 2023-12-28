@@ -1,3 +1,0 @@
-kind: Changed
-body: '`clydetools fetch` now recognizes `64-Bit` and `32-Bit` as x86_64 and x86 architectures.'
-time: 2023-08-03T09:30:26.886032915+02:00
