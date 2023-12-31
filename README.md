@@ -4,7 +4,7 @@ Clyde is a package manager for prebuilt applications.
 
 It works on Linux, macOS and Windows.
 
-[![Clyde demo](https://asciinema.org/a/571122.svg)](https://asciinema.org/a/571122)
+[![Clyde demo](https://asciinema.org/a/629496.svg)](https://asciinema.org/a/629496)
 
 ## Motivation
 
@@ -70,7 +70,7 @@ Add the created activation script to your shell startup script and restart your 
 You are now ready to use Clyde. Let's install ripgrep:
 
 ```
-./clyde install ripgrep
+clyde install ripgrep
 ```
 
 Check it works:
@@ -91,12 +91,6 @@ Check auto-completion works:
 $ rg --regex<tab>
 --regexp            -- specify pattern
 --regex-size-limit  -- specify upper size limit of compiled regex
-```
-
-To ensure you always run the latest version of Clyde, install it with itself!
-
-```
-./clyde install clyde
 ```
 
 ## Commands
