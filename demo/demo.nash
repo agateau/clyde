@@ -1,0 +1,33 @@
+fd --version
+# fd is not available, but I downloaded Clyde
+ls
+
+# Let's install it
+tar xf clyde-0.6.0-x86_64-linux.tar.gz
+cd clyde-0.6.0
+ls
+## sleep 1
+./clyde setup
+## sleep 2
+# For this demo, let's source the shell startup script directly
+. /home/demo/.cache/clyde/scripts/activate.sh
+
+# Now we can search for fd in Clyde store
+clyde search fd
+
+# And install it
+clyde install fd
+
+# fd is now installed in Clyde home
+
+# The command is in $PATH
+which fd
+
+fd --version
+
+# We can see the installed files with `clyde show -l <package>`
+clyde show -l fd
+
+# And the man page is available
+## sleep 1
+man fd
