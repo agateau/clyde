@@ -1,0 +1,3 @@
+kind: Changed
+body: '`clyde install` no longer overwrites existing files. If a file it wants to install already exists, it aborts and removes any files it already installed.'
+time: 2024-02-02T08:16:30.945586092+01:00
