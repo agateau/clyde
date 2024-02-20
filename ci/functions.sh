@@ -7,6 +7,10 @@ die() {
 # optionally defines and exports CARGO_BUILD_TARGET
 init_system_vars() {
     ARCH=$(uname -m)
+    if [ "$ARCH" = "arm64" ] ; then
+        # Use Rust convention for 64-bit ARM CPU
+        ARCH=aarch64
+    fi
 
     EXE_EXT=""
 
