@@ -30,7 +30,7 @@ fn is_none<T>(x: &Option<T>) -> bool {
     x.is_none()
 }
 
-fn is_vec_empty<T>(vec: &Vec<T>) -> bool {
+fn is_vec_empty<T>(vec: &[T]) -> bool {
     vec.is_empty()
 }
 
