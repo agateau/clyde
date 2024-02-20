@@ -1,3 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
-pipx run pre-commit run --all
+if ! command -v pre-commit > /dev/null ; then
+    pipx install pre-commit
+fi
+pre-commit run --all
