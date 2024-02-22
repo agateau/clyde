@@ -29,18 +29,7 @@ init_checksum_cmd() {
 }
 
 define_version() {
-    local describe=$(git describe)
-    echo "git describe: $describe"
-    case "$describe" in
-        *-*-g*)
-            echo "Building a snapshot"
-            VERSION=${describe//-*/}+$(git show --no-patch --format=%cd-%h --date=format:%Y%m%dT%H%M%S)
-            ;;
-        *)
-            echo "Building from a tag"
-            VERSION=$describe
-            ;;
-    esac
+    VERSION=0.6.0
     echo "VERSION=$VERSION"
 }
 

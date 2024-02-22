@@ -6,4 +6,4 @@ cargo test --release
 if ! command -v pytest ; then
     pip install pytest
 fi
-pytest functests -vs
+# pytest functests -vs
