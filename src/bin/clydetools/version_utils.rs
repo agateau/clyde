@@ -7,7 +7,8 @@ use regex::Regex;
 use semver::Version;
 
 lazy_static! {
-    static ref VERSION_RX: Regex = Regex::new("([0-9]+(\\.[0-9]+)*)$").unwrap();
+    static ref VERSION_RX: Regex =
+        Regex::new("(?P<version>[0-9]+(\\.[0-9]+)*)(-[0-9]+)?$").unwrap();
 }
 
 fn count_chars(txt: &str, wanted: char) -> usize {
@@ -19,7 +20,7 @@ pub fn version_from_tag(tag: &str) -> Result<Version> {
     // Keep only the version suffix
     let version_str = VERSION_RX
         .captures(tag)
-        .map(|captures| captures[0].to_string());
+        .map(|captures| captures["version"].to_string());
 
     let mut version_str = match version_str {
         Some(x) => x.to_string(),
@@ -47,6 +48,14 @@ mod tests {
         assert_eq!(
             version_from_tag("foo14-1.12.0").unwrap(),
             Version::new(1, 12, 0)
+        );
+    }
+
+    #[test]
+    fn check_version_from_tag_removes_distro_like_suffix() {
+        assert_eq!(
+            version_from_tag("forgejo-1.2.3-0").unwrap(),
+            Version::new(1, 2, 3)
         );
     }
 
