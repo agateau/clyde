@@ -90,6 +90,9 @@ struct InternalPackage {
 pub enum FetcherConfig {
     #[default]
     Auto,
+    Forgejo {
+        base_url: String,
+    },
     GitHub {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]

@@ -11,6 +11,7 @@ use clap::{Parser, Subcommand};
 pub mod add_assets;
 pub mod check_package;
 pub mod fetch;
+pub mod forgejo_fetcher;
 pub mod github_fetcher;
 pub mod gitlab_fetcher;
 pub mod script_fetcher;
