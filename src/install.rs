@@ -95,6 +95,10 @@ fn install_file_entry(
 
         let dst_path = install_dir.join(&rel_dst_path);
 
+        if dst_path.exists() {
+            return Err(anyhow!("{} already exists", dst_path.display()));
+        }
+
         create_parent_dir(&dst_path)?;
 
         match install_mode {
@@ -158,6 +162,15 @@ fn parse_package_name_arg(arg: &str) -> Result<InstallRequest> {
             Ok(InstallRequest::new(name, version))
         }
     }
+}
+
+fn remove_installed_files(ui: &Ui, install_dir: &Path, files: &HashSet<PathBuf>) -> Result<()> {
+    ui.error("Installation failed, cleaning up");
+    for file in files {
+        let path = install_dir.join(file);
+        fs::remove_file(path)?;
+    }
+    Ok(())
 }
 
 fn create_vars_map(asset_name: &Option<String>, package_name: &str) -> VarsMap {
@@ -297,26 +310,32 @@ pub fn install_package(
     ui.info("Installing files");
     let map = create_vars_map(&asset_name, &package.name);
     let mut installed_files = HashSet::<PathBuf>::new();
-    install_files(
+    if let Err(err) = install_files(
         InstallMode::Move,
         &mut installed_files,
         &unpack_dir,
         &app.install_dir,
         &install.files,
         &map,
-    )?;
+    ) {
+        remove_installed_files(&ui, &app.install_dir, &installed_files)?;
+        return Err(err);
+    }
 
     let extra_files_dir = package.package_dir.join(EXTRA_FILES_DIR_NAME);
     if extra_files_dir.exists() {
         ui.info("Installing extra files");
-        install_files(
+        if let Err(err) = install_files(
             InstallMode::Copy,
             &mut installed_files,
             &extra_files_dir,
             &app.install_dir,
             &install.extra_files,
             &map,
-        )?;
+        ) {
+            remove_installed_files(&ui, &app.install_dir, &installed_files)?;
+            return Err(err);
+        }
     }
     db.add_package(
         &package.name,

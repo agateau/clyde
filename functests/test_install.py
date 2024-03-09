@@ -2,6 +2,10 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+import json
+
+from pathlib import Path
+
 from conftest import get_bin_path, run_clyde, run_in_clyde_home
 
 
@@ -50,3 +54,30 @@ def test_reinstall_package(clyde_home):
 
     # THEN the binary is back
     assert starship_path.exists()
+
+
+def test_install_cleans_after_itself_in_case_of_failure(clyde_home):
+    # Get the list of xh files
+    run_clyde("install", "xh")
+    xh_info = json.loads(run_clyde("show", "-l", "--json", "xh").stdout)
+    paths = [Path(x) for x in xh_info["files"]]
+    run_clyde("uninstall", "xh")
+
+    for idx, existing_path in enumerate(paths):
+        # GIVEN the xh package is not installed but one of its files exists
+        existing_path.write_text("foo")
+        other_paths = paths[:idx] + paths[idx + 1:]
+
+        # WHEN one tries to install xh
+        proc = run_clyde("install", "xh", check=False)
+
+        # THEN it fails
+        assert proc.returncode != 0
+
+        # AND no files from the package have been installed
+        for other_path in other_paths:
+            assert not other_path.exists(), f"{existing_path=} {other_paths=}"
+
+        # AND the existing file has been left untouched
+        assert existing_path.read_text() == "foo"
+        existing_path.unlink()
