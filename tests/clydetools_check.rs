@@ -13,8 +13,8 @@ fn clydetools_check_run_test_commands() {
 
     let mut yaml_writer = ClydeYamlWriter::new("0.1.0");
     yaml_writer.exe_name = test_exe_name.clone();
-    yaml_writer.add_test(&format!("{test_exe_name} help list"));
-    yaml_writer.add_test(&format!("{test_exe_name} help install"));
+    yaml_writer.add_test(&format!("touch t1"));
+    yaml_writer.add_test(&format!("touch t2"));
     let package_path = yaml_writer.write(&temp_dir).unwrap();
 
     // WHEN `clydetools check` is run against the package file
@@ -42,17 +42,12 @@ fn clydetools_check_run_test_commands() {
     assert!(output.status.success(), "{}", output_summary);
 
     // AND the test commands have been executed
-    // The output of `clyde help <cmd>` contains the string `clyde <cmd> [OPTIONS]`
-    assert!(
-        stdout.contains(&format!("List installed applications")),
-        "{}",
-        output_summary
-    );
-    assert!(
-        stdout.contains(&format!("Install applications")),
-        "{}",
-        output_summary
-    );
+    // If the test commands have been executed, they should have created empty files called t1 and
+    // t2 in the temp dir
+    let t1_path = temp_dir.join("t1");
+    let t2_path = temp_dir.join("t2");
+    assert!(t1_path.exists(), "{}", output_summary);
+    assert!(t2_path.exists(), "{}", output_summary);
 }
 
 #[test]

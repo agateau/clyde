@@ -3,8 +3,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::fs;
+use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Output};
 
 use anyhow::{anyhow, Context, Result};
 use semver::Version;
@@ -18,6 +19,20 @@ use clyde::package::Package;
 use clyde::store::INDEX_NAME;
 use clyde::ui::Ui;
 use clyde::vars::{expand_vars, VarsMap};
+
+struct FailedPackage {
+    package_path: PathBuf,
+    error_message: String,
+}
+
+impl FailedPackage {
+    fn new(package_path: &Path, error_message: &str) -> FailedPackage {
+        FailedPackage {
+            package_path: package_path.to_path_buf(),
+            error_message: error_message.to_string(),
+        }
+    }
+}
 
 fn check_has_release_assets(package: &Package) -> Result<()> {
     if package.releases.is_empty() {
@@ -51,7 +66,8 @@ fn get_latest_version(package: &Package) -> Option<Version> {
         .map(|_| version.clone())
 }
 
-fn run_test_command(home_dir: &Path, test_command: &str) -> Result<()> {
+/// Run the test command `test_command`, add results with error details to `report`
+fn run_test_command(report: &mut Vec<String>, home_dir: &Path, test_command: &str) -> Result<()> {
     let clyde_bin_dir = home_dir.join("inst").join("bin");
 
     let new_path = prepend_dir_to_path(&clyde_bin_dir)?;
@@ -63,15 +79,10 @@ fn run_test_command(home_dir: &Path, test_command: &str) -> Result<()> {
         .ok_or_else(|| anyhow!("Test command is empty"))?;
     let args: Vec<String> = iter.map(|x| x.into()).collect();
 
-    let status = Command::new(binary)
-        .env("PATH", new_path)
-        .args(args)
-        .status()
-        .map_err(|x| anyhow!("Failed to start command: {}", x))?;
-    if !status.success() {
-        return Err(anyhow!("Command failed: {status}"));
-    }
-    Ok(())
+    run_command(
+        report,
+        Command::new(binary).env("PATH", new_path).args(args),
+    )
 }
 
 fn create_vars_map() -> VarsMap {
@@ -88,12 +99,41 @@ fn create_vars_map() -> VarsMap {
     map
 }
 
-fn check_can_install(
-    ui: &Ui,
-    package: &Package,
-    package_path: &Path,
-    version: &Version,
-) -> Result<()> {
+fn string_for_command_output(output: &Output) -> String {
+    let mut string = String::new();
+    string.push_str("--- Stdout ---\n");
+    string.push_str(&String::from_utf8_lossy(&output.stdout));
+    string.push_str("--- Stderr ---\n");
+    string.push_str(&String::from_utf8_lossy(&output.stderr));
+    string
+}
+
+/// Run `command`, add results with error details to `report`
+fn run_command(report: &mut Vec<String>, command: &mut Command) -> Result<()> {
+    let command_str = format!("{:?} {:?}", command.get_program(), command.get_args());
+    report.push(format!("Running {command_str}"));
+    let output = command.output().context("Failed to execute command")?;
+
+    match output.status.code() {
+        Some(0) => Ok(()),
+        Some(x) => {
+            report.push(format!("Command failed with exit code {x}"));
+            report.push(string_for_command_output(&output));
+            Err(anyhow!("Command failed with exit code {x}"))
+        }
+        None => {
+            report.push("Command terminated by signal".to_string());
+            Err(anyhow!("Command terminated by signal"))
+        }
+    }
+}
+
+/// Checks the package can install, reports failure as a big string in the Err branch of Result
+fn check_can_install(package: &Package, package_path: &Path, version: &Version) -> Result<()> {
+    let mut report = Vec::<String>::new();
+
+    // Setup temp Clyde home
+    report.push("### Setup Clyde home".to_string());
     let home_temp_dir = TempDir::new()?;
     let home_dir = home_temp_dir.path();
     let store_dir = home_dir.join("store");
@@ -103,32 +143,28 @@ fn check_can_install(
     let app = App::new(home_dir).context("Could not create test Clyde home")?;
     app.database.create()?;
 
+    // Install package
+    report.push("\n### Install package\n".to_string());
     let package_str = package_path.as_os_str().to_str().unwrap();
-    let mut cmd = Command::new("clyde");
+    run_command(
+        &mut report,
+        Command::new("clyde")
+            .arg("install")
+            .arg(format!("{package_str}@={version}"))
+            .env("CLYDE_HOME", home_dir.as_os_str()),
+    )
+    .map_err(|_| anyhow!(report.join("\n")))?;
 
-    cmd.env("CLYDE_HOME", home_dir.as_os_str())
-        .arg("install")
-        .arg(format!("{package_str}@={version}"));
-
-    ui.info(&format!("Executing {cmd:?}"));
-    let status = cmd.status().context("Failed to execute command")?;
-
-    match status.code() {
-        Some(0) => Ok(()),
-        Some(x) => Err(anyhow!("Command failed with exit code {x}")),
-        None => Err(anyhow!("Command terminated by signal")),
-    }?;
-
-    ui.info("Running test commands");
+    // Run test commands
+    report.push("\n### Running test commmands\n".to_string());
     let install = package.get_install(version, &ArchOs::current()).unwrap();
 
     let vars = create_vars_map();
 
-    let ui2 = ui.nest();
     for test_command in &install.tests {
-        ui2.info(&format!("Running {test_command:?}"));
         let test_command = expand_vars(test_command, &vars)?;
-        run_test_command(home_dir, &test_command)?;
+        run_test_command(&mut report, home_dir, &test_command)
+            .map_err(|_| anyhow!(report.join("\n")))?;
     }
     Ok(())
 }
@@ -155,59 +191,84 @@ fn check_package_name(package: &Package, path: &Path) -> Result<()> {
     Ok(())
 }
 
-/// The bool indicates if an asset was available
-fn check_package(ui: &Ui, path: &Path) -> Result<bool> {
+fn load_package(path: &Path) -> Result<Package> {
     let path = path.canonicalize()?;
     let package = Package::from_file(&path)?;
-
     check_package_name(&package, &path)?;
-    check_has_release_assets(&package)?;
-    check_has_installs(&package)?;
+    Ok(package)
+}
 
-    let version = match get_latest_version(&package) {
+/// The bool indicates if an asset was available for the current arch-os
+fn check_package(package: &Package, path: &Path) -> Result<bool> {
+    check_has_release_assets(package)?;
+    check_has_installs(package)?;
+
+    let version = match get_latest_version(package) {
         Some(x) => x,
         None => {
-            ui.info(&format!(
-                "No release assets available for {}",
-                ArchOs::current()
-            ));
             return Ok(false);
         }
     };
-    check_can_install(ui, &package, &path, &version)?;
+    check_can_install(package, path, &version)?;
     Ok(true)
 }
 
-fn print_summary_line(header: &str, packages: &[&str]) {
+fn print_summary_line(header: &str, packages: &[String]) {
     let joined = packages.join(", ");
     println!("{header}: {joined}");
 }
 
 pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
-    let mut ok_packages = Vec::<&str>::new();
-    let mut not_on_arch_os_packages = Vec::<&str>::new();
-    let mut failed_packages = Vec::<&str>::new();
+    let mut ok_packages = Vec::<String>::new();
+    let mut not_on_arch_os_packages = Vec::<String>::new();
+    let mut failed_packages = Vec::<FailedPackage>::new();
 
+    let count = paths.len();
+    let mut idx = 1;
     for path in paths {
-        let name = path.file_stem().unwrap().to_str().unwrap();
-        ui.info(&format!("Checking {name}"));
-        let ui2 = ui.nest();
-        match check_package(&ui2, path) {
-            Ok(true) => ok_packages.push(name),
-            Ok(false) => not_on_arch_os_packages.push(name),
+        print!(
+            "[{idx}/{count} {:3}%] {}: ",
+            100 * idx / count,
+            path.display()
+        );
+        io::stdout().lock().flush().unwrap_or_default();
+        idx += 1;
+        let package = match load_package(path) {
+            Ok(x) => x,
             Err(message) => {
-                ui2.error(&format!("Error: {message}"));
-                failed_packages.push(name)
+                failed_packages.push(FailedPackage::new(path, &message.to_string()));
+                println!("FAIL");
+                continue;
+            }
+        };
+        let name = package.name.clone();
+        match check_package(&package, path) {
+            Ok(true) => {
+                ok_packages.push(name);
+                println!("OK");
+            }
+            Ok(false) => {
+                not_on_arch_os_packages.push(name);
+                println!("OK (not on arch-os)");
+            }
+            Err(message) => {
+                failed_packages.push(FailedPackage::new(path, &message.to_string()));
+                println!("FAIL");
             }
         };
     }
 
     ui.info("Finished");
-    print_summary_line("OK   ", &ok_packages);
-    print_summary_line("N/A  ", &not_on_arch_os_packages);
-    print_summary_line("FAIL ", &failed_packages);
+    print_summary_line("OK", &ok_packages);
+    print_summary_line("N/A", &not_on_arch_os_packages);
 
     if !failed_packages.is_empty() {
+        println!("# Failed packages\n");
+        for failed_package in &failed_packages {
+            println!("## {}", failed_package.package_path.display());
+            println!("\n{}\n", failed_package.error_message);
+        }
+
         return Err(anyhow!("{} package(s) failed", failed_packages.len()));
     }
     Ok(())
