@@ -8,7 +8,8 @@ use clap::Parser;
 use clyde::app::App;
 use clyde::cli::{Cli, Command};
 use clyde::cmd::{
-    install_cmd, list_cmd, search_cmd, setup_cmd, show_cmd, uninstall_cmd, update_cmd, upgrade_cmd,
+    doc_cmd, install_cmd, list_cmd, search_cmd, setup_cmd, show_cmd, uninstall_cmd, update_cmd,
+    upgrade_cmd,
 };
 use clyde::ui::Ui;
 
@@ -49,6 +50,10 @@ pub fn exec(cli: Cli) -> Result<()> {
         Command::Search { query } => {
             let app = App::new(&home)?;
             search_cmd(&app, &ui, &query)
+        }
+        Command::Doc { package_name } => {
+            let app = App::new(&home)?;
+            doc_cmd(&app, &package_name)
         }
         Command::List { json } => {
             let app = App::new(&home)?;
