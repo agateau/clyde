@@ -8,8 +8,8 @@ use anyhow::Result;
 use semver::{Version, VersionReq};
 
 use crate::app::App;
+use crate::cmd::{install_packages, InstallRequest};
 use crate::db::{Database, PackageInfo};
-use crate::install::{install_packages, InstallRequest};
 use crate::package::Package;
 use crate::store::Store;
 use crate::ui::Ui;

@@ -7,15 +7,10 @@ use clap::Parser;
 
 use clyde::app::App;
 use clyde::cli::{Cli, Command};
-use clyde::install::install_cmd;
-use clyde::list::list_cmd;
-use clyde::search::search_cmd;
-use clyde::setup::setup_cmd;
-use clyde::show::show_cmd;
+use clyde::cmd::{
+    install_cmd, list_cmd, search_cmd, setup_cmd, show_cmd, uninstall_cmd, update_cmd, upgrade_cmd,
+};
 use clyde::ui::Ui;
-use clyde::uninstall::uninstall_cmd;
-use clyde::update::update_cmd;
-use clyde::upgrade::upgrade_cmd;
 
 pub fn exec(cli: Cli) -> Result<()> {
     let ui = Ui::default();
