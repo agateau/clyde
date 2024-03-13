@@ -57,19 +57,23 @@ def test_reinstall_package(clyde_home):
 
 
 def test_install_cleans_after_itself_in_case_of_failure(clyde_home):
-    # Get the list of xh files
-    run_clyde("install", "xh")
-    xh_info = json.loads(run_clyde("show", "-l", "--json", "xh").stdout)
+    # Get the list of glab files
+    #
+    # This test needs to use a package which:
+    # - provide binaries for all supported arch-os
+    # - contains more than one file
+    run_clyde("install", "glab")
+    xh_info = json.loads(run_clyde("show", "-l", "--json", "glab").stdout)
     paths = [Path(x) for x in xh_info["files"]]
-    run_clyde("uninstall", "xh")
+    run_clyde("uninstall", "glab")
 
     for idx, existing_path in enumerate(paths):
-        # GIVEN the xh package is not installed but one of its files exists
+        # GIVEN the glab package is not installed but one of its files exists
         existing_path.write_text("foo")
         other_paths = paths[:idx] + paths[idx + 1:]
 
-        # WHEN one tries to install xh
-        proc = run_clyde("install", "xh", check=False)
+        # WHEN one tries to install glab
+        proc = run_clyde("install", "glab", check=False)
 
         # THEN it fails
         assert proc.returncode != 0
