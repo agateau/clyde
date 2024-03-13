@@ -12,9 +12,9 @@ use semver::VersionReq;
 use crate::app::App;
 use crate::arch_os::ArchOs;
 use crate::checksum::verify_checksum;
+use crate::cmd::uninstall_package;
 use crate::package::EXTRA_FILES_DIR_NAME;
 use crate::ui::Ui;
-use crate::uninstall::uninstall_package;
 use crate::unpacker::get_unpacker;
 use crate::vars::{expand_vars, VarsMap};
 

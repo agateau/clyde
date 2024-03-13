@@ -13,7 +13,7 @@ use semver::VersionReq;
 use shell_words::quote;
 
 use crate::app::App;
-use crate::install::{install_package, InstallRequest};
+use crate::cmd::{install_package, InstallRequest};
 use crate::ui::Ui;
 
 const SH_INIT: &str = include_str!("activate.sh.tmpl");
