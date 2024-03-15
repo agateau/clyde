@@ -147,7 +147,7 @@ fetcher: !<type>
   # type-specific entries
 ```
 
-Where `<type>` must be one of `Auto` (default), `GitHub`, `GitLab`, `Script` or `Off`.
+Where `<type>` must be one of `Auto` (default), `GitHub`, `GitLab`, `Forgejo`, `Script` or `Off`.
 
 ### GitHub fetcher
 
@@ -162,6 +162,12 @@ This fetcher accepts the following entries:
 
 - `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
 - `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+
+### Forgejo fetcher
+
+This fetcher can fetch from any Forgejo-powered code forge. It accepts the following entries:
+
+- `base_url`: required, the base URL of the forge to connect to.
 
 ### Script fetcher
 
