@@ -337,12 +337,16 @@ pub fn install_package(
             return Err(err);
         }
     }
-    db.add_package(
+
+    if let Err(err) = db.add_package(
         &package.name,
         version,
         &install_request.version,
         &installed_files,
-    )?;
+    ) {
+        remove_installed_files(&ui, &app.install_dir, &installed_files)?;
+        return Err(err);
+    }
 
     ui.info("Cleaning");
     fs::remove_dir_all(&unpack_dir)
