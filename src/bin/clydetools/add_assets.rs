@@ -203,7 +203,7 @@ impl BestUrlOptions {
 /// Given a bunch of asset URLs returns the best URL per arch-os
 pub fn select_best_urls(
     ui: &Ui,
-    urls: &Vec<String>,
+    urls: &[String],
     options: BestUrlOptions,
 ) -> Result<HashMap<ArchOs, String>> {
     let mut best_urls = HashMap::<ArchOs, String>::new();
@@ -235,7 +235,7 @@ pub fn add_assets(
     path: &Path,
     version: &Version,
     arch_os: &Option<String>,
-    urls: &Vec<String>,
+    urls: &[String],
 ) -> Result<()> {
     let package = Package::from_file(path)?;
 
@@ -292,7 +292,7 @@ pub fn add_assets_cmd(
     path: &Path,
     version: &str,
     arch_os: &Option<String>,
-    urls: &Vec<String>,
+    urls: &[String],
 ) -> Result<()> {
     let version = Version::parse(version)?;
     add_assets(app, ui, path, &version, arch_os, urls)
