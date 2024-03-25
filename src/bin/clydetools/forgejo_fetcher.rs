@@ -14,7 +14,7 @@ use serde_json::{self, Value};
 use clyde::package::{FetcherConfig, Package};
 use clyde::ui::Ui;
 
-use crate::add_assets::select_best_urls;
+use crate::add_assets::{select_best_urls, BestUrlOptions};
 use crate::fetch::{Fetcher, UpdateStatus};
 use crate::version_utils::version_from_tag;
 
@@ -130,8 +130,7 @@ impl Fetcher for ForgejoFetcher {
         let urls = select_best_urls(
             ui,
             &extract_build_urls(&release_json)?,
-            default_arch,
-            default_os,
+            BestUrlOptions::new(default_arch, default_os),
         )?;
 
         Ok(UpdateStatus::NeedUpdate {

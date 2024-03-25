@@ -20,7 +20,7 @@ use serde_json;
 use clyde::package::Package;
 use clyde::ui::Ui;
 
-use crate::add_assets::select_best_urls;
+use crate::add_assets::{select_best_urls, BestUrlOptions};
 use crate::fetch::{Fetcher, UpdateStatus};
 
 const SCRIPT_FILE_NAME: &str = "fetch.js";
@@ -98,7 +98,7 @@ impl Fetcher for ScriptFetcher {
             }
         }
 
-        let urls = select_best_urls(ui, &response.urls, None, None)?;
+        let urls = select_best_urls(ui, &response.urls, BestUrlOptions::default())?;
 
         Ok(UpdateStatus::NeedUpdate { version, urls })
     }

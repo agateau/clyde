@@ -185,12 +185,26 @@ fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
     }
 }
 
+#[derive(Default)]
+pub struct BestUrlOptions {
+    default_arch: Option<Arch>,
+    default_os: Option<Os>,
+}
+
+impl BestUrlOptions {
+    pub fn new(default_arch: Option<Arch>, default_os: Option<Os>) -> Self {
+        BestUrlOptions {
+            default_arch,
+            default_os,
+        }
+    }
+}
+
 /// Given a bunch of asset URLs returns the best URL per arch-os
 pub fn select_best_urls(
     ui: &Ui,
     urls: &Vec<String>,
-    default_arch: Option<Arch>,
-    default_os: Option<Os>,
+    options: BestUrlOptions,
 ) -> Result<HashMap<ArchOs, String>> {
     let mut best_urls = HashMap::<ArchOs, String>::new();
     for url in urls {
@@ -199,7 +213,7 @@ pub fn select_best_urls(
             continue;
         }
 
-        let arch_os = match extract_arch_os(&lname, default_arch, default_os) {
+        let arch_os = match extract_arch_os(&lname, options.default_arch, options.default_os) {
             Some(x) => x,
             None => {
                 ui.warn(&format!("Can't extract arch-os from {lname}, skipping"));
@@ -246,7 +260,7 @@ pub fn add_assets(
             url,
         )?;
     } else {
-        let urls_for_arch_os = select_best_urls(ui, urls, None, None)?;
+        let urls_for_arch_os = select_best_urls(ui, urls, BestUrlOptions::default())?;
         for (arch_os, url) in urls_for_arch_os {
             ui.info(&format!("{arch_os}: {url}"));
             let result = add_asset(
