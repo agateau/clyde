@@ -55,7 +55,7 @@ impl Fetcher for GitLabFetcher {
         }
 
         let (default_arch, default_os) = match &package.fetcher {
-            FetcherConfig::GitHub { arch, os } => (*arch, *os),
+            FetcherConfig::GitLab { arch, os } => (*arch, *os),
             _ => (None, None),
         };
 
