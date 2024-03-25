@@ -98,13 +98,6 @@ impl Fetcher for ScriptFetcher {
             }
         }
 
-        /*
-        let urls: HashMap<ArchOs, String> = response
-            .urls
-            .iter()
-            .map(|(arch_os_str, url)| (ArchOs::parse(arch_os_str).unwrap(), url.clone()))
-            .collect();
-        */
         let urls = select_best_urls(ui, &response.urls, None, None)?;
 
         Ok(UpdateStatus::NeedUpdate { version, urls })
