@@ -12,7 +12,7 @@ use reqwest::blocking::Client;
 use reqwest::header::{self, HeaderMap, HeaderValue};
 use serde_json::{self, Value};
 
-use clyde::package::{FetcherConfig, Package};
+use clyde::package::Package;
 use clyde::ui::Ui;
 
 use crate::add_assets::{select_best_urls, BestUrlOptions};
@@ -55,15 +55,10 @@ impl Fetcher for GitHubFetcher {
             return Ok(UpdateStatus::UpToDate);
         }
 
-        let (default_arch, default_os) = match &package.fetcher {
-            FetcherConfig::GitHub { arch, os } => (*arch, *os),
-            _ => (None, None),
-        };
-
         let urls = select_best_urls(
             ui,
             &extract_build_urls(&release_json)?,
-            BestUrlOptions::new(default_arch, default_os),
+            BestUrlOptions::try_from(&package.fetcher)?,
         )?;
 
         Ok(UpdateStatus::NeedUpdate {

@@ -7,6 +7,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::slice::Iter;
 
+use anyhow::Error as AnyhowError;
 use anyhow::{anyhow, Result};
 use regex::Regex;
 use semver::Version;
@@ -15,7 +16,7 @@ use clyde::app::App;
 use clyde::arch_os::{Arch, ArchOs, Os};
 use clyde::checksum::compute_checksum;
 use clyde::file_cache::FileCache;
-use clyde::package::{Asset, Package, Release};
+use clyde::package::{Asset, FetcherConfig, Package, Release};
 use clyde::ui::Ui;
 
 lazy_static! {
@@ -95,11 +96,15 @@ fn get_extension(name: &str) -> Option<&str> {
     name.rsplit_once('.').map(|x| x.1)
 }
 
-fn get_lname(url: &str) -> Result<String> {
+fn get_filename(url: &str) -> Result<String> {
     let (_, name) = url
         .rsplit_once('/')
         .ok_or_else(|| anyhow!("Can't find archive name in URL {}", url))?;
-    Ok(name.to_ascii_lowercase())
+    Ok(name.to_string())
+}
+
+fn get_lname(url: &str) -> Result<String> {
+    Ok(get_filename(url)?.to_ascii_lowercase())
 }
 
 fn is_supported_name(name: &str) -> bool {
@@ -189,14 +194,50 @@ fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
 pub struct BestUrlOptions {
     default_arch: Option<Arch>,
     default_os: Option<Os>,
+    include: Option<Regex>,
+}
+
+fn parse_include(include: &Option<String>) -> Result<Option<Regex>> {
+    match include {
+        None => Ok(None),
+        Some(expr) => match Regex::new(expr) {
+            Ok(rx) => Ok(Some(rx)),
+            Err(e) => Err(anyhow!("Failed to parse regular expression {expr}: {e}")),
+        },
+    }
 }
 
 impl BestUrlOptions {
-    pub fn new(default_arch: Option<Arch>, default_os: Option<Os>) -> Self {
+    pub fn new(default_arch: Option<Arch>, default_os: Option<Os>, include: Option<Regex>) -> Self {
         BestUrlOptions {
             default_arch,
             default_os,
+            include,
         }
+    }
+}
+
+impl TryFrom<&FetcherConfig> for BestUrlOptions {
+    type Error = AnyhowError;
+
+    fn try_from(config: &FetcherConfig) -> Result<BestUrlOptions> {
+        Ok(match config {
+            FetcherConfig::Forgejo {
+                arch, os, include, ..
+            } => BestUrlOptions::new(*arch, *os, parse_include(include)?),
+            FetcherConfig::GitHub {
+                arch, os, include, ..
+            } => BestUrlOptions::new(*arch, *os, parse_include(include)?),
+            FetcherConfig::GitLab {
+                arch, os, include, ..
+            } => BestUrlOptions::new(*arch, *os, parse_include(include)?),
+            _ => {
+                panic!(
+                    "BestUrlOptions::try_from should not be called for {:?}",
+                    config
+                )
+            }
+        })
     }
 }
 
@@ -213,6 +254,13 @@ pub fn select_best_urls(
             continue;
         }
 
+        if let Some(ref include) = options.include {
+            let filename = get_filename(url)?;
+            if !include.is_match(&filename) {
+                continue;
+            }
+        }
+
         let arch_os = match extract_arch_os(&lname, options.default_arch, options.default_os) {
             Some(x) => x,
             None => {
@@ -220,6 +268,7 @@ pub fn select_best_urls(
                 continue;
             }
         };
+
         let url = match best_urls.get(&arch_os) {
             Some(current_url) => select_best_url(ui, current_url, url),
             None => url,
@@ -409,5 +458,28 @@ mod tests {
             ),
             "https://example.com/foo-musl"
         );
+    }
+
+    #[test]
+    fn test_select_best_urls_applies_include() {
+        let ui = Ui::default();
+
+        let options = BestUrlOptions::new(None, None, Some(Regex::new("^foo-cli").unwrap()));
+
+        let result = select_best_urls(
+            &ui,
+            &[
+                "https://example.com/foo/foo-cli-x86_64-linux.gz".to_string(),
+                "https://example.com/foo/foo-extra-x86_64-linux.gz".to_string(),
+            ],
+            options,
+        )
+        .unwrap();
+
+        let expected = HashMap::from([(
+            ArchOs::new(Arch::X86_64, Os::Linux),
+            "https://example.com/foo/foo-cli-x86_64-linux.gz".to_string(),
+        )]);
+        assert_eq!(result, expected);
     }
 }

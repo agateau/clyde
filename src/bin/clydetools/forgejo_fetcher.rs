@@ -122,15 +122,10 @@ impl Fetcher for ForgejoFetcher {
             return Ok(UpdateStatus::UpToDate);
         }
 
-        let (default_arch, default_os) = match &package.fetcher {
-            FetcherConfig::Forgejo { arch, os, .. } => (*arch, *os),
-            _ => (None, None),
-        };
-
         let urls = select_best_urls(
             ui,
             &extract_build_urls(&release_json)?,
-            BestUrlOptions::new(default_arch, default_os),
+            BestUrlOptions::try_from(&package.fetcher)?,
         )?;
 
         Ok(UpdateStatus::NeedUpdate {
