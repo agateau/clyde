@@ -155,6 +155,7 @@ Fetcher entries depend on their type, some entries are supported by many fetcher
 
 - `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
 - `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+- `include`: optional, a regular expression to select a subset of the package assets. Useful when the upstream project publishes multiple assets but the package should only include some of them.
 
 ### GitHub fetcher
 
@@ -162,6 +163,7 @@ This fetcher accepts the following entries:
 
 - `arch`
 - `os`
+- `include`
 
 ### GitLab fetcher
 
@@ -169,6 +171,7 @@ This fetcher accepts the following entries:
 
 - `arch`
 - `os`
+- `include`
 
 ### Forgejo fetcher
 
@@ -177,6 +180,7 @@ This fetcher can fetch from any Forgejo-powered code forge. It accepts the follo
 - `base_url`: required, the base URL of the forge to connect to.
 - `arch`
 - `os`
+- `include`
 
 ### Script fetcher
 
