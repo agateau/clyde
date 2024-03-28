@@ -6,9 +6,9 @@ Clyde packages are defined as YAML files.
 
 They can either use the "directory layout" or the "plain file" layout.
 
-In the directory layout, the package file is called: `<package_name>/index.yaml`.
+In the directory layout, the package file is: `<package_name>/index.yaml`.
 
-In the plain file layout, the package file id directly: `<package_name>.yaml`.
+In the plain file layout, the package file is: `<package_name>.yaml`.
 
 The directory layout is supported since 0.4.0.
 
@@ -17,8 +17,10 @@ The directory layout is supported since 0.4.0.
 ```yaml
 name: foobar
 description: Foo Bar Baz
+
 # The public homepage
 homepage: https://foobar.example.com
+
 # Where the code can be downloaded. Optional.
 repository: https://src.example.com
 ```
@@ -149,27 +151,36 @@ fetcher: !<type>
 
 Where `<type>` must be one of `Auto` (default), `GitHub`, `GitLab`, `Forgejo`, `Script` or `Off`.
 
+Fetcher entries depend on their type, some entries are supported by many fetchers:
+
+- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
+- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+- `include`: optional, a regular expression to select a subset of the package assets. Useful when the upstream project publishes multiple assets but the package should only include some of them.
+
 ### GitHub fetcher
 
 This fetcher accepts the following entries:
 
-- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
-- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+- `arch`
+- `os`
+- `include`
 
 ### GitLab fetcher
 
 This fetcher accepts the following entries:
 
-- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
-- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+- `arch`
+- `os`
+- `include`
 
 ### Forgejo fetcher
 
 This fetcher can fetch from any Forgejo-powered code forge. It accepts the following entries:
 
 - `base_url`: required, the base URL of the forge to connect to.
-- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
-- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
+- `arch`
+- `os`
+- `include`
 
 ### Script fetcher
 

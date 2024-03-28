@@ -98,6 +98,9 @@ pub enum FetcherConfig {
         #[serde(skip_serializing_if = "is_none")]
         os: Option<Os>,
         base_url: String,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        include: Option<String>,
     },
     GitHub {
         #[serde(default)]
@@ -106,6 +109,9 @@ pub enum FetcherConfig {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
         os: Option<Os>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        include: Option<String>,
     },
     GitLab {
         #[serde(default)]
@@ -114,6 +120,9 @@ pub enum FetcherConfig {
         #[serde(default)]
         #[serde(skip_serializing_if = "is_none")]
         os: Option<Os>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        include: Option<String>,
     },
     Script,
     Off,
