@@ -1,0 +1,4 @@
+kind: Added
+body: It is now possible for `clydetools fetch` to select a subset of the project
+  assets, using the new `include` fetcher entry.
+time: 2024-03-28T10:02:24.079796234+01:00
