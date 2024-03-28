@@ -91,6 +91,12 @@ pub enum FetcherConfig {
     #[default]
     Auto,
     Forgejo {
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        arch: Option<Arch>,
+        #[serde(default)]
+        #[serde(skip_serializing_if = "is_none")]
+        os: Option<Os>,
         base_url: String,
     },
     GitHub {

@@ -82,7 +82,7 @@ impl ForgejoFetcher {
 
 fn get_base_url(package: &Package) -> String {
     match &package.fetcher {
-        FetcherConfig::Forgejo { base_url } => base_url.to_string(),
+        FetcherConfig::Forgejo { base_url, .. } => base_url.to_string(),
         _ => {
             panic!("Forgejo config must include a `base_url` key");
         }
@@ -122,7 +122,17 @@ impl Fetcher for ForgejoFetcher {
             return Ok(UpdateStatus::UpToDate);
         }
 
-        let urls = select_best_urls(ui, &extract_build_urls(&release_json)?, None, None)?;
+        let (default_arch, default_os) = match &package.fetcher {
+            FetcherConfig::Forgejo { arch, os, .. } => (*arch, *os),
+            _ => (None, None),
+        };
+
+        let urls = select_best_urls(
+            ui,
+            &extract_build_urls(&release_json)?,
+            default_arch,
+            default_os,
+        )?;
 
         Ok(UpdateStatus::NeedUpdate {
             version: forgejo_latest_version,

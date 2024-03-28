@@ -168,6 +168,8 @@ This fetcher accepts the following entries:
 This fetcher can fetch from any Forgejo-powered code forge. It accepts the following entries:
 
 - `base_url`: required, the base URL of the forge to connect to.
+- `arch`: optional, set a default architecture. Useful when it cannot be deduced from the asset name.
+- `os`: optional, set a default OS. Useful when it cannot be deduced from the asset name.
 
 ### Script fetcher
 
