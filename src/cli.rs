@@ -62,6 +62,11 @@ pub enum Command {
         /// Search query
         query: String,
     },
+    /// Read documentation files provided by an application
+    Doc {
+        /// Application name
+        package_name: String,
+    },
     /// List installed applications
     List {
         /// Use JSON output

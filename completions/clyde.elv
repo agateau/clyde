@@ -28,6 +28,7 @@ set edit:completion:arg-completer[clyde] = {|@words|
             cand uninstall 'Uninstall applications (alias: remove)'
             cand show 'Show details about an application'
             cand search 'Search for available applications'
+            cand doc 'Read documentation files provided by an application'
             cand list 'List installed applications'
             cand upgrade 'Upgrade all installed applications, enforcing pinning'
             cand help 'Print this message or the help of the given subcommand(s)'
@@ -65,6 +66,10 @@ set edit:completion:arg-completer[clyde] = {|@words|
             cand -h 'Print help'
             cand --help 'Print help'
         }
+        &'clyde;doc'= {
+            cand -h 'Print help'
+            cand --help 'Print help'
+        }
         &'clyde;list'= {
             cand -j 'Use JSON output'
             cand --json 'Use JSON output'
@@ -82,6 +87,7 @@ set edit:completion:arg-completer[clyde] = {|@words|
             cand uninstall 'Uninstall applications (alias: remove)'
             cand show 'Show details about an application'
             cand search 'Search for available applications'
+            cand doc 'Read documentation files provided by an application'
             cand list 'List installed applications'
             cand upgrade 'Upgrade all installed applications, enforcing pinning'
             cand help 'Print this message or the help of the given subcommand(s)'
@@ -97,6 +103,8 @@ set edit:completion:arg-completer[clyde] = {|@words|
         &'clyde;help;show'= {
         }
         &'clyde;help;search'= {
+        }
+        &'clyde;help;doc'= {
         }
         &'clyde;help;list'= {
         }

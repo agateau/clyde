@@ -49,6 +49,8 @@ impl Database {
         Ok(())
     }
 
+    /// Returns the installed version of `package` if it is installed
+    /// Otherwise returns None
     pub fn get_package_version(&self, package: &str) -> Result<Option<Version>> {
         let row: RusqliteResult<String> = self.conn.query_row(
             "SELECT installed_version FROM installed_package

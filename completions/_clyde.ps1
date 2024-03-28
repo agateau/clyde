@@ -31,6 +31,7 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             [CompletionResult]::new('uninstall', 'uninstall', [CompletionResultType]::ParameterValue, 'Uninstall applications (alias: remove)')
             [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show details about an application')
             [CompletionResult]::new('search', 'search', [CompletionResultType]::ParameterValue, 'Search for available applications')
+            [CompletionResult]::new('doc', 'doc', [CompletionResultType]::ParameterValue, 'Read documentation files provided by an application')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List installed applications')
             [CompletionResult]::new('upgrade', 'upgrade', [CompletionResultType]::ParameterValue, 'Upgrade all installed applications, enforcing pinning')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
@@ -75,6 +76,11 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
             break
         }
+        'clyde;doc' {
+            [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
+            [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
+            break
+        }
         'clyde;list' {
             [CompletionResult]::new('-j', 'j', [CompletionResultType]::ParameterName, 'Use JSON output')
             [CompletionResult]::new('--json', 'json', [CompletionResultType]::ParameterName, 'Use JSON output')
@@ -94,6 +100,7 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             [CompletionResult]::new('uninstall', 'uninstall', [CompletionResultType]::ParameterValue, 'Uninstall applications (alias: remove)')
             [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show details about an application')
             [CompletionResult]::new('search', 'search', [CompletionResultType]::ParameterValue, 'Search for available applications')
+            [CompletionResult]::new('doc', 'doc', [CompletionResultType]::ParameterValue, 'Read documentation files provided by an application')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List installed applications')
             [CompletionResult]::new('upgrade', 'upgrade', [CompletionResultType]::ParameterValue, 'Upgrade all installed applications, enforcing pinning')
             [CompletionResult]::new('help', 'help', [CompletionResultType]::ParameterValue, 'Print this message or the help of the given subcommand(s)')
@@ -115,6 +122,9 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             break
         }
         'clyde;help;search' {
+            break
+        }
+        'clyde;help;doc' {
             break
         }
         'clyde;help;list' {

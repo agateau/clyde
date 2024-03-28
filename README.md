@@ -135,6 +135,12 @@ Updates Clyde store so that Clyde is aware of the availability of new packages o
 
 Upgrades all packages to the latest version. If a package has been installed with an `@version` restriction, enforces it.
 
+### `clyde doc foobar`
+
+Shows the list of documentation files provided by the `foobar` package. Let you pick one and read it with the appropriate application.
+
+`clyde doc` looks for a pager to display text files. You can set one in `$CLYDE_PAGER` or in `$PAGER`. If none of these variables is set, it falls back to an hard-coded list of pager programs.
+
 ## FAQ
 
 ### Is Clyde more secure than `curl <url> | bash`?

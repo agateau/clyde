@@ -12,6 +12,9 @@ _clyde() {
             ",$1")
                 cmd="clyde"
                 ;;
+            clyde,doc)
+                cmd="clyde__doc"
+                ;;
             clyde,help)
                 cmd="clyde__help"
                 ;;
@@ -38,6 +41,9 @@ _clyde() {
                 ;;
             clyde,upgrade)
                 cmd="clyde__upgrade"
+                ;;
+            clyde__help,doc)
+                cmd="clyde__help__doc"
                 ;;
             clyde__help,help)
                 cmd="clyde__help__help"
@@ -73,7 +79,7 @@ _clyde() {
 
     case "${cmd}" in
         clyde)
-            opts="-h -V --help --version setup update install uninstall show search list upgrade help"
+            opts="-h -V --help --version setup update install uninstall show search doc list upgrade help"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 1 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
@@ -86,9 +92,37 @@ _clyde() {
             COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
             return 0
             ;;
-        clyde__help)
-            opts="setup update install uninstall show search list upgrade help"
+        clyde__doc)
+            opts="-h --help <PACKAGE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clyde__help)
+            opts="setup update install uninstall show search doc list upgrade help"
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
+                COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+                return 0
+            fi
+            case "${prev}" in
+                *)
+                    COMPREPLY=()
+                    ;;
+            esac
+            COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
+            return 0
+            ;;
+        clyde__help__doc)
+            opts=""
+            if [[ ${cur} == -* || ${COMP_CWORD} -eq 3 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0
             fi

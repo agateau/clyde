@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+mod doc;
 mod install;
 mod list;
 mod search;
@@ -10,6 +11,8 @@ mod show;
 mod uninstall;
 mod update;
 mod upgrade;
+
+pub use doc::doc_cmd;
 
 pub use install::{install_cmd, install_package, install_packages, InstallRequest};
 
