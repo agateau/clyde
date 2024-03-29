@@ -81,7 +81,10 @@ fn run_test_command(report: &mut Vec<String>, home_dir: &Path, test_command: &st
 
     run_command(
         report,
-        Command::new(binary).env("PATH", new_path).args(args),
+        Command::new(binary)
+            .env("PATH", new_path)
+            .env("CLYDE_HOME", home_dir)
+            .args(args),
     )
 }
 
