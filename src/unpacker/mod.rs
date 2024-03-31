@@ -10,6 +10,7 @@ use anyhow::{anyhow, Result};
 mod exe_unpacker;
 mod single_file_unpacker;
 mod tar_unpacker;
+mod unpacker_utils;
 mod zip_unpacker;
 
 use exe_unpacker::ExeUnpacker;
