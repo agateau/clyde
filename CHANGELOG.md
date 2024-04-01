@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.0 - 2024-04-01
+
+### Added
+
+- Clyde got a new command: `clyde doc` to let you read the documentation provided by a package.
+
+- Clyde releases now include binaries for Mac M1 processors.
+
+- `clydetools` can now download packages from Forgejo forges.
+
+- `clydetools fetch` can now select a subset of the project assets using the new `include` fetcher entry.
+
+### Changed
+
+- `clyde install` no longer overwrites existing files. If a file it wants to install already exists, it aborts and removes any files it just installed.
+
+- `clydetools check` now provides a nicer and more detailed summary of package failures.
+
 ## 0.6.0 - 2023-12-28
 
 ### Added

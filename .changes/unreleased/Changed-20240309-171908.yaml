@@ -1,4 +1,0 @@
-kind: Changed
-body: '`clydetools check` now provides a nicer and more detailed summary of package
-  failures.'
-time: 2024-03-09T17:19:08.940672607+01:00
