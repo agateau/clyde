@@ -115,7 +115,13 @@ fn string_for_command_output(output: &Output) -> String {
 fn run_command(report: &mut Vec<String>, command: &mut Command) -> Result<()> {
     let command_str = format!("{:?} {:?}", command.get_program(), command.get_args());
     report.push(format!("Running {command_str}"));
-    let output = command.output().context("Failed to execute command")?;
+    let output = match command.output() {
+        Ok(x) => x,
+        Err(x) => {
+            report.push(format!("Failed to execute command: {x}"));
+            return Err(anyhow!("Failed to execute command: {x}"));
+        }
+    };
 
     match output.status.code() {
         Some(0) => Ok(()),
