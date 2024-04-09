@@ -231,6 +231,7 @@ impl TryFrom<&FetcherConfig> for BestUrlOptions {
             FetcherConfig::GitLab {
                 arch, os, include, ..
             } => BestUrlOptions::new(*arch, *os, parse_include(include)?),
+            FetcherConfig::Auto {} => BestUrlOptions::new(None, None, None),
             _ => {
                 panic!(
                     "BestUrlOptions::try_from should not be called for {:?}",
