@@ -1,0 +1,4 @@
+kind: Fixed
+body: Fix regression in `clydetools fetch` preventing it from updating packages that
+  used the default fetcher
+time: 2024-04-09T08:38:19.042586836+02:00
