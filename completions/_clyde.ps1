@@ -23,7 +23,7 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
         'clyde' {
             [CompletionResult]::new('-h', 'h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', 'help', [CompletionResultType]::ParameterName, 'Print help')
-            [CompletionResult]::new('-V', 'V', [CompletionResultType]::ParameterName, 'Print version')
+            [CompletionResult]::new('-V', 'V ', [CompletionResultType]::ParameterName, 'Print version')
             [CompletionResult]::new('--version', 'version', [CompletionResultType]::ParameterName, 'Print version')
             [CompletionResult]::new('setup', 'setup', [CompletionResultType]::ParameterValue, 'Setup Clyde')
             [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update Clyde store')

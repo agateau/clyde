@@ -165,7 +165,7 @@ _clyde_commands() {
 'setup:Setup Clyde' \
 'update:Update Clyde store' \
 'install:Install applications' \
-'uninstall:Uninstall applications (alias: remove)' \
+'uninstall:Uninstall applications (alias\: remove)' \
 'show:Show details about an application' \
 'search:Search for available applications' \
 'doc:Read documentation files provided by an application' \
@@ -191,7 +191,7 @@ _clyde__help_commands() {
 'setup:Setup Clyde' \
 'update:Update Clyde store' \
 'install:Install applications' \
-'uninstall:Uninstall applications (alias: remove)' \
+'uninstall:Uninstall applications (alias\: remove)' \
 'show:Show details about an application' \
 'search:Search for available applications' \
 'doc:Read documentation files provided by an application' \

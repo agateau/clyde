@@ -379,4 +379,8 @@ _clyde() {
     esac
 }
 
-complete -F _clyde -o bashdefault -o default clyde
+if [[ "${BASH_VERSINFO[0]}" -eq 4 && "${BASH_VERSINFO[1]}" -ge 4 || "${BASH_VERSINFO[0]}" -gt 4 ]]; then
+    complete -F _clyde -o nosort -o bashdefault -o default clyde
+else
+    complete -F _clyde -o bashdefault -o default clyde
+fi
