@@ -232,7 +232,7 @@ impl TryFrom<&FetcherConfig> for BestUrlOptions {
                 arch, os, include, ..
             } => BestUrlOptions::new(*arch, *os, parse_include(include)?),
             FetcherConfig::Auto {} => BestUrlOptions::new(None, None, None),
-            _ => {
+            FetcherConfig::Off {} | FetcherConfig::Script {} => {
                 panic!(
                     "BestUrlOptions::try_from should not be called for {:?}",
                     config
