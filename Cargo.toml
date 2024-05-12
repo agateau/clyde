@@ -33,8 +33,8 @@ lazy_static = "1.4.0"
 tempfile = "3.5.0"
 shell-words = "1.1.0"
 reqwest = { version = "0.11.16", default-features = false, features = ["rustls-tls", "blocking"] }
-indicatif = "0.17.3"
-console = { version = "0.15.5", default-features = false, features = ["ansi-parsing"] }
+indicatif = "0.17.8"
+console = { version = "0.15.8", default-features = false, features = ["ansi-parsing"] }
 regex = "1.7.3"
 archiver-rs = { version = "0.5.1", default-features = false, features = ["bzip", "gzip", "xz"] }
 single-instance = "0.3.3"
