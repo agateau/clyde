@@ -7,6 +7,7 @@ pub mod arch_os;
 pub mod checksum;
 pub mod cli;
 pub mod cmd;
+pub mod ctrlcutils;
 pub mod db;
 pub mod download;
 pub mod file_cache;
