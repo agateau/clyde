@@ -44,6 +44,7 @@ dialoguer = { version = "0.11.0", default-features = false }
 glob-match = "0.2.1"
 which = "4.4.0"
 open = "5.1.2"
+ctrlc = "3.4.4"
 
 [build-dependencies]
 clap = { version = "4.2.0", features = ["derive"] }

@@ -11,6 +11,7 @@ use clyde::cmd::{
     doc_cmd, install_cmd, list_cmd, search_cmd, setup_cmd, show_cmd, uninstall_cmd, update_cmd,
     upgrade_cmd,
 };
+use clyde::ctrlcutils;
 use clyde::ui::Ui;
 
 pub fn exec(cli: Cli) -> Result<()> {
@@ -19,7 +20,9 @@ pub fn exec(cli: Cli) -> Result<()> {
 
     let _instance = App::create_single_instance(&home)?;
 
-    match cli.command {
+    ctrlcutils::disable_ctrlc_handler();
+
+    let result = match cli.command {
         Command::Setup {
             update_scripts,
             store_url,
@@ -63,7 +66,14 @@ pub fn exec(cli: Cli) -> Result<()> {
             let app = App::new(&home)?;
             upgrade_cmd(&app, &ui)
         }
+    };
+    if let Err(ref err) = result {
+        if ctrlcutils::is_ctrlc(err) {
+            println!("Interrupted");
+            return Ok(());
+        }
     }
+    result
 }
 
 fn main() -> Result<()> {
