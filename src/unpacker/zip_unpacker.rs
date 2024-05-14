@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use zip::ZipArchive;
 
+use crate::unpacker::unpacker_utils::apply_strip;
 use crate::unpacker::Unpacker;
 
 pub struct ZipUnpacker {
@@ -25,19 +26,6 @@ impl ZipUnpacker {
     pub fn supports(name: &str) -> bool {
         name.ends_with(".zip")
     }
-}
-
-fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {
-    if strip == 0 {
-        return Some(path.to_owned());
-    }
-    let prefix = path.iter().next()?;
-
-    let path = path.strip_prefix(prefix).ok()?;
-    if path == Path::new("") {
-        return None;
-    }
-    apply_strip(path, strip - 1)
 }
 
 impl Unpacker for ZipUnpacker {
@@ -98,19 +86,6 @@ mod tests {
     use super::*;
 
     use crate::test_file_utils::{get_fixture_path, list_tree, pathbufset_from_strings};
-
-    #[test]
-    fn apply_strip_should_strip_1() {
-        assert_eq!(
-            apply_strip(Path::new("foo/bar"), 1),
-            Some(PathBuf::from("bar"))
-        );
-    }
-
-    #[test]
-    fn apply_strip_should_return_none_when_stripping_too_much() {
-        assert_eq!(apply_strip(Path::new("foo/bar"), 2), None);
-    }
 
     #[test]
     fn unpack_should_unpack_in_the_right_dir() {
