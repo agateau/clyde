@@ -5,20 +5,21 @@
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 use anyhow::{anyhow, Result};
+use tar::Archive;
 
+use crate::unpacker::unpacker_utils::apply_strip;
 use crate::unpacker::Unpacker;
 
 pub struct TarUnpacker {
-    pub archive: PathBuf,
+    pub archive_path: PathBuf,
 }
 
 impl TarUnpacker {
-    pub fn new(archive: &Path) -> TarUnpacker {
+    pub fn new(archive_path: &Path) -> TarUnpacker {
         TarUnpacker {
-            archive: archive.to_path_buf(),
+            archive_path: archive_path.to_path_buf(),
         }
     }
 
@@ -33,32 +34,47 @@ impl TarUnpacker {
 
 impl Unpacker for TarUnpacker {
     fn unpack(&self, dst_dir: &Path, strip: u32) -> Result<Option<String>> {
-        fs::create_dir_all(dst_dir)?;
+        let extension = self
+            .archive_path
+            .extension()
+            .ok_or_else(|| anyhow!("Can't get extension for {:?}", self.archive_path))?
+            .to_str()
+            .unwrap();
 
-        let mut cmd = Command::new("tar");
-        cmd.arg("-C");
-        cmd.arg(dst_dir);
-        if strip > 0 {
-            cmd.arg(format!("--strip-components={strip}"));
-        }
-        cmd.arg("-xf");
-        cmd.arg(self.archive.canonicalize()?);
-        let status = match cmd.status() {
-            Ok(x) => x,
-            Err(err) => {
-                if err.kind() == io::ErrorKind::NotFound {
-                    return Err(anyhow!(
-                        "Failed to unpack {}: tar is not installed",
-                        self.archive.display()
-                    ));
-                } else {
-                    return Err(err.into());
-                }
+        let compressed_reader: Box<dyn io::Read> = match extension {
+            "gz" => Box::new(archiver_rs::Gzip::open(&self.archive_path)?),
+            "bz2" => Box::new(archiver_rs::Bzip2::open(&self.archive_path)?),
+            "xz" => Box::new(archiver_rs::Xz::open(&self.archive_path)?),
+            _ => {
+                return Err(anyhow!("Don't know how to unpack {:?}", self.archive_path));
             }
         };
 
-        if !status.success() {
-            return Err(anyhow!("Error unpacking {}", self.archive.display()));
+        let mut tar_reader = Archive::new(compressed_reader);
+
+        // Code below is adapted from tar::Archive::unpack()
+
+        // Canonicalizing the dst_dir directory will prepend the path with '\\?\'
+        // on windows which will allow windows APIs to treat the path as an
+        // extended-length path with a 32,767 character limit. Otherwise all
+        // unpacked paths over 260 characters will fail on creation with a
+        // NotFound exception.
+        let dst_dir = &dst_dir.canonicalize().unwrap_or(dst_dir.to_path_buf());
+
+        fs::create_dir_all(dst_dir)?;
+
+        for entry in tar_reader.entries()? {
+            let mut entry = entry?;
+            let path = match apply_strip(&entry.path()?, strip) {
+                Some(x) => x,
+                None => continue,
+            };
+            if entry.header().entry_type() != tar::EntryType::Directory {
+                let entry_path = dst_dir.join(path);
+                let entry_dir = entry_path.parent().unwrap();
+                fs::create_dir_all(entry_dir)?;
+                entry.unpack(entry_path)?;
+            }
         }
 
         Ok(None)

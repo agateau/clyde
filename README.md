@@ -32,12 +32,7 @@ To get started, you need to download the Clyde binary yourself. Clyde can update
 
 - Build it yourself. Clyde is written in Rust, so if you have the Rust tool-chain installed, then you can clone its source code and install it with `clyde install --path .`.
 
-Next, make sure these tools are installed:
-
-- git: to download and update the Clyde store
-- tar: to unpack tar archives
-
-This requirement list might get smaller in the future if more features are implemented internally.
+Next, make sure git is installed (Clyde uses git to download and update the Clyde store, this requirement might go away in the future).
 
 ### Setting up your Clyde home
 

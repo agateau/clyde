@@ -45,6 +45,7 @@ glob-match = "0.2.1"
 which = "4.4.0"
 open = "5.1.2"
 ctrlc = "3.4.4"
+tar = "0.4.40"
 
 [build-dependencies]
 clap = { version = "4.2.0", features = ["derive"] }
