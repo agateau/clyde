@@ -134,7 +134,7 @@ pub fn add_asset(
         sha256: checksum,
     };
 
-    release.insert(arch_os.clone(), asset);
+    release.insert(*arch_os, asset);
 
     Ok(())
 }
