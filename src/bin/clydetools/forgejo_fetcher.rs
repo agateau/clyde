@@ -14,8 +14,8 @@ use serde_json::{self, Value};
 use clyde::package::{FetcherConfig, Package};
 use clyde::ui::Ui;
 
-use crate::add_assets::{select_best_urls, BestUrlOptions};
 use crate::fetch::{Fetcher, UpdateStatus};
+use crate::url_selector::{select_best_urls, BestUrlOptions};
 use crate::version_utils::version_from_tag;
 
 #[derive(Default)]

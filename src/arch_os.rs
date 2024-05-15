@@ -40,7 +40,7 @@ impl fmt::Display for Os {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct ArchOs {
     pub arch: Arch,
     pub os: Os,

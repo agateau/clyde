@@ -20,8 +20,8 @@ use serde_json;
 use clyde::package::Package;
 use clyde::ui::Ui;
 
-use crate::add_assets::{select_best_urls, BestUrlOptions};
 use crate::fetch::{Fetcher, UpdateStatus};
+use crate::url_selector::{select_best_urls, BestUrlOptions};
 
 const SCRIPT_FILE_NAME: &str = "fetch.js";
 
