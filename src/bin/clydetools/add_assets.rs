@@ -86,10 +86,17 @@ fn extract_arch_os(
     name: &str,
     default_arch: Option<Arch>,
     default_os: Option<Os>,
-) -> Option<ArchOs> {
-    let arch = find_in_iter(ARCH_VEC.iter(), name).or(default_arch)?;
-    let os = find_in_iter(OS_VEC.iter(), name).or(default_os)?;
-    Some(ArchOs::new(arch, os))
+) -> Option<(ArchOs, u8)> {
+    let mut score = 3;
+    let arch = find_in_iter(ARCH_VEC.iter(), name).or_else(|| {
+        score -= 1;
+        default_arch
+    })?;
+    let os = find_in_iter(OS_VEC.iter(), name).or_else(|| {
+        score -= 1;
+        default_os
+    })?;
+    Some((ArchOs::new(arch, os), score))
 }
 
 fn get_extension(name: &str) -> Option<&str> {
@@ -163,10 +170,16 @@ fn get_libc_score(name: &str) -> usize {
 }
 
 /// Given two asset URLs, return the one we prefer to use
-fn select_best_url<'a>(ui: &Ui, u1: &'a str, u2: &'a str) -> &'a str {
+fn select_best_url<'a>(ui: &Ui, u1: &'a ScoredUrl, u2: &'a ScoredUrl) -> &'a ScoredUrl {
+    match u1.score.cmp(&u2.score) {
+        Ordering::Greater => return u1,
+        Ordering::Less => return u2,
+        Ordering::Equal => (),
+    };
+
     // We know get_lname() is going to succeed here, because it has already been called before
-    let n1 = get_lname(u1).unwrap();
-    let n2 = get_lname(u2).unwrap();
+    let n1 = get_lname(&u1.url).unwrap();
+    let n2 = get_lname(&u2.url).unwrap();
 
     let u1_libc_score = get_libc_score(&n1);
     let u2_libc_score = get_libc_score(&n2);
@@ -242,13 +255,28 @@ impl TryFrom<&FetcherConfig> for BestUrlOptions {
     }
 }
 
+#[derive(Debug, PartialEq, Clone)]
+struct ScoredUrl {
+    url: String,
+    score: u8,
+}
+
+impl ScoredUrl {
+    fn new(url: &str, score: u8) -> Self {
+        ScoredUrl {
+            url: url.into(),
+            score,
+        }
+    }
+}
+
 /// Given a bunch of asset URLs returns the best URL per arch-os
 pub fn select_best_urls(
     ui: &Ui,
     urls: &[String],
     options: BestUrlOptions,
 ) -> Result<HashMap<ArchOs, String>> {
-    let mut best_urls = HashMap::<ArchOs, String>::new();
+    let mut best_urls = HashMap::<ArchOs, ScoredUrl>::new();
     for url in urls {
         let lname = get_lname(url)?;
         if !is_supported_name(&lname) {
@@ -262,21 +290,28 @@ pub fn select_best_urls(
             }
         }
 
-        let arch_os = match extract_arch_os(&lname, options.default_arch, options.default_os) {
-            Some(x) => x,
-            None => {
-                ui.warn(&format!("Can't extract arch-os from {lname}, skipping"));
-                continue;
-            }
-        };
+        let (arch_os, score) =
+            match extract_arch_os(&lname, options.default_arch, options.default_os) {
+                Some(x) => x,
+                None => {
+                    ui.warn(&format!("Can't extract arch-os from {lname}, skipping"));
+                    continue;
+                }
+            };
 
-        let url = match best_urls.get(&arch_os) {
-            Some(current_url) => select_best_url(ui, current_url, url),
-            None => url,
-        };
-        best_urls.insert(arch_os, url.to_string());
+        let new_scored_url = ScoredUrl::new(url, score);
+        best_urls
+            .entry(arch_os)
+            .and_modify(|e| {
+                let best = select_best_url(ui, e, &new_scored_url);
+                *e = best.clone();
+            })
+            .or_insert(new_scored_url);
     }
-    Ok(best_urls)
+    Ok(best_urls
+        .iter()
+        .map(|(arch_os, scored_url)| (*arch_os, scored_url.url.clone()))
+        .collect())
 }
 
 pub fn add_assets(
@@ -357,7 +392,7 @@ mod tests {
     use clyde::test_file_utils::get_fixture_path;
 
     fn check_extract_arch_os(filename: &str, expected: Option<ArchOs>) {
-        let result = extract_arch_os(filename, None, None);
+        let result = extract_arch_os(filename, None, None).map(|x| x.0);
         assert_eq!(result, expected);
     }
 
@@ -372,7 +407,7 @@ mod tests {
             let expected = ArchOs::parse(arch_os_str).unwrap();
 
             let result = extract_arch_os(name, None, None);
-            if result != Some(expected) {
+            if result != Some((expected, 3)) {
                 eprintln!("Failure: name={} arch_os_str={}", name, arch_os_str);
                 ok = false;
             }
@@ -412,10 +447,10 @@ mod tests {
     #[test]
     fn test_extract_arch_os_default_values() {
         let result = extract_arch_os("ninja-windows.zip", Some(Arch::X86_64), None);
-        assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::Windows)));
+        assert_eq!(result, Some((ArchOs::new(Arch::X86_64, Os::Windows), 2)));
 
         let result = extract_arch_os("ninja-mac.zip", Some(Arch::X86_64), None);
-        assert_eq!(result, Some(ArchOs::new(Arch::X86_64, Os::MacOs)));
+        assert_eq!(result, Some((ArchOs::new(Arch::X86_64, Os::MacOs), 2)));
     }
 
     #[test]
@@ -438,26 +473,30 @@ mod tests {
         let ui = Ui::default();
 
         assert_eq!(
-            select_best_url(&ui, "https://example.com/foo.gz", "https://example.com/foo"),
-            "https://example.com/foo.gz"
+            select_best_url(
+                &ui,
+                &ScoredUrl::new("https://example.com/foo.gz", 1),
+                &ScoredUrl::new("https://example.com/foo", 1)
+            ),
+            &ScoredUrl::new("https://example.com/foo.gz", 1)
         );
         assert_eq!(
             select_best_url(
                 &ui,
-                "https://example.com/foo.gz",
-                "https://example.com/foo.xz"
+                &ScoredUrl::new("https://example.com/foo.gz", 1),
+                &ScoredUrl::new("https://example.com/foo.xz", 1),
             ),
-            "https://example.com/foo.xz"
+            &ScoredUrl::new("https://example.com/foo.xz", 1)
         );
 
         // libc is more important than compression
         assert_eq!(
             select_best_url(
                 &ui,
-                "https://example.com/foo-musl",
-                "https://example.com/foo-glibc.gz"
+                &ScoredUrl::new("https://example.com/foo-musl", 1),
+                &ScoredUrl::new("https://example.com/foo-glibc.gz", 1),
             ),
-            "https://example.com/foo-musl"
+            &ScoredUrl::new("https://example.com/foo-musl", 1)
         );
     }
 
@@ -480,6 +519,33 @@ mod tests {
         let expected = HashMap::from([(
             ArchOs::new(Arch::X86_64, Os::Linux),
             "https://example.com/foo/foo-cli-x86_64-linux.gz".to_string(),
+        )]);
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_select_best_urls_prefers_not_using_default_arch_os() {
+        let ui = Ui::default();
+
+        // GIVEN a BestUrlOptions instance with a default arch
+        let options = BestUrlOptions::new(Some(Arch::X86_64), None, None);
+
+        // AND 2 URLs: URL1 uses an unknown arch, URL2 uses the default arch
+        // WHEN calling select_best_urls() on [URL1, URL2]
+        let result = select_best_urls(
+            &ui,
+            &[
+                "https://example.com/foo/foo-z80-linux.gz".to_string(),
+                "https://example.com/foo/foo-x86_64-linux.gz".to_string(),
+            ],
+            options,
+        )
+        .unwrap();
+
+        // THEN it selects the URL with the known arch (URL2)
+        let expected = HashMap::from([(
+            ArchOs::new(Arch::X86_64, Os::Linux),
+            "https://example.com/foo/foo-x86_64-linux.gz".to_string(),
         )]);
         assert_eq!(result, expected);
     }
