@@ -15,6 +15,7 @@ pub mod forgejo_fetcher;
 pub mod github_fetcher;
 pub mod gitlab_fetcher;
 pub mod script_fetcher;
+pub mod url_selector;
 pub mod version_utils;
 
 #[macro_use]
