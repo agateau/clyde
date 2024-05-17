@@ -42,8 +42,8 @@ impl Unpacker for TarUnpacker {
             .unwrap();
 
         let compressed_reader: Box<dyn io::Read> = match extension {
-            "gz" => Box::new(archiver_rs::Gzip::open(&self.archive_path)?),
-            "bz2" => Box::new(archiver_rs::Bzip2::open(&self.archive_path)?),
+            "gz" | "tgz" => Box::new(archiver_rs::Gzip::open(&self.archive_path)?),
+            "bz2" | "tbz2" => Box::new(archiver_rs::Bzip2::open(&self.archive_path)?),
             "xz" => Box::new(archiver_rs::Xz::open(&self.archive_path)?),
             _ => {
                 return Err(anyhow!("Don't know how to unpack {:?}", self.archive_path));
@@ -93,6 +93,8 @@ mod tests {
         tar_gz = { "test_archive.tar.gz" },
         tar_bz2 = { "test_archive.tar.bz2" },
         tar_xz = { "test_archive.tar.xz" },
+        tgz = { "test_archive.tgz" },
+        tbz2 = { "test_archive.tbz2" },
     )]
     fn test_unpack(filename: &str) {
         // GIVEN a compressed tar archive
