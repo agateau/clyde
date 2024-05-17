@@ -48,7 +48,9 @@ lazy_static! {
         "sbom",
         "sh",
         "sha256",
+        "sha256sum",
         "txt",
+        "zsync",
     ]);
 
     // Packer extensions, ordered from worse to best
