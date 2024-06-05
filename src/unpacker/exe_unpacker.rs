@@ -3,7 +3,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::fs::{self, File};
-use std::io;
+use std::io::{self, Read, Seek};
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result};
@@ -31,6 +31,9 @@ impl ExeUnpacker {
                 return false;
             }
         };
+        if is_script(&mut file) {
+            return true;
+        }
         let hint = match goblin::peek(&mut file) {
             Ok(x) => x,
             Err(_) => {
@@ -47,6 +50,17 @@ impl ExeUnpacker {
         #[cfg(windows)]
         matches!(hint, Hint::PE)
     }
+}
+
+fn is_script(file: &mut File) -> bool {
+    let mut buffer = [0; 2];
+    if file.read(&mut buffer[..]).is_err() {
+        return false;
+    };
+    if file.rewind().is_err() {
+        return false;
+    }
+    buffer == "#!".as_bytes()
 }
 
 impl Unpacker for ExeUnpacker {
@@ -75,6 +89,7 @@ impl Unpacker for ExeUnpacker {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_fs::prelude::*;
 
     use crate::test_file_utils::get_fixture_path;
 
@@ -96,6 +111,15 @@ mod tests {
     fn supports_should_accept_executable() {
         let exe_path = get_test_executable_path();
         assert!(ExeUnpacker::supports(&exe_path));
+    }
+
+    #[test]
+    fn supports_should_accept_scripts() {
+        let temp_dir = assert_fs::TempDir::new().unwrap();
+        let script_path = temp_dir.child("script");
+        fs::write(&script_path, "#!/bin/bash\necho 'hello'\n").unwrap();
+
+        assert!(ExeUnpacker::supports(&script_path));
     }
 
     #[test]
