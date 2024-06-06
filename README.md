@@ -1,5 +1,7 @@
 # Clyde
 
+<img src="docs/icon.png" align="right" width="128" height="128">
+
 Clyde is a package manager for prebuilt applications.
 
 It works on Linux, macOS and Windows.
