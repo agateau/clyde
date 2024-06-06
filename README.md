@@ -1,4 +1,4 @@
-# Clyde
+![Clyde](docs/title.png)
 
 Clyde is a package manager for prebuilt applications.
 
