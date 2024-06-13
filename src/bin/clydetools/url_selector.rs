@@ -37,7 +37,18 @@ lazy_static! {
         ("osx", Os::MacOs),
         ("win(|dows|32|64)", Os::Windows),
     ];
-    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from(["deb", "rpm", "msi", "apk", "asc", "sha256", "sbom", "txt", "dmg", "sh"]);
+    static ref UNSUPPORTED_EXTS : HashSet<&'static str> = HashSet::from([
+        "apk",
+        "asc",
+        "deb",
+        "dmg",
+        "msi",
+        "rpm",
+        "sbom",
+        "sh",
+        "sha256",
+        "txt",
+    ]);
 
     // Packer extensions, ordered from worse to best
     static ref PACKER_EXTENSIONS: Vec<&'static str> = vec![
