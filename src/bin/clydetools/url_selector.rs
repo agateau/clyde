@@ -43,6 +43,7 @@ lazy_static! {
         "deb",
         "dmg",
         "msi",
+        "pkg",
         "rpm",
         "sbom",
         "sh",
