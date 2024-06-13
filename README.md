@@ -30,9 +30,9 @@ To get started, you need to download the Clyde binary yourself. Clyde can update
 
 - Download a pre-built archive of the `main` branch from <https://builds.agateau.com/clyde>.
 
-- Build it yourself. Clyde is written in Rust, so if you have the Rust tool-chain installed, then you can clone its source code and install it with `clyde install --path .`.
+- Build it yourself. Clyde is written in Rust, so if you have the Rust tool-chain installed, then you can install it with `cargo install clyde`.
 
-Next, make sure git is installed (Clyde uses git to download and update the Clyde store, this requirement might go away in the future).
+Next, make sure git is installed: Clyde uses git to download and update the Clyde store (this requirement might go away in the future).
 
 ### Setting up your Clyde home
 
