@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::fmt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -34,56 +35,70 @@ lazy_static! {
     ];
 }
 
+#[derive(Debug, Clone)]
+enum Doc {
+    Path { text: String, path: PathBuf },
+    Url { kind: String, url: String },
+    None,
+}
+
+impl fmt::Display for Doc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Doc::Path { text, path: _ } => write!(f, "{text}"),
+            Doc::Url { kind, url } => write!(f, "{kind}: {url}"),
+            Doc::None => write!(f, "[None]"),
+        }
+    }
+}
+
 fn is_doc_file(path: &Path) -> bool {
     path.starts_with("share/doc") || path.starts_with("share/man")
 }
 
-fn get_doc_file_list(app: &App, package_name: &str) -> Result<Vec<PathBuf>> {
+fn get_doc_file_list(app: &App, package_name: &str) -> Result<Vec<Doc>> {
     let fileset = app.database.get_package_files(package_name)?;
     let mut files: Vec<_> = fileset.iter().filter(|x| is_doc_file(x)).cloned().collect();
     files.sort();
-    Ok(files)
+
+    let docs = files
+        .iter()
+        .map(|x| Doc::Path {
+            text: x.display().to_string(),
+            path: app.install_dir.join(x),
+        })
+        .collect();
+    Ok(docs)
 }
 
-fn get_url_list(app: &App, package_name: &str) -> Result<Vec<String>> {
+fn get_url_list(app: &App, package_name: &str) -> Result<Vec<Doc>> {
     let package = app.store.get_package(package_name)?;
     let mut urls: Vec<_> = Vec::new();
     if !package.homepage.is_empty() {
-        urls.push(package.homepage.clone());
+        urls.push(Doc::Url {
+            kind: "Homepage".to_string(),
+            url: package.homepage.clone(),
+        });
     }
-    if package.repository != package.homepage {
-        urls.push(package.repository);
+    if !package.repository.is_empty() {
+        urls.push(Doc::Url {
+            kind: "Repository".to_string(),
+            url: package.repository,
+        });
     }
     Ok(urls)
 }
 
-enum Doc {
-    Path(PathBuf),
-    Url(String),
-    None,
-}
-
 fn select_doc(app: &App, package_name: &str) -> Result<Doc> {
-    let files = get_doc_file_list(app, package_name)?;
-    let urls = get_url_list(app, package_name)?;
-
-    let mut items: Vec<String> = files.iter().map(|x| x.display().to_string()).collect();
-    urls.iter().for_each(|x| items.push(x.to_string()));
+    let mut items = get_doc_file_list(app, package_name)?;
+    items.extend_from_slice(&get_url_list(app, package_name)?);
 
     let idx = Select::new().items(&items).default(0).interact_opt()?;
 
-    let idx = match idx {
-        Some(x) => x,
-        None => return Ok(Doc::None),
-    };
-
-    let doc = if idx < files.len() {
-        let doc_file = app.install_dir.join(&files[idx]);
-        Doc::Path(doc_file)
-    } else {
-        Doc::Url(urls[idx - files.len()].to_string())
-    };
-    Ok(doc)
+    Ok(match idx {
+        Some(x) => items[x].clone(),
+        None => Doc::None,
+    })
 }
 
 fn find_doc_app(doc_file: &Path) -> DocApp {
@@ -143,8 +158,8 @@ pub fn doc_cmd(app: &App, package_name: &str) -> Result<()> {
         return Err(anyhow!("{} is not installed", package_name));
     }
     match select_doc(app, package_name)? {
-        Doc::Path(x) => open_doc_file(&x),
-        Doc::Url(x) => Ok(open::that(x)?),
+        Doc::Path { text: _, path } => open_doc_file(&path),
+        Doc::Url { kind: _, url } => Ok(open::that(url)?),
         Doc::None => Ok(()),
     }
 }
