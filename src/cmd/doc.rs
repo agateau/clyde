@@ -107,7 +107,7 @@ fn open_doc_file(doc_file: &Path) -> Result<()> {
         DocApp::Pager => match find_pager() {
             Some(x) => x,
             None => {
-                return Err(anyhow!("Could not find a pager, install one with Clyde, for example using `clyde install bat`"));
+                return Err(anyhow!("Could not find a pager. You can install one with Clyde, for example using `clyde install bat`"));
             }
         },
         DocApp::Man => "man".to_string(),
