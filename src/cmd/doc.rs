@@ -45,26 +45,45 @@ fn get_doc_file_list(app: &App, package_name: &str) -> Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-fn select_doc_file(app: &App, package_name: &str) -> Result<Option<PathBuf>> {
-    let files = get_doc_file_list(app, package_name)?;
-    if files.is_empty() {
-        return Err(anyhow!(
-            "Package {package_name} does not provide documentation"
-        ));
+fn get_url_list(app: &App, package_name: &str) -> Result<Vec<String>> {
+    let package = app.store.get_package(package_name)?;
+    let mut urls: Vec<_> = Vec::new();
+    if !package.homepage.is_empty() {
+        urls.push(package.homepage.clone());
     }
+    if package.repository != package.homepage {
+        urls.push(package.repository);
+    }
+    Ok(urls)
+}
 
-    let items: Vec<_> = files.iter().map(|x| x.display()).collect();
+enum Doc {
+    Path(PathBuf),
+    Url(String),
+    None,
+}
+
+fn select_doc(app: &App, package_name: &str) -> Result<Doc> {
+    let files = get_doc_file_list(app, package_name)?;
+    let urls = get_url_list(app, package_name)?;
+
+    let mut items: Vec<String> = files.iter().map(|x| x.display().to_string()).collect();
+    urls.iter().for_each(|x| items.push(x.to_string()));
 
     let idx = Select::new().items(&items).default(0).interact_opt()?;
 
     let idx = match idx {
         Some(x) => x,
-        None => return Ok(None),
+        None => return Ok(Doc::None),
     };
 
-    let doc_file = app.install_dir.join(&files[idx]);
-
-    Ok(Some(doc_file))
+    let doc = if idx < files.len() {
+        let doc_file = app.install_dir.join(&files[idx]);
+        Doc::Path(doc_file)
+    } else {
+        Doc::Url(urls[idx - files.len()].to_string())
+    };
+    Ok(doc)
 }
 
 fn find_doc_app(doc_file: &Path) -> DocApp {
@@ -123,10 +142,9 @@ pub fn doc_cmd(app: &App, package_name: &str) -> Result<()> {
     if db.get_package_version(package_name)?.is_none() {
         return Err(anyhow!("{} is not installed", package_name));
     }
-    let doc_file = match select_doc_file(app, package_name)? {
-        Some(x) => x,
-        None => return Ok(()),
-    };
-
-    open_doc_file(&doc_file)
+    match select_doc(app, package_name)? {
+        Doc::Path(x) => open_doc_file(&x),
+        Doc::Url(x) => Ok(open::that(x)?),
+        Doc::None => Ok(()),
+    }
 }
