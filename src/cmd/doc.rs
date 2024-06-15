@@ -12,7 +12,7 @@ use glob_match::glob_match;
 use shell_words;
 
 use crate::app::App;
-use crate::ctrlcutils::CursorRestorer;
+use crate::ctrlcutils::{disable_ctrlc_handler, CursorRestorer};
 use crate::pager::find_pager;
 
 #[derive(Debug, Clone, Copy)]
@@ -148,6 +148,7 @@ fn open_doc_file(doc_file: &Path) -> Result<()> {
 }
 
 pub fn doc_cmd(app: &App, package_name: &str) -> Result<()> {
+    disable_ctrlc_handler();
     let _cursor_restorer = CursorRestorer::new();
     let db = &app.database;
 

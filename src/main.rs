@@ -20,8 +20,6 @@ pub fn exec(cli: Cli) -> Result<()> {
 
     let _instance = App::create_single_instance(&home)?;
 
-    ctrlcutils::disable_ctrlc_handler();
-
     let result = match cli.command {
         Command::Setup {
             update_scripts,
