@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::fmt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -34,37 +35,70 @@ lazy_static! {
     ];
 }
 
+#[derive(Debug, Clone)]
+enum Doc {
+    Path { text: String, path: PathBuf },
+    Url { kind: String, url: String },
+    None,
+}
+
+impl fmt::Display for Doc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Doc::Path { text, path: _ } => write!(f, "{text}"),
+            Doc::Url { kind, url } => write!(f, "{kind}: {url}"),
+            Doc::None => write!(f, "[None]"),
+        }
+    }
+}
+
 fn is_doc_file(path: &Path) -> bool {
     path.starts_with("share/doc") || path.starts_with("share/man")
 }
 
-fn get_doc_file_list(app: &App, package_name: &str) -> Result<Vec<PathBuf>> {
+fn get_doc_file_list(app: &App, package_name: &str) -> Result<Vec<Doc>> {
     let fileset = app.database.get_package_files(package_name)?;
     let mut files: Vec<_> = fileset.iter().filter(|x| is_doc_file(x)).cloned().collect();
     files.sort();
-    Ok(files)
+
+    let docs = files
+        .iter()
+        .map(|x| Doc::Path {
+            text: x.display().to_string(),
+            path: app.install_dir.join(x),
+        })
+        .collect();
+    Ok(docs)
 }
 
-fn select_doc_file(app: &App, package_name: &str) -> Result<Option<PathBuf>> {
-    let files = get_doc_file_list(app, package_name)?;
-    if files.is_empty() {
-        return Err(anyhow!(
-            "Package {package_name} does not provide documentation"
-        ));
+fn get_url_list(app: &App, package_name: &str) -> Result<Vec<Doc>> {
+    let package = app.store.get_package(package_name)?;
+    let mut urls: Vec<_> = Vec::new();
+    if !package.homepage.is_empty() {
+        urls.push(Doc::Url {
+            kind: "Homepage".to_string(),
+            url: package.homepage.clone(),
+        });
     }
+    if !package.repository.is_empty() {
+        urls.push(Doc::Url {
+            kind: "Repository".to_string(),
+            url: package.repository,
+        });
+    }
+    Ok(urls)
+}
 
-    let items: Vec<_> = files.iter().map(|x| x.display()).collect();
+fn select_doc(app: &App, package_name: &str) -> Result<Doc> {
+    let mut items = get_doc_file_list(app, package_name)?;
+    items.extend_from_slice(&get_url_list(app, package_name)?);
 
     let idx = Select::new().items(&items).default(0).interact_opt()?;
 
-    let idx = match idx {
-        Some(x) => x,
-        None => return Ok(None),
-    };
-
-    let doc_file = app.install_dir.join(&files[idx]);
-
-    Ok(Some(doc_file))
+    Ok(match idx {
+        Some(x) => items[x].clone(),
+        None => Doc::None,
+    })
 }
 
 fn find_doc_app(doc_file: &Path) -> DocApp {
@@ -88,7 +122,7 @@ fn open_doc_file(doc_file: &Path) -> Result<()> {
         DocApp::Pager => match find_pager() {
             Some(x) => x,
             None => {
-                return Err(anyhow!("Could not find a pager, install one with Clyde, for example using `clyde install bat`"));
+                return Err(anyhow!("Could not find a pager. You can install one with Clyde, for example using `clyde install bat`"));
             }
         },
         DocApp::Man => "man".to_string(),
@@ -123,10 +157,9 @@ pub fn doc_cmd(app: &App, package_name: &str) -> Result<()> {
     if db.get_package_version(package_name)?.is_none() {
         return Err(anyhow!("{} is not installed", package_name));
     }
-    let doc_file = match select_doc_file(app, package_name)? {
-        Some(x) => x,
-        None => return Ok(()),
-    };
-
-    open_doc_file(&doc_file)
+    match select_doc(app, package_name)? {
+        Doc::Path { text: _, path } => open_doc_file(&path),
+        Doc::Url { kind: _, url } => Ok(open::that(url)?),
+        Doc::None => Ok(()),
+    }
 }
