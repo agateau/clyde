@@ -57,16 +57,25 @@ impl GitStore {
                 None
             };
         }
-        let store_path = self.dir.join(name).join(INDEX_NAME);
-        if store_path.is_file() {
-            return Some(store_path);
-        }
-        let store_path = self.dir.join(name.to_owned() + ".yaml");
-        if store_path.is_file() {
-            return Some(store_path);
-        }
-        None
+        find_package_in_dir(&self.packages_dir(), name)
+            .or_else(|| find_package_in_dir(&self.dir, name))
     }
+
+    fn packages_dir(&self) -> PathBuf {
+        self.dir.join("packages")
+    }
+}
+
+fn find_package_in_dir(dir: &Path, name: &str) -> Option<PathBuf> {
+    let store_path = dir.join(name).join(INDEX_NAME);
+    if store_path.is_file() {
+        return Some(store_path);
+    }
+    let store_path = dir.join(name.to_owned() + ".yaml");
+    if store_path.is_file() {
+        return Some(store_path);
+    }
+    None
 }
 
 /// Return path to the YAML file if it exists
@@ -147,32 +156,59 @@ impl Store for GitStore {
         // of available packages. It should be revisited when the number of packages grow.
         // A possible solution is to create a database table to store the name and description of
         // available packages.
-        for entry in fs::read_dir(&self.dir)? {
-            let path = entry?.path();
-            let path = match get_package_path(&path) {
-                Some(x) => x,
-                None => continue,
-            };
-
-            let package = match Package::from_file(&path) {
-                Ok(x) => x,
-                Err(x) => {
-                    let x = x.context(format!("Failed to parse {}", &path.display()));
-                    errors.push(x);
-                    continue;
-                }
-            };
-
-            if package.name.to_lowercase().contains(&query) {
-                name_hits.push(SearchHit::from_package(&package));
-            } else if package.description.to_lowercase().contains(&query) {
-                description_hits.push(SearchHit::from_package(&package));
-            }
+        let packages_dir = self.packages_dir();
+        if packages_dir.exists() {
+            search_in_dir(
+                &packages_dir,
+                &query,
+                &mut name_hits,
+                &mut description_hits,
+                &mut errors,
+            )?;
         }
+        search_in_dir(
+            &self.dir,
+            &query,
+            &mut name_hits,
+            &mut description_hits,
+            &mut errors,
+        )?;
 
         name_hits.extend_from_slice(&description_hits);
         Ok((name_hits, errors))
     }
+}
+
+fn search_in_dir(
+    dir: &Path,
+    query: &str,
+    name_hits: &mut Vec<SearchHit>,
+    description_hits: &mut Vec<SearchHit>,
+    errors: &mut Vec<Error>,
+) -> Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let path = entry?.path();
+        let path = match get_package_path(&path) {
+            Some(x) => x,
+            None => continue,
+        };
+
+        let package = match Package::from_file(&path) {
+            Ok(x) => x,
+            Err(x) => {
+                let x = x.context(format!("Failed to parse {}", &path.display()));
+                errors.push(x);
+                continue;
+            }
+        };
+
+        if package.name.to_lowercase().contains(query) {
+            name_hits.push(SearchHit::from_package(&package));
+        } else if package.description.to_lowercase().contains(query) {
+            description_hits.push(SearchHit::from_package(&package));
+        }
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -181,7 +217,9 @@ mod tests {
 
     use std::vec::Vec;
 
-    use crate::test_file_utils::CwdSaver;
+    use yare::parameterized;
+
+    use crate::test_file_utils::{create_tree, CwdSaver};
 
     fn create_package_file(dir: &Path, name: &str) {
         create_package_file_with_desc(dir, name, &format!("The {} package", name));
@@ -264,6 +302,40 @@ mod tests {
 
         // THEN it should return None
         assert_eq!(path, None);
+    }
+
+    #[parameterized(
+        pkg_f1_yaml = { "f1", "packages/f1.yaml" },
+        pkg_f2_index_yaml = { "f2", "packages/f2/index.yaml" },
+        f3_yaml = { "f3", "f3.yaml" },
+    )]
+    fn find_package_path_should_look_in_packages_dir_first(query: &str, expected: &str) {
+        // GIVEN a store
+        let dir = assert_fs::TempDir::new().unwrap();
+        let store_dir = dir.join("store");
+        let store = GitStore::new(&store_dir);
+
+        // AND the following package files
+        // - packages/f1.yaml
+        // - f1.yaml
+        // - packages/f2/index.yaml
+        // - f3.yaml
+        create_tree(
+            &store_dir,
+            &[
+                "packages/f1.yaml",
+                "f1.yaml",
+                "packages/f2/index.yaml",
+                "f3.yaml",
+            ],
+        );
+
+        // WHEN find_package_path(query) is called
+        let path = store.find_package_path(query);
+
+        // THEN it should return the expected path
+        let expected_path = store_dir.join(expected);
+        assert_eq!(path, Some(expected_path));
     }
 
     #[test]
