@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.8.0 - 2024-06-16
+
+### Added
+
+- It is now possible to install assets which are scripts.
+
+- `clyde doc` now also shows the repository and homepage URLs, making it easy to open them.
+
+### Changed
+
+- Clyde no longer uses the `tar` command to unpack tar archives (Fixes #4).
+
+### Fixed
+
+- Fix regression in `clydetools fetch` preventing it from updating packages that use the default fetcher.
+
+- Quitting `clyde doc` with Ctrl+C now properly restores the terminal cursor.
+
+- `clydetools fetch` now prefers assets with explicit arch and OS (fixes gitui update failure).
+
 ## 0.7.0 - 2024-04-01
 
 ### Added

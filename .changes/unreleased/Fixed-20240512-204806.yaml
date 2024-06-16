@@ -1,3 +1,0 @@
-kind: Fixed
-body: Quitting `clyde doc` with Ctrl+C now properly restores the terminal cursor.
-time: 2024-05-12T20:48:06.055668001+02:00
