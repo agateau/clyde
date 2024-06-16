@@ -1,3 +1,0 @@
-kind: Changed
-body: Clyde no longer uses the `tar` command to unpack tar archives (Fixes #4).
-time: 2024-03-31T18:05:38.600306787+02:00

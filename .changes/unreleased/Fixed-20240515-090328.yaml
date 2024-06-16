@@ -1,4 +1,0 @@
-kind: Fixed
-body: '`clydetools fetch` now prefers assets with explicit arch and OS (fixes gitui
-  update failure).'
-time: 2024-05-15T09:03:28.570408501+02:00
