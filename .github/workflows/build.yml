@@ -32,7 +32,7 @@ jobs:
         os:
           - ubuntu-22.04
           # Intel-based
-          - macos-12
+          - macos-13
           # ARM-based
           - macos-14
           - windows-2019
