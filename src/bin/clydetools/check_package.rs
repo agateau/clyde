@@ -102,26 +102,27 @@ fn create_vars_map() -> VarsMap {
     map
 }
 
-fn string_for_command_output(output: &Output) -> String {
-    let mut string = String::new();
-    string.push_str("--- Stdout ---\n");
-    string.push_str(&String::from_utf8_lossy(&output.stdout));
-    string.push_str("--- Stderr ---\n");
-    string.push_str(&String::from_utf8_lossy(&output.stderr));
-    string
+fn report_command_output(report: &mut Vec<String>, output: &Output) {
+    report.push("STDOUT".into());
+    report.push(String::from_utf8_lossy(&output.stdout).into());
+    report.push("STDERR".into());
+    report.push(String::from_utf8_lossy(&output.stderr).into());
 }
 
 /// Run `command`, add results with error details to `report`
 fn run_command(report: &mut Vec<String>, command: &mut Command) -> Result<()> {
-    let command_str = format!("{:?} {:?}", command.get_program(), command.get_args());
+    let mut command_str = format!("{:?}", command.get_program());
+    for arg in command.get_args() {
+        command_str.push_str(&format!(" {:?}", arg));
+    }
     report.push(format!("Running {command_str}"));
     let output = command.output().context("Failed to execute command")?;
+    report_command_output(report, &output);
 
     match output.status.code() {
         Some(0) => Ok(()),
         Some(x) => {
             report.push(format!("Command failed with exit code {x}"));
-            report.push(string_for_command_output(&output));
             Err(anyhow!("Command failed with exit code {x}"))
         }
         None => {
@@ -321,5 +322,28 @@ mod tests {
 
         // THEN it fails
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn run_command_reports_include_command_output() {
+        let mut report = Vec::<String>::new();
+
+        // GIVEN a command to run that fails
+        // WHEN calling run_command()
+        let result = run_command(&mut report, Command::new("cargo").args([&"foo"]));
+
+        // THEN it fails
+        assert!(result.is_err());
+
+        // AND the report contains the command output
+        for line in &report {
+            println!("{}", line);
+        }
+        let running_line = report.get(0).unwrap();
+        assert!(running_line.contains("Running \"cargo"));
+        assert_eq!(report.get(1).unwrap(), "STDOUT");
+        assert_eq!(report.get(3).unwrap(), "STDERR");
+        assert!(report.get(4).unwrap().contains("no such command: `foo`"));
+        assert_eq!(report.last().unwrap(), "Command failed with exit code 101");
     }
 }
