@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::collections::HashMap;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -9,6 +10,7 @@ use std::process::{Command, Output};
 
 use anyhow::{anyhow, Context, Result};
 use semver::Version;
+use serde_json::json;
 use shell_words;
 use tempfile::TempDir;
 
@@ -222,7 +224,7 @@ fn print_summary_line(header: &str, packages: &[String]) {
     println!("{header}: {joined}");
 }
 
-pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
+pub fn check_packages(ui: &Ui, report_path: &Option<PathBuf>, paths: &Vec<PathBuf>) -> Result<()> {
     let mut ok_packages = Vec::<String>::new();
     let mut not_on_arch_os_packages = Vec::<String>::new();
     let mut failed_packages = Vec::<FailedPackage>::new();
@@ -265,6 +267,28 @@ pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
     ui.info("Finished");
     print_summary_line("OK", &ok_packages);
     print_summary_line("N/A", &not_on_arch_os_packages);
+
+    if let Some(report_path) = report_path {
+        let fails: HashMap<String, String> = failed_packages
+            .iter()
+            .map(|p| {
+                (
+                    p.package_path
+                        .clone()
+                        .into_os_string()
+                        .into_string()
+                        .unwrap(),
+                    p.error_message.clone(),
+                )
+            })
+            .collect();
+
+        let json = json!({
+            "fails": fails
+        });
+
+        fs::write(report_path, json.to_string())?;
+    }
 
     if !failed_packages.is_empty() {
         println!("# Failed packages\n");

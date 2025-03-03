@@ -59,6 +59,10 @@ enum Command {
     /// Check the validity of packages: checks the YAML files has all the required entries, and
     /// check the latest asset installs (if it can be installed on the running machine)
     Check {
+        /// Path where to store a JSON report of the checks
+        #[arg(short, long)]
+        report: Option<PathBuf>,
+
         /// Path to the package YAML files
         #[arg(required = true)]
         package_files: Vec<PathBuf>,
@@ -87,7 +91,10 @@ fn main() -> Result<()> {
             add_assets_cmd(&app, &ui, &package_file, &version, &arch_os, &urls)
         }
         // Check can run without an existing Clyde home: it creates a temporary one to test the package
-        Command::Check { package_files } => check_packages(&ui, &package_files),
+        Command::Check {
+            report,
+            package_files,
+        } => check_packages(&ui, &report, &package_files),
         Command::Fetch { package_files } => {
             let app = App::new(&home)?;
             fetch_cmd(&app, &ui, &package_files)
