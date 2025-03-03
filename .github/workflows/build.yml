@@ -80,9 +80,9 @@ jobs:
         run: ci/create-archive
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: artifacts
+          name: artifacts-${{ matrix.os }}
           path: |
             artifacts/*.gz
             artifacts/*.zip
@@ -98,10 +98,11 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: artifacts
           path: artifacts
+          pattern: artifacts-*
+          merge-multiple: true
 
       - name: Upload to builds.agateau.com
         run: ci/upload-build clyde artifacts/*.gz artifacts/*.zip
