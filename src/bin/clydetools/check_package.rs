@@ -273,11 +273,7 @@ pub fn check_packages(ui: &Ui, report_path: &Option<PathBuf>, paths: &Vec<PathBu
             .iter()
             .map(|p| {
                 (
-                    p.package_path
-                        .clone()
-                        .into_os_string()
-                        .into_string()
-                        .unwrap(),
+                    p.package_path.clone().to_string_lossy().replace("\\", "/"),
                     p.error_message.clone(),
                 )
             })
