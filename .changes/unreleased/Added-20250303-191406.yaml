@@ -1,3 +1,0 @@
-kind: Added
-body: '`clydetools check` now provides a `--report` option. This option is used by the CI.'
-time: 2025-03-03T19:14:06.65218476+01:00
