@@ -166,7 +166,7 @@ fn check_can_install(package: &Package, package_path: &Path, version: &Version) 
     .map_err(|_| anyhow!(report.join("\n")))?;
 
     // Run test commands
-    report.push("\n### Running test commmands\n".to_string());
+    report.push("\n### Running test commands\n".to_string());
     let install = package.get_install(version, &ArchOs::current()).unwrap();
 
     let vars = create_vars_map();

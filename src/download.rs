@@ -80,7 +80,7 @@ pub fn download(ui: &Ui, url_str: &str, dst_path: &Path) -> Result<()> {
     } else if url_str.starts_with(FILE_PREFIX) {
         file_download(ui, url_str, dst_path)
     } else {
-        Err(anyhow!("Unspported URL protocol: {url_str}"))
+        Err(anyhow!("Unsupported URL protocol: {url_str}"))
     }
 }
 
