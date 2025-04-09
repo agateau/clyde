@@ -29,7 +29,7 @@ lazy_static! {
         ("universal", Arch::Any),
     ];
     static ref OS_VEC: Vec<(&'static str, Os)> = vec![
-        ("linux", Os::Linux),
+        ("linux(|32|64)", Os::Linux),
         ("darwin", Os::MacOs),
         ("apple", Os::MacOs),
         ("macos(|10|11)", Os::MacOs),
@@ -48,7 +48,9 @@ lazy_static! {
         "sbom",
         "sh",
         "sha256",
+        "sha256sum",
         "txt",
+        "zsync",
     ]);
 
     // Packer extensions, ordered from worse to best
