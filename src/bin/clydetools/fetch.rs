@@ -62,7 +62,7 @@ impl FetcherFinder {
             FetcherConfig::Off => None,
             FetcherConfig::GitHub { .. } => Some(&self.github_fetcher),
             FetcherConfig::GitLab { .. } => Some(&self.gitlab_fetcher),
-            FetcherConfig::Script { .. } => Some(&self.script_fetcher),
+            FetcherConfig::Script => Some(&self.script_fetcher),
             FetcherConfig::Forgejo { .. } => Some(&self.forgejo_fetcher),
         }
     }
