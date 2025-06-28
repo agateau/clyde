@@ -1,0 +1,3 @@
+kind: Fixed
+body: Clydetools now includes the pre-release component when extracting a version number from the tag.
+time: 2025-06-28T16:21:23.623026488+02:00
