@@ -3,12 +3,26 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use anyhow::{anyhow, Result};
-use regex::Regex;
+use regex::{Regex, RegexBuilder};
 use semver::Version;
 
 lazy_static! {
-    static ref VERSION_RX: Regex =
-        Regex::new("(?P<version>[0-9]+(\\.[0-9]+)*)(-[0-9]+)?$").unwrap();
+    static ref VERSION_RX: Regex = RegexBuilder::new(
+        "(?P<version>
+                (
+                    # version with possible pre-release info. Must contain at
+                    # least two components to avoid ambiguity.
+                    [0-9]+(\\.[0-9]+)+(-[a-z.0-9]+)?
+                )|(
+                    # version with no pre-release info. Supports one component
+                    # version numbers.
+                    [0-9]+(\\.[0-9]+)*
+                )
+            )$"
+    )
+    .ignore_whitespace(true)
+    .build()
+    .unwrap();
 }
 
 fn count_chars(txt: &str, wanted: char) -> usize {
@@ -42,27 +56,19 @@ pub fn version_from_tag(tag: &str) -> Result<Version> {
 mod tests {
     use super::*;
 
-    #[test]
-    fn check_version_from_tag_removes_prefixes() {
-        assert_eq!(version_from_tag("v1.12.0").unwrap(), Version::new(1, 12, 0));
-        assert_eq!(
-            version_from_tag("foo14-1.12.0").unwrap(),
-            Version::new(1, 12, 0)
-        );
-    }
+    use yare::parameterized;
 
-    #[test]
-    fn check_version_from_tag_removes_distro_like_suffix() {
-        assert_eq!(
-            version_from_tag("forgejo-1.2.3-0").unwrap(),
-            Version::new(1, 2, 3)
-        );
-    }
-
-    #[test]
-    fn check_version_from_tag_add_missing_components() {
-        assert_eq!(version_from_tag("1").unwrap(), Version::new(1, 0, 0));
-        assert_eq!(version_from_tag("1.12").unwrap(), Version::new(1, 12, 0));
+    #[parameterized(
+        skip_prefix1 = { "v1.12.0", "1.12.0"},
+        skip_prefix2 = { "foo14-1.12.0", "1.12.0"},
+        prerelease1 = { "forgejo-1.2.3-0", "1.2.3-0"},
+        prerelease2 = { "v0.2.2-pre", "0.2.2-pre"},
+        missing_component1 = {"1", "1.0.0"},
+        missing_component2 = {"1.12", "1.12.0"},
+    )]
+    fn check_version_from_tag_success(tag: &str, expected_str: &str) {
+        let expected = Version::parse(expected_str).unwrap();
+        assert_eq!(version_from_tag(tag).unwrap(), expected);
     }
 
     #[test]
