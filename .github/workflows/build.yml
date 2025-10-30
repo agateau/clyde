@@ -35,7 +35,7 @@ jobs:
           - macos-13
           # ARM-based
           - macos-14
-          - windows-2019
+          - windows-2022
 
     runs-on: ${{ matrix.os }}
 
@@ -70,7 +70,7 @@ jobs:
           python-version: "3.10"
 
       - name: Force bash binary (Windows)
-        if: matrix.os == 'windows-2019'
+        if: matrix.os == 'windows-2022'
         run: echo "BASH_CMD=c:/program files/git/bin/bash.exe" >> $GITHUB_ENV
 
       - name: Run tests
