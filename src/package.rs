@@ -346,7 +346,7 @@ mod tests {
         // THEN it is loaded as expected
         let package = Package::from_file(&package_file).unwrap();
 
-        // ANd its package_dir is correct
+        // AND its package_dir is correct
         assert_eq!(package.package_dir, package_dir);
 
         // AND its tests are valid
@@ -367,7 +367,7 @@ mod tests {
         // THEN it is loaded as expected
         let package = Package::from_file(&package_file).unwrap();
 
-        // ANd its package_dir is correct
+        // AND its package_dir is correct
         assert_eq!(package.package_dir, dir.path());
 
         // AND its tests are valid
