@@ -31,11 +31,15 @@ fn show_details(app: &App, package_name: &str) -> Result<()> {
 
     println!();
     println!("Available versions:");
-    for (version, builds) in package.releases.iter().rev() {
-        let mut arch_os_list = Vec::from_iter(builds.keys().map(|x| format!("{x}")));
+    for (version, release) in package.releases.iter().rev() {
+        let published_at = match release.published_at {
+            Some(x) => format!(" {}", x.to_rfc3339()),
+            None => "".into(),
+        };
+        let mut arch_os_list = Vec::from_iter(release.assets.keys().map(|x| format!("{x}")));
         arch_os_list.sort();
         let arch_os_str = arch_os_list.join(", ");
-        println!("- {version} ({arch_os_str})");
+        println!("- {version} ({arch_os_str}){published_at}");
     }
     Ok(())
 }
@@ -58,12 +62,13 @@ fn show_as_json(app: &App, package_name: &str, list: bool) -> Result<()> {
     let available_versions: Vec<_> = package
         .releases
         .iter()
-        .map(|(version, builds)| {
-            let mut arch_os_list = Vec::from_iter(builds.keys().map(|x| format!("{x}")));
+        .map(|(version, release)| {
+            let mut arch_os_list = Vec::from_iter(release.assets.keys().map(|x| format!("{x}")));
             arch_os_list.sort();
             json!({
                 "version": version.to_string(),
                 "arch_os": arch_os_list,
+                "published_at": release.published_at,
             })
         })
         .collect();

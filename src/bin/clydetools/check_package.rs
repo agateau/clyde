@@ -39,7 +39,7 @@ fn check_has_release_assets(package: &Package) -> Result<()> {
         return Err(anyhow!("No releases"));
     }
     for (version, release) in package.releases.iter() {
-        if release.is_empty() {
+        if release.assets.is_empty() {
             return Err(anyhow!("No release assets for version {}", version));
         }
     }
@@ -299,6 +299,7 @@ mod tests {
         homepage:
         releases:
             1.2.0:
+                assets: {}
         ",
         )
         .unwrap();

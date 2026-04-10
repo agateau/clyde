@@ -106,7 +106,7 @@ pub fn fetch_cmd(app: &App, ui: &Ui, paths: &[PathBuf]) -> Result<()> {
             continue;
         }
 
-        let mut release = Release::new();
+        let mut release = Release::default();
         for (arch_os, url) in urls {
             add_asset(
                 &ui2,
