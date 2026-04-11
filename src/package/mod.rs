@@ -2,6 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+mod fetcher_config;
+mod internal_package;
+
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::path::{Path, PathBuf};
@@ -11,7 +14,12 @@ use chrono::{DateTime, Utc};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
+pub use fetcher_config::FetcherConfig;
+
 use crate::arch_os::{Arch, ArchOs, Os};
+use crate::serde_skip::{is_map_empty, is_vec_empty, is_zero};
+
+use internal_package::InternalPackage;
 
 pub const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
@@ -20,6 +28,8 @@ pub struct Asset {
     pub url: String,
     pub sha256: String,
 }
+
+pub type ReleaseAssets = HashMap<ArchOs, Asset>;
 
 #[derive(Debug, Clone, Default)]
 pub struct Release {
@@ -37,24 +47,6 @@ impl Release {
         self.published_at = published_at;
         self
     }
-}
-
-pub type ReleaseAssets = HashMap<ArchOs, Asset>;
-
-fn is_zero(x: &u32) -> bool {
-    *x == 0
-}
-
-fn is_none<T>(x: &Option<T>) -> bool {
-    x.is_none()
-}
-
-fn is_vec_empty<T>(vec: &[T]) -> bool {
-    vec.is_empty()
-}
-
-fn is_map_empty<K, V>(map: &BTreeMap<K, V>) -> bool {
-    map.is_empty()
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -83,179 +75,6 @@ pub struct Package {
     pub package_dir: PathBuf,
 
     pub fetcher: FetcherConfig,
-}
-
-fn is_auto_fetcher(x: &FetcherConfig) -> bool {
-    *x == FetcherConfig::Auto
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-struct InternalReleaseV2 {
-    published_at: Option<DateTime<Utc>>,
-    // Key is arch-os
-    assets: BTreeMap<String, Asset>,
-}
-
-#[derive(Debug, Deserialize, Serialize)]
-#[serde(untagged)]
-enum InternalReleaseEnum {
-    V2(InternalReleaseV2),
-    // Key is arch-os
-    V1(BTreeMap<String, Asset>),
-}
-
-/// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
-/// Package, which has stronger typing
-#[derive(Debug, Deserialize, Serialize)]
-struct InternalPackage {
-    pub name: String,
-    pub description: String,
-    pub homepage: String,
-    #[serde(default)]
-    pub repository: String,
-    pub releases: Option<BTreeMap<String, InternalReleaseEnum>>,
-    pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_auto_fetcher")]
-    pub fetcher: FetcherConfig,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Hash, Serialize)]
-pub enum FetcherConfig {
-    #[default]
-    Auto,
-    Forgejo {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        arch: Option<Arch>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        os: Option<Os>,
-        base_url: String,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        include: Option<String>,
-    },
-    GitHub {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        arch: Option<Arch>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        os: Option<Os>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        include: Option<String>,
-    },
-    GitLab {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        arch: Option<Arch>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        os: Option<Os>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        include: Option<String>,
-    },
-    Script,
-    Off,
-}
-
-impl InternalPackage {
-    fn from_package(package: &Package) -> InternalPackage {
-        let mut releases = BTreeMap::<String, InternalReleaseEnum>::new();
-        for (version, release) in package.releases.iter() {
-            let version_str = version.to_string();
-            let assets: BTreeMap<String, Asset> = release
-                .assets
-                .iter()
-                .map(|(arch_os, asset)| (arch_os.to_str(), asset.clone()))
-                .collect();
-            let internal_release_v2 = InternalReleaseV2 {
-                published_at: release.published_at,
-                assets,
-            };
-            releases.insert(version_str, InternalReleaseEnum::V2(internal_release_v2));
-        }
-
-        let mut installs = BTreeMap::<String, BTreeMap<String, Install>>::new();
-        for (version, installs_for_arch_os) in package.installs.iter() {
-            let version_str = version.to_string();
-            let installs_for_arch_os = installs_for_arch_os
-                .iter()
-                .map(|(arch_os, install)| (arch_os.to_str(), install.clone()))
-                .collect();
-            installs.insert(version_str, installs_for_arch_os);
-        }
-
-        InternalPackage {
-            name: package.name.clone(),
-            description: package.description.clone(),
-            homepage: package.homepage.clone(),
-            repository: package.repository.clone(),
-            releases: Some(releases),
-            installs: Some(installs),
-            fetcher: package.fetcher.clone(),
-        }
-    }
-
-    fn to_package(&self, package_dir: &Path) -> Result<Package> {
-        let mut releases = BTreeMap::<Version, Release>::new();
-
-        if let Some(internal_releases) = &self.releases {
-            for (version_str, internal_release_enum) in internal_releases.iter() {
-                let version = Version::parse(version_str)?;
-                let release = match internal_release_enum {
-                    InternalReleaseEnum::V2(internal_release) => {
-                        let assets = internal_release
-                            .assets
-                            .iter()
-                            .map(|(arch_os, build)| {
-                                (ArchOs::parse(arch_os).unwrap(), build.clone())
-                            })
-                            .collect();
-                        Release::default()
-                            .with_published_at(internal_release.published_at)
-                            .with_assets(assets)
-                    }
-                    InternalReleaseEnum::V1(internal_release) => {
-                        let assets = internal_release
-                            .iter()
-                            .map(|(arch_os, build)| {
-                                (ArchOs::parse(arch_os).unwrap(), build.clone())
-                            })
-                            .collect();
-                        Release::default().with_assets(assets)
-                    }
-                };
-                releases.insert(version, release);
-            }
-        }
-
-        let mut installs = BTreeMap::<Version, HashMap<ArchOs, Install>>::new();
-        if let Some(internal_installs) = &self.installs {
-            for (version_str, installs_for_arch_os) in internal_installs.iter() {
-                let version = Version::parse(version_str)?;
-                let installs_for_arch_os = installs_for_arch_os
-                    .iter()
-                    .map(|(arch_os, install)| (ArchOs::parse(arch_os).unwrap(), install.clone()))
-                    .collect();
-                installs.insert(version, installs_for_arch_os);
-            }
-        }
-
-        Ok(Package {
-            name: self.name.clone(),
-            description: self.description.clone(),
-            homepage: self.homepage.clone(),
-            repository: self.repository.clone(),
-            releases,
-            installs,
-            package_dir: package_dir.to_path_buf(),
-            fetcher: self.fetcher.clone(),
-        })
-    }
 }
 
 impl Package {
