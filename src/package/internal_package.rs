@@ -58,11 +58,14 @@ impl From<&Package> for InternalPackage {
                 .iter()
                 .map(|(arch_os, asset)| (arch_os.to_str(), asset.clone()))
                 .collect();
+            /* Uncomment this when we are ready for V2
             let internal_release_v2 = InternalReleaseV2 {
                 published_at: release.published_at,
                 assets,
             };
             releases.insert(version_str, InternalReleaseEnum::V2(internal_release_v2));
+            */
+            releases.insert(version_str, InternalReleaseEnum::V1(assets));
         }
 
         let mut installs = BTreeMap::<String, BTreeMap<String, Install>>::new();

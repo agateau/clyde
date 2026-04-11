@@ -265,7 +265,7 @@ mod tests {
     }
 
     #[test]
-    fn test_to_package() {
+    fn test_loading_package() {
         // GIVEN a package defined by TEST_PACKAGE_YAML_CONTENT
         // WHEN its loaded
         let package = Package::from_yaml_str(TEST_PACKAGE_YAML_CONTENT).unwrap();
@@ -305,6 +305,54 @@ mod tests {
             Some(&"bin/foo".to_string())
         );
         assert_eq!(install.files.get("share"), Some(&"".to_string()));
+    }
+
+    #[test]
+    fn saving_package_must_write_correct_release_format() {
+        // GIVEN a package
+        let package = Package::from_yaml_str(
+            "
+            name: test
+            description: desc
+            homepage:
+            releases:
+              2.0.0:
+                x86_64-linux:
+                  url: https://example.com
+                  sha256: '1234'
+            installs: {}
+            ",
+        )
+        .unwrap();
+
+        // WHEN it's saved to disk
+        let dir = assert_fs::TempDir::new().unwrap();
+        let path = dir.join("test.yaml");
+        package.to_file(&path).unwrap();
+
+        // THEN it uses the correct format for releases
+        let file = File::open(path).unwrap();
+        let value: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+
+        // Get the 2.0.0 release
+        let release = value
+            .as_mapping()
+            .unwrap()
+            .get("releases")
+            .unwrap()
+            .as_mapping()
+            .unwrap()
+            .get("2.0.0")
+            .unwrap()
+            .as_mapping()
+            .unwrap();
+
+        // For now we want the V1 format, so there should be only one key: "x86_64-linux"
+        let keys: Vec<String> = release
+            .keys()
+            .map(|x| x.as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(keys, &["x86_64-linux"]);
     }
 
     #[test]
