@@ -48,8 +48,8 @@ pub(crate) struct InternalPackage {
     pub fetcher: FetcherConfig,
 }
 
-impl InternalPackage {
-    pub fn from_package(package: &Package) -> InternalPackage {
+impl From<&Package> for InternalPackage {
+    fn from(package: &Package) -> Self {
         let mut releases = BTreeMap::<String, InternalReleaseEnum>::new();
         for (version, release) in package.releases.iter() {
             let version_str = version.to_string();
@@ -85,7 +85,9 @@ impl InternalPackage {
             fetcher: package.fetcher.clone(),
         }
     }
+}
 
+impl InternalPackage {
     pub fn to_package(&self, package_dir: &Path) -> Result<Package> {
         let mut releases = BTreeMap::<Version, Release>::new();
 

@@ -93,7 +93,7 @@ impl Package {
     }
 
     pub fn to_file(&self, path: &Path) -> Result<()> {
-        let internal_package = InternalPackage::from_package(self);
+        let internal_package = InternalPackage::from(self);
         let file = File::create(path)?;
         serde_yaml::to_writer(file, &internal_package)?;
         Ok(())
