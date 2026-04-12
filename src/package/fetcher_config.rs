@@ -5,7 +5,6 @@
 use serde::{Deserialize, Serialize};
 
 use crate::arch_os::{Arch, Os};
-use crate::serde_skip::is_none;
 
 #[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Hash, Serialize)]
 pub enum FetcherConfig {
@@ -13,36 +12,36 @@ pub enum FetcherConfig {
     Auto,
     Forgejo {
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         arch: Option<Arch>,
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         os: Option<Os>,
         base_url: String,
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         include: Option<String>,
     },
     GitHub {
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         arch: Option<Arch>,
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         os: Option<Os>,
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         include: Option<String>,
     },
     GitLab {
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         arch: Option<Arch>,
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         os: Option<Os>,
         #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
+        #[serde(skip_serializing_if = "Option::is_none")]
         include: Option<String>,
     },
     Script,

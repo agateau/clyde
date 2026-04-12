@@ -12,7 +12,6 @@ use serde::{Deserialize, Serialize};
 
 use crate::arch_os::ArchOs;
 use crate::package::{Asset, FetcherConfig, Install, Package, Release};
-use crate::serde_skip::is_empty;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct InternalReleaseV2 {
@@ -43,7 +42,7 @@ pub(crate) struct InternalPackage {
     #[serde(default)]
     pub repository: String,
     #[serde(default)]
-    #[serde(skip_serializing_if = "is_empty")]
+    #[serde(skip_serializing_if = "String::is_empty")]
     pub comment: String,
     pub releases: Option<BTreeMap<String, InternalReleaseEnum>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
