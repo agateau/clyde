@@ -12,10 +12,23 @@ pub fn is_zero(x: &u32) -> bool {
     *x == 0
 }
 
-pub fn is_vec_empty<T>(vec: &[T]) -> bool {
-    vec.is_empty()
+pub fn is_empty<T: CanBeEmpty>(x: &T) -> bool {
+    x.is_empty()
 }
 
-pub fn is_map_empty<K, V>(map: &BTreeMap<K, V>) -> bool {
-    map.is_empty()
+/// Helper trait to test emptiness on various structs
+pub trait CanBeEmpty {
+    fn is_empty(&self) -> bool;
+}
+
+impl<K, V> CanBeEmpty for BTreeMap<K, V> {
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+}
+
+impl<T> CanBeEmpty for Vec<T> {
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
 }

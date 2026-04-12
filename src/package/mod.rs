@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub use fetcher_config::FetcherConfig;
 
 use crate::arch_os::{Arch, ArchOs, Os};
-use crate::serde_skip::{is_map_empty, is_vec_empty, is_zero};
+use crate::serde_skip::{is_empty, is_zero};
 
 use internal_package::InternalPackage;
 
@@ -56,10 +56,10 @@ pub struct Install {
     pub strip: u32,
     pub files: BTreeMap<String, String>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "is_map_empty")]
+    #[serde(skip_serializing_if = "is_empty")]
     pub extra_files: BTreeMap<String, String>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "is_vec_empty")]
+    #[serde(skip_serializing_if = "is_empty")]
     pub tests: Vec<String>,
 }
 
