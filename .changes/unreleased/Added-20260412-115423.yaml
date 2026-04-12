@@ -1,0 +1,3 @@
+kind: Added
+body: 'Added a "comment" entry to the package format. This entry is for package maintenance comments. Unlike regular YAML comments, it is kept when the package file is updated by a tool.'
+time: 2026-04-12T11:54:23.789398635+02:00

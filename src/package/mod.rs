@@ -17,7 +17,7 @@ use serde::{Deserialize, Serialize};
 pub use fetcher_config::FetcherConfig;
 
 use crate::arch_os::{Arch, ArchOs, Os};
-use crate::serde_skip::{is_map_empty, is_vec_empty, is_zero};
+use crate::serde_skip::{is_empty, is_zero};
 
 use internal_package::InternalPackage;
 
@@ -56,10 +56,10 @@ pub struct Install {
     pub strip: u32,
     pub files: BTreeMap<String, String>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "is_map_empty")]
+    #[serde(skip_serializing_if = "is_empty")]
     pub extra_files: BTreeMap<String, String>,
     #[serde(default)]
-    #[serde(skip_serializing_if = "is_vec_empty")]
+    #[serde(skip_serializing_if = "is_empty")]
     pub tests: Vec<String>,
 }
 
@@ -69,6 +69,7 @@ pub struct Package {
     pub description: String,
     pub homepage: String,
     pub repository: String,
+    pub comment: String,
     pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
@@ -109,6 +110,7 @@ impl Package {
             description: self.description.clone(),
             homepage: self.homepage.clone(),
             repository: self.repository.clone(),
+            comment: self.comment.clone(),
             releases,
             installs: self.installs.clone(),
             package_dir: self.package_dir.clone(),
@@ -219,6 +221,13 @@ mod tests {
       arch: x86_64
       os: linux
     ";
+
+    /// Helper function to read a YAML file and return the Mapping representing it
+    fn read_yaml_from_path(path: &Path) -> serde_yaml::Mapping {
+        let file = File::open(path).unwrap();
+        let value: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+        value.as_mapping().unwrap().clone()
+    }
 
     #[test]
     fn from_file_should_load_packages_defined_as_dirs() {
@@ -331,13 +340,10 @@ mod tests {
         package.to_file(&path).unwrap();
 
         // THEN it uses the correct format for releases
-        let file = File::open(path).unwrap();
-        let value: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+        let root = read_yaml_from_path(&path);
 
         // Get the 2.0.0 release
-        let release = value
-            .as_mapping()
-            .unwrap()
+        let release = root
             .get("releases")
             .unwrap()
             .as_mapping()
@@ -353,6 +359,36 @@ mod tests {
             .map(|x| x.as_str().unwrap().to_string())
             .collect();
         assert_eq!(keys, &["x86_64-linux"]);
+    }
+
+    #[test]
+    fn saving_package_keeps_comment() {
+        // GIVEN a package with a comment
+        let package = Package::from_yaml_str(
+            "
+            name: test
+            description: desc
+            homepage:
+            comment: Careful with test
+            releases:
+              2.0.0:
+                x86_64-linux:
+                  url: https://example.com
+                  sha256: '1234'
+            installs: {}
+            ",
+        )
+        .unwrap();
+
+        // WHEN it's saved to disk
+        let dir = assert_fs::TempDir::new().unwrap();
+        let path = dir.join("test.yaml");
+        package.to_file(&path).unwrap();
+
+        // THEN the comment is kept
+        let root = read_yaml_from_path(&path);
+        let comment = root.get("comment").unwrap();
+        assert_eq!(comment.as_str().unwrap(), "Careful with test");
     }
 
     #[test]
