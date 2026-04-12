@@ -178,7 +178,7 @@ mod tests {
               1.2.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
             installs: {}
             ",
         )
@@ -216,11 +216,11 @@ mod tests {
               1.2.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
               1.3.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
             installs: {}
             ",
         )
@@ -261,11 +261,11 @@ mod tests {
               1.2.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
               1.3.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
             installs: {}
             ",
         )

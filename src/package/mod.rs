@@ -2,15 +2,24 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+mod fetcher_config;
+mod internal_package;
+
 use std::collections::{BTreeMap, HashMap};
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
+use chrono::{DateTime, Utc};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
+pub use fetcher_config::FetcherConfig;
+
 use crate::arch_os::{Arch, ArchOs, Os};
+use crate::serde_skip::{is_map_empty, is_vec_empty, is_zero};
+
+use internal_package::InternalPackage;
 
 pub const EXTRA_FILES_DIR_NAME: &str = "extra_files";
 
@@ -20,22 +29,24 @@ pub struct Asset {
     pub sha256: String,
 }
 
-pub type Release = HashMap<ArchOs, Asset>;
+pub type ReleaseAssets = HashMap<ArchOs, Asset>;
 
-fn is_zero(x: &u32) -> bool {
-    *x == 0
+#[derive(Debug, Clone, Default)]
+pub struct Release {
+    pub published_at: Option<DateTime<Utc>>,
+    pub assets: ReleaseAssets,
 }
 
-fn is_none<T>(x: &Option<T>) -> bool {
-    x.is_none()
-}
+impl Release {
+    pub fn with_assets(mut self, assets: ReleaseAssets) -> Self {
+        self.assets = assets;
+        self
+    }
 
-fn is_vec_empty<T>(vec: &[T]) -> bool {
-    vec.is_empty()
-}
-
-fn is_map_empty<K, V>(map: &BTreeMap<K, V>) -> bool {
-    map.is_empty()
+    pub fn with_published_at(mut self, published_at: Option<DateTime<Utc>>) -> Self {
+        self.published_at = published_at;
+        self
+    }
 }
 
 #[derive(Debug, Deserialize, Serialize, Clone)]
@@ -66,139 +77,6 @@ pub struct Package {
     pub fetcher: FetcherConfig,
 }
 
-fn is_auto_fetcher(x: &FetcherConfig) -> bool {
-    *x == FetcherConfig::Auto
-}
-
-/// Intermediate struct, used to serialize and deserialize. After deserializing it is turned into
-/// Package, which has stronger typing
-#[derive(Debug, Deserialize, Serialize)]
-struct InternalPackage {
-    pub name: String,
-    pub description: String,
-    pub homepage: String,
-    #[serde(default)]
-    pub repository: String,
-    pub releases: Option<BTreeMap<String, BTreeMap<String, Asset>>>,
-    pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "is_auto_fetcher")]
-    pub fetcher: FetcherConfig,
-}
-
-#[derive(Clone, Debug, Default, Deserialize, Eq, PartialEq, Hash, Serialize)]
-pub enum FetcherConfig {
-    #[default]
-    Auto,
-    Forgejo {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        arch: Option<Arch>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        os: Option<Os>,
-        base_url: String,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        include: Option<String>,
-    },
-    GitHub {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        arch: Option<Arch>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        os: Option<Os>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        include: Option<String>,
-    },
-    GitLab {
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        arch: Option<Arch>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        os: Option<Os>,
-        #[serde(default)]
-        #[serde(skip_serializing_if = "is_none")]
-        include: Option<String>,
-    },
-    Script,
-    Off,
-}
-
-impl InternalPackage {
-    fn from_package(package: &Package) -> InternalPackage {
-        let mut releases = BTreeMap::<String, BTreeMap<String, Asset>>::new();
-        for (version, release) in package.releases.iter() {
-            let version_str = version.to_string();
-            let release = release
-                .iter()
-                .map(|(arch_os, build)| (arch_os.to_str(), build.clone()))
-                .collect();
-            releases.insert(version_str, release);
-        }
-
-        let mut installs = BTreeMap::<String, BTreeMap<String, Install>>::new();
-        for (version, installs_for_arch_os) in package.installs.iter() {
-            let version_str = version.to_string();
-            let installs_for_arch_os = installs_for_arch_os
-                .iter()
-                .map(|(arch_os, install)| (arch_os.to_str(), install.clone()))
-                .collect();
-            installs.insert(version_str, installs_for_arch_os);
-        }
-
-        InternalPackage {
-            name: package.name.clone(),
-            description: package.description.clone(),
-            homepage: package.homepage.clone(),
-            repository: package.repository.clone(),
-            releases: Some(releases),
-            installs: Some(installs),
-            fetcher: package.fetcher.clone(),
-        }
-    }
-
-    fn to_package(&self, package_dir: &Path) -> Result<Package> {
-        let mut releases = BTreeMap::<Version, Release>::new();
-        if let Some(internal_releases) = &self.releases {
-            for (version_str, builds_for_arch_os) in internal_releases.iter() {
-                let version = Version::parse(version_str)?;
-                let builds_for_arch_os = builds_for_arch_os
-                    .iter()
-                    .map(|(arch_os, build)| (ArchOs::parse(arch_os).unwrap(), build.clone()))
-                    .collect();
-                releases.insert(version, builds_for_arch_os);
-            }
-        }
-
-        let mut installs = BTreeMap::<Version, HashMap<ArchOs, Install>>::new();
-        if let Some(internal_installs) = &self.installs {
-            for (version_str, installs_for_arch_os) in internal_installs.iter() {
-                let version = Version::parse(version_str)?;
-                let installs_for_arch_os = installs_for_arch_os
-                    .iter()
-                    .map(|(arch_os, install)| (ArchOs::parse(arch_os).unwrap(), install.clone()))
-                    .collect();
-                installs.insert(version, installs_for_arch_os);
-            }
-        }
-
-        Ok(Package {
-            name: self.name.clone(),
-            description: self.description.clone(),
-            homepage: self.homepage.clone(),
-            repository: self.repository.clone(),
-            releases,
-            installs,
-            package_dir: package_dir.to_path_buf(),
-            fetcher: self.fetcher.clone(),
-        })
-    }
-}
-
 impl Package {
     pub fn from_file(path: &Path) -> Result<Package> {
         let file = File::open(path)?;
@@ -215,7 +93,7 @@ impl Package {
     }
 
     pub fn to_file(&self, path: &Path) -> Result<()> {
-        let internal_package = InternalPackage::from_package(self);
+        let internal_package = InternalPackage::from(self);
         let file = File::create(path)?;
         serde_yaml::to_writer(file, &internal_package)?;
         Ok(())
@@ -252,23 +130,23 @@ impl Package {
 
     pub fn get_asset(&self, version: &Version, arch_os: &ArchOs) -> Option<&Asset> {
         let release = self.releases.get(version)?;
-        let asset = release.get(arch_os);
+        let asset = release.assets.get(arch_os);
         if asset.is_some() {
             return asset;
         }
         if arch_os.arch != Arch::Any {
-            let asset = release.get(&arch_os.with_any_arch());
+            let asset = release.assets.get(&arch_os.with_any_arch());
             if asset.is_some() {
                 return asset;
             }
         }
         if arch_os.os != Os::Any {
-            let asset = release.get(&arch_os.with_any_os());
+            let asset = release.assets.get(&arch_os.with_any_os());
             if asset.is_some() {
                 return asset;
             }
         }
-        release.get(&ArchOs::any())
+        release.assets.get(&ArchOs::any())
     }
 
     /// Return files definition for wanted_version
@@ -308,7 +186,7 @@ impl Package {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
+    use std::{fs, str::FromStr};
 
     use crate::store::INDEX_NAME;
 
@@ -316,7 +194,17 @@ mod tests {
     name: test
     description: desc
     homepage:
-    releases: {}
+    releases:
+      1.2.0:
+        any:
+          url: https://example.com/foo-1.2.0
+          sha256: '1234'
+      1.3.0:
+        published_at: '2024-01-02T12:34:56Z'
+        assets:
+          any:
+            url: https://example.com/foo-1.3.0
+            sha256: '5678'
     installs:
       1.2.0:
         any:
@@ -377,9 +265,38 @@ mod tests {
     }
 
     #[test]
-    fn test_to_package() {
+    fn test_loading_package() {
+        // GIVEN a package defined by TEST_PACKAGE_YAML_CONTENT
+        // WHEN its loaded
         let package = Package::from_yaml_str(TEST_PACKAGE_YAML_CONTENT).unwrap();
 
+        // THEN the 1.2.0 release, which uses the V1 variant, is correctly loaded
+        let release_120 = package
+            .releases
+            .get(&Version::from_str("1.2.0").unwrap())
+            .unwrap();
+        assert!(release_120.published_at.is_none());
+        let asset_120 = release_120.assets.get(&ArchOs::any()).unwrap();
+        assert_eq!(asset_120.sha256, "1234");
+
+        // AND the 1.3.0 release, which uses the V2 variant, is correctly loaded
+        let release_130 = package
+            .releases
+            .get(&Version::from_str("1.3.0").unwrap())
+            .unwrap();
+        assert_eq!(
+            release_130.published_at,
+            Some(
+                DateTime::parse_from_rfc3339("2024-01-02T12:34:56Z")
+                    .unwrap()
+                    .to_utc()
+            )
+        );
+        assert!(release_130.assets.contains_key(&ArchOs::any()));
+        let asset_130 = release_130.assets.get(&ArchOs::any()).unwrap();
+        assert_eq!(asset_130.sha256, "5678");
+
+        // AND the install section for the 1.2.0 release is correctly loaded
         let install = package
             .get_install(&Version::new(1, 2, 0), &ArchOs::current())
             .unwrap();
@@ -388,6 +305,54 @@ mod tests {
             Some(&"bin/foo".to_string())
         );
         assert_eq!(install.files.get("share"), Some(&"".to_string()));
+    }
+
+    #[test]
+    fn saving_package_must_write_correct_release_format() {
+        // GIVEN a package
+        let package = Package::from_yaml_str(
+            "
+            name: test
+            description: desc
+            homepage:
+            releases:
+              2.0.0:
+                x86_64-linux:
+                  url: https://example.com
+                  sha256: '1234'
+            installs: {}
+            ",
+        )
+        .unwrap();
+
+        // WHEN it's saved to disk
+        let dir = assert_fs::TempDir::new().unwrap();
+        let path = dir.join("test.yaml");
+        package.to_file(&path).unwrap();
+
+        // THEN it uses the correct format for releases
+        let file = File::open(path).unwrap();
+        let value: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+
+        // Get the 2.0.0 release
+        let release = value
+            .as_mapping()
+            .unwrap()
+            .get("releases")
+            .unwrap()
+            .as_mapping()
+            .unwrap()
+            .get("2.0.0")
+            .unwrap()
+            .as_mapping()
+            .unwrap();
+
+        // For now we want the V1 format, so there should be only one key: "x86_64-linux"
+        let keys: Vec<String> = release
+            .keys()
+            .map(|x| x.as_str().unwrap().to_string())
+            .collect();
+        assert_eq!(keys, &["x86_64-linux"]);
     }
 
     #[test]
@@ -401,15 +366,15 @@ mod tests {
               2.0.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
               1.2.1:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
               1.2.0:
                 any:
                   url: https://example.com
-                  sha256: 1234
+                  sha256: '1234'
             installs: {}
             ",
         )

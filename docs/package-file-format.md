@@ -29,33 +29,39 @@ repository: https://src.example.com
 
 Releases are stored in the `releases` mapping.
 
-Each entry is a version, which itself contains entries for each arch-os asset.
+Each entry represents a version. the entry value is a mapping that contains a `published_at` entry and an `assets` entry.
 
-Each asset as two entries: `url` and `sha256`.
+`published_at` is the publication date of the release in ISO-8601. It can be left empty if unknown.
+
+`assets` is a mapping where entry names are arch-os and entry values are a mapping of two entries: `url` and `sha256`.
 
 ```yaml
 releases:
   "1.2.3":
-    x86_64-linux:
-      url: https://example.com/foobar/foobar-1.2.3-x86_64-linux.tar.gz
-      sha256: 1234567890abcdef
+    published_at: 2023-04-05T12:34:56Z
+    assets:
+      x86_64-linux:
+        url: https://example.com/foobar/foobar-1.2.3-x86_64-linux.tar.gz
+        sha256: 1234567890abcdef
 
-    x86_64-macos:
-      url: https://example.com/foobar/foobar-1.2.3-x86_64-macos.tar.gz
-      sha256: 1234567890abcdef
+      x86_64-macos:
+        url: https://example.com/foobar/foobar-1.2.3-x86_64-macos.tar.gz
+        sha256: 1234567890abcdef
 
-    x86_64-windows
-      url: https://example.com/foobar/foobar-1.2.3-x86_64-windows.zip
-      sha256: 1234567890abcdef
+      x86_64-windows
+        url: https://example.com/foobar/foobar-1.2.3-x86_64-windows.zip
+        sha256: 1234567890abcdef
 
-    aarch64-macos:
-      url: https://example.com/foobar/foobar-1.2.3-aarch64-macos.tar.gz
-      sha256: 1234567890abcdef
+      aarch64-macos:
+        url: https://example.com/foobar/foobar-1.2.3-aarch64-macos.tar.gz
+        sha256: 1234567890abcdef
 
   "1.2.1":
-    x86_64-linux:
-      url: https://example.com/foobar/foobar-1.2.1-x86_64-linux.tar.gz
-      sha256: 1234567890abcdef
+    published_at: 2023-04-02T12:34:56Z
+    assets:
+      x86_64-linux:
+        url: https://example.com/foobar/foobar-1.2.1-x86_64-linux.tar.gz
+        sha256: 1234567890abcdef
 ```
 
 ## Installs

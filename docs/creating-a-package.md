@@ -41,7 +41,7 @@ clydetools add-assets namcap.yaml 1.2.3 \
     https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz
 ```
 
-`clydetools add-assets` downloads all archives, computes their sha256 checksum, and adds them as builds for the 1.2.3 release to `namcap.yaml`.
+`clydetools add-assets` downloads all archives, computes their sha256 checksum, and adds them as assets for the 1.2.3 release.
 
 Our `namcap.yaml` should now look like this:
 
@@ -51,18 +51,19 @@ description: A one line description of the namcap app
 homepage: https://namcap.example.com
 releases:
   1.2.3:
-    aarch64-macos:
-      url: https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz
-      sha256: some_sha256_checksum
-    x86_64-linux:
-      url: https://namcap.example.com/download/namcap-1.2.3-x86_64-linux.tar.gz
-      sha256: some_sha256_checksum
-    x86_64-macos:
-      url: https://namcap.example.com/download/namcap-1.2.3-x86_64-macos.tar.gz
-      sha256: some_sha256_checksum
-    x86_64-windows
-      url: https://namcap.example.com/download/namcap-1.2.3-x86_64-windows.zip
-      sha256: some_sha256_checksum
+    assets:
+      aarch64-macos:
+        url: https://namcap.example.com/download/namcap-1.2.3-aarch64-darwin.tar.gz
+        sha256: some_sha256_checksum
+      x86_64-linux:
+        url: https://namcap.example.com/download/namcap-1.2.3-x86_64-linux.tar.gz
+        sha256: some_sha256_checksum
+      x86_64-macos:
+        url: https://namcap.example.com/download/namcap-1.2.3-x86_64-macos.tar.gz
+        sha256: some_sha256_checksum
+      x86_64-windows
+        url: https://namcap.example.com/download/namcap-1.2.3-x86_64-windows.zip
+        sha256: some_sha256_checksum
 ```
 
 ## Adding installs
@@ -71,7 +72,7 @@ It's time to add an `installs` entry so that Clyde knows which files should go w
 
 Let's assume the archive content is the following:
 
-```yaml
+```
 namcap-1.2.3-$arch-$os/
   namcap (namcap.exe on Windows)
   README.md

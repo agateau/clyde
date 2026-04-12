@@ -44,7 +44,7 @@ pub fn add_asset(
         sha256: checksum,
     };
 
-    release.insert(*arch_os, asset);
+    release.assets.insert(*arch_os, asset);
 
     Ok(())
 }
@@ -61,7 +61,7 @@ pub fn add_assets(
 
     let mut release = match package.releases.get(version) {
         Some(x) => x.clone(),
-        None => Release::new(),
+        None => Release::default(),
     };
 
     if let Some(arch_os) = arch_os {

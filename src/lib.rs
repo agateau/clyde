@@ -14,6 +14,7 @@ pub mod file_cache;
 pub mod file_utils;
 pub mod package;
 pub mod pager;
+pub mod serde_skip;
 pub mod store;
 pub mod table;
 pub mod test_file_utils;
