@@ -32,6 +32,25 @@ impl FailedPackage {
             error_message: error_message.to_string(),
         }
     }
+
+    fn name(&self) -> String {
+        let Ok(file_name) = get_file_name(&self.package_path) else {
+            return self.package_path.display().to_string();
+        };
+        if file_name != INDEX_NAME {
+            // plain file layout, we are done
+            return file_name.replace(".yaml", "");
+        }
+
+        // directory layout, return the name of the parent directory
+        let Some(parent) = self.package_path.parent() else {
+            return self.package_path.display().to_string();
+        };
+        match get_file_name(parent) {
+            Ok(x) => x.to_string(),
+            Err(_) => self.package_path.display().to_string(),
+        }
+    }
 }
 
 fn check_has_release_assets(package: &Package) -> Result<()> {
@@ -223,9 +242,12 @@ fn check_package(package: &Package, path: &Path) -> Result<bool> {
     Ok(true)
 }
 
-fn print_summary_line(header: &str, packages: &[String]) {
-    let joined = packages.join(", ");
-    println!("{header}: {joined}");
+fn print_summary_line(ui: &Ui, count: usize, header: &str, packages: &[String]) {
+    ui.info(&format!("{header} ({}/{count})", packages.len()));
+    if !packages.is_empty() {
+        let joined = packages.join(", ");
+        println!("\n{joined}\n");
+    }
 }
 
 pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
@@ -269,13 +291,15 @@ pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
     }
 
     ui.info("Finished");
-    print_summary_line("OK", &ok_packages);
-    print_summary_line("N/A", &not_on_arch_os_packages);
+    let failed_package_names: Vec<_> = failed_packages.iter().map(|x| x.name()).collect();
+    print_summary_line(ui, count, "OK", &ok_packages);
+    print_summary_line(ui, count, "N/A", &not_on_arch_os_packages);
+    print_summary_line(ui, count, "Failed", &failed_package_names);
 
     if !failed_packages.is_empty() {
-        println!("# Failed packages\n");
+        println!("\n# Failed packages details\n");
         for failed_package in &failed_packages {
-            println!("## {}", failed_package.package_path.display());
+            println!("## {}", failed_package.name());
             println!("\n{}\n", failed_package.error_message);
         }
 
