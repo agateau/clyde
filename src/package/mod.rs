@@ -220,6 +220,13 @@ mod tests {
       os: linux
     ";
 
+    /// Helper function to read a YAML file and return the Mapping representing it
+    fn read_yaml_from_path(path: &Path) -> serde_yaml::Mapping {
+        let file = File::open(path).unwrap();
+        let value: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+        value.as_mapping().unwrap().clone()
+    }
+
     #[test]
     fn from_file_should_load_packages_defined_as_dirs() {
         // GIVEN a package defined as a dir
@@ -331,13 +338,10 @@ mod tests {
         package.to_file(&path).unwrap();
 
         // THEN it uses the correct format for releases
-        let file = File::open(path).unwrap();
-        let value: serde_yaml::Value = serde_yaml::from_reader(file).unwrap();
+        let root = read_yaml_from_path(&path);
 
         // Get the 2.0.0 release
-        let release = value
-            .as_mapping()
-            .unwrap()
+        let release = root
             .get("releases")
             .unwrap()
             .as_mapping()
