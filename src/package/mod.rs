@@ -69,6 +69,7 @@ pub struct Package {
     pub description: String,
     pub homepage: String,
     pub repository: String,
+    pub comment: String,
     pub releases: BTreeMap<Version, Release>,
 
     pub installs: BTreeMap<Version, HashMap<ArchOs, Install>>,
@@ -109,6 +110,7 @@ impl Package {
             description: self.description.clone(),
             homepage: self.homepage.clone(),
             repository: self.repository.clone(),
+            comment: self.comment.clone(),
             releases,
             installs: self.installs.clone(),
             package_dir: self.package_dir.clone(),
@@ -357,6 +359,36 @@ mod tests {
             .map(|x| x.as_str().unwrap().to_string())
             .collect();
         assert_eq!(keys, &["x86_64-linux"]);
+    }
+
+    #[test]
+    fn saving_package_keeps_comment() {
+        // GIVEN a package with a comment
+        let package = Package::from_yaml_str(
+            "
+            name: test
+            description: desc
+            homepage:
+            comment: Careful with test
+            releases:
+              2.0.0:
+                x86_64-linux:
+                  url: https://example.com
+                  sha256: '1234'
+            installs: {}
+            ",
+        )
+        .unwrap();
+
+        // WHEN it's saved to disk
+        let dir = assert_fs::TempDir::new().unwrap();
+        let path = dir.join("test.yaml");
+        package.to_file(&path).unwrap();
+
+        // THEN the comment is kept
+        let root = read_yaml_from_path(&path);
+        let comment = root.get("comment").unwrap();
+        assert_eq!(comment.as_str().unwrap(), "Careful with test");
     }
 
     #[test]

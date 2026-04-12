@@ -21,6 +21,12 @@ pub trait CanBeEmpty {
     fn is_empty(&self) -> bool;
 }
 
+impl CanBeEmpty for String {
+    fn is_empty(&self) -> bool {
+        self.is_empty()
+    }
+}
+
 impl<K, V> CanBeEmpty for BTreeMap<K, V> {
     fn is_empty(&self) -> bool {
         self.is_empty()

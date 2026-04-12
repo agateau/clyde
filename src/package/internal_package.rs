@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::arch_os::ArchOs;
 use crate::package::{Asset, FetcherConfig, Install, Package, Release};
+use crate::serde_skip::is_empty;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct InternalReleaseV2 {
@@ -41,6 +42,9 @@ pub(crate) struct InternalPackage {
     pub homepage: String,
     #[serde(default)]
     pub repository: String,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "is_empty")]
+    pub comment: String,
     pub releases: Option<BTreeMap<String, InternalReleaseEnum>>,
     pub installs: Option<BTreeMap<String, BTreeMap<String, Install>>>,
     #[serde(default)]
@@ -83,6 +87,7 @@ impl From<&Package> for InternalPackage {
             description: package.description.clone(),
             homepage: package.homepage.clone(),
             repository: package.repository.clone(),
+            comment: package.comment.clone(),
             releases: Some(releases),
             installs: Some(installs),
             fetcher: package.fetcher.clone(),
@@ -141,6 +146,7 @@ impl InternalPackage {
             description: self.description.clone(),
             homepage: self.homepage.clone(),
             repository: self.repository.clone(),
+            comment: self.comment.clone(),
             releases,
             installs,
             package_dir: package_dir.to_path_buf(),

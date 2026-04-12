@@ -23,6 +23,12 @@ homepage: https://foobar.example.com
 
 # Where the code can be downloaded. Optional.
 repository: https://src.example.com
+
+# Package-maintenance comment. Optional.
+# Clyde does nothing with this entry, but clydetools knows about it so when
+# clydetools updates the package file, the comment is kept, unlike classic `#`
+# YAML comments.
+comment: Be careful with XXX
 ```
 
 ## Releases
