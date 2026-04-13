@@ -45,7 +45,7 @@ glob-match = "0.2.1"
 which = "4.4.0"
 open = "5.1.2"
 ctrlc = "3.4.4"
-tar = "0.4.40"
+tar = "0.4.45"
 chrono = { version = "0.4.43", features = ["now", "serde"], default-features = false }
 
 [build-dependencies]
