@@ -14,7 +14,7 @@ _clyde() {
     fi
 
     local context curcontext="$curcontext" state line
-    _arguments "${_arguments_options[@]}" \
+    _arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
 '-V[Print version]' \
@@ -29,8 +29,8 @@ _clyde() {
         curcontext="${curcontext%:*:*}:clyde-command-$line[1]:"
         case $line[1] in
             (setup)
-_arguments "${_arguments_options[@]}" \
-'--url=[URL of the Git repository to use for the store]:STORE_URL: ' \
+_arguments "${_arguments_options[@]}" : \
+'--url=[URL of the Git repository to use for the store]:STORE_URL:_default' \
 '-u[Update the activation scripts of an existing installation]' \
 '--update-scripts[Update the activation scripts of an existing installation]' \
 '-h[Print help]' \
@@ -38,54 +38,54 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (update)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (install)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-r[Uninstall then reinstall already installed packages]' \
 '--reinstall[Uninstall then reinstall already installed packages]' \
 '-h[Print help (see more with '\''--help'\'')]' \
 '--help[Print help (see more with '\''--help'\'')]' \
-'*::package_names -- Application name, optionally suffixed with @version:' \
+'*::package_names -- Application name, optionally suffixed with @version:_default' \
 && ret=0
 ;;
 (uninstall)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
-'*::package_names -- Application name:' \
+'*::package_names -- Application name:_default' \
 && ret=0
 ;;
 (show)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-l[List application files instead of showing information]' \
 '--list[List application files instead of showing information]' \
 '-j[Use JSON output]' \
 '--json[Use JSON output]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':package_name -- Application name:' \
+':package_name -- Application name:_default' \
 && ret=0
 ;;
 (search)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
-':query -- Search query:' \
+':query -- Search query:_default' \
 && ret=0
 ;;
 (doc)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
-':package_name -- Application name:' \
+':package_name -- Application name:_default' \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-j[Use JSON output]' \
 '--json[Use JSON output]' \
 '-h[Print help]' \
@@ -93,14 +93,14 @@ _arguments "${_arguments_options[@]}" \
 && ret=0
 ;;
 (upgrade)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 '-h[Print help]' \
 '--help[Print help]' \
 && ret=0
 ;;
 (help)
-_arguments "${_arguments_options[@]}" \
-":: :_clyde__help_commands" \
+_arguments "${_arguments_options[@]}" : \
+":: :_clyde__subcmd__help_commands" \
 "*::: :->help" \
 && ret=0
 
@@ -111,43 +111,43 @@ _arguments "${_arguments_options[@]}" \
         curcontext="${curcontext%:*:*}:clyde-help-command-$line[1]:"
         case $line[1] in
             (setup)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (update)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (install)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (uninstall)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (show)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (search)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (doc)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (list)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (upgrade)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
 (help)
-_arguments "${_arguments_options[@]}" \
+_arguments "${_arguments_options[@]}" : \
 && ret=0
 ;;
         esac
@@ -175,18 +175,13 @@ _clyde_commands() {
     )
     _describe -t commands 'clyde commands' commands "$@"
 }
-(( $+functions[_clyde__doc_commands] )) ||
-_clyde__doc_commands() {
+(( $+functions[_clyde__subcmd__doc_commands] )) ||
+_clyde__subcmd__doc_commands() {
     local commands; commands=()
     _describe -t commands 'clyde doc commands' commands "$@"
 }
-(( $+functions[_clyde__help__doc_commands] )) ||
-_clyde__help__doc_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde help doc commands' commands "$@"
-}
-(( $+functions[_clyde__help_commands] )) ||
-_clyde__help_commands() {
+(( $+functions[_clyde__subcmd__help_commands] )) ||
+_clyde__subcmd__help_commands() {
     local commands; commands=(
 'setup:Setup Clyde' \
 'update:Update Clyde store' \
@@ -201,88 +196,93 @@ _clyde__help_commands() {
     )
     _describe -t commands 'clyde help commands' commands "$@"
 }
-(( $+functions[_clyde__help__help_commands] )) ||
-_clyde__help__help_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__doc_commands] )) ||
+_clyde__subcmd__help__subcmd__doc_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde help doc commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__help__subcmd__help_commands] )) ||
+_clyde__subcmd__help__subcmd__help_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help help commands' commands "$@"
 }
-(( $+functions[_clyde__help__install_commands] )) ||
-_clyde__help__install_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__install_commands] )) ||
+_clyde__subcmd__help__subcmd__install_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help install commands' commands "$@"
 }
-(( $+functions[_clyde__install_commands] )) ||
-_clyde__install_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde install commands' commands "$@"
-}
-(( $+functions[_clyde__help__list_commands] )) ||
-_clyde__help__list_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__list_commands] )) ||
+_clyde__subcmd__help__subcmd__list_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help list commands' commands "$@"
 }
-(( $+functions[_clyde__list_commands] )) ||
-_clyde__list_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde list commands' commands "$@"
-}
-(( $+functions[_clyde__help__search_commands] )) ||
-_clyde__help__search_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__search_commands] )) ||
+_clyde__subcmd__help__subcmd__search_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help search commands' commands "$@"
 }
-(( $+functions[_clyde__search_commands] )) ||
-_clyde__search_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde search commands' commands "$@"
-}
-(( $+functions[_clyde__help__setup_commands] )) ||
-_clyde__help__setup_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__setup_commands] )) ||
+_clyde__subcmd__help__subcmd__setup_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help setup commands' commands "$@"
 }
-(( $+functions[_clyde__setup_commands] )) ||
-_clyde__setup_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde setup commands' commands "$@"
-}
-(( $+functions[_clyde__help__show_commands] )) ||
-_clyde__help__show_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__show_commands] )) ||
+_clyde__subcmd__help__subcmd__show_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help show commands' commands "$@"
 }
-(( $+functions[_clyde__show_commands] )) ||
-_clyde__show_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde show commands' commands "$@"
-}
-(( $+functions[_clyde__help__uninstall_commands] )) ||
-_clyde__help__uninstall_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__uninstall_commands] )) ||
+_clyde__subcmd__help__subcmd__uninstall_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help uninstall commands' commands "$@"
 }
-(( $+functions[_clyde__uninstall_commands] )) ||
-_clyde__uninstall_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde uninstall commands' commands "$@"
-}
-(( $+functions[_clyde__help__update_commands] )) ||
-_clyde__help__update_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__update_commands] )) ||
+_clyde__subcmd__help__subcmd__update_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help update commands' commands "$@"
 }
-(( $+functions[_clyde__update_commands] )) ||
-_clyde__update_commands() {
-    local commands; commands=()
-    _describe -t commands 'clyde update commands' commands "$@"
-}
-(( $+functions[_clyde__help__upgrade_commands] )) ||
-_clyde__help__upgrade_commands() {
+(( $+functions[_clyde__subcmd__help__subcmd__upgrade_commands] )) ||
+_clyde__subcmd__help__subcmd__upgrade_commands() {
     local commands; commands=()
     _describe -t commands 'clyde help upgrade commands' commands "$@"
 }
-(( $+functions[_clyde__upgrade_commands] )) ||
-_clyde__upgrade_commands() {
+(( $+functions[_clyde__subcmd__install_commands] )) ||
+_clyde__subcmd__install_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde install commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__list_commands] )) ||
+_clyde__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde list commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__search_commands] )) ||
+_clyde__subcmd__search_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde search commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__setup_commands] )) ||
+_clyde__subcmd__setup_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde setup commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__show_commands] )) ||
+_clyde__subcmd__show_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde show commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__uninstall_commands] )) ||
+_clyde__subcmd__uninstall_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde uninstall commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__update_commands] )) ||
+_clyde__subcmd__update_commands() {
+    local commands; commands=()
+    _describe -t commands 'clyde update commands' commands "$@"
+}
+(( $+functions[_clyde__subcmd__upgrade_commands] )) ||
+_clyde__subcmd__upgrade_commands() {
     local commands; commands=()
     _describe -t commands 'clyde upgrade commands' commands "$@"
 }

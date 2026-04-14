@@ -8,7 +8,7 @@ use std::vec::Vec;
 use anyhow::{anyhow, Result};
 use boa_engine::property::Attribute;
 use boa_engine::{
-    js_string, Context, JsError, JsObject, JsResult, JsValue, NativeFunction, Source,
+    js_string, Context, JsNativeError, JsObject, JsResult, JsValue, NativeFunction, Source,
 };
 use boa_runtime::Console;
 use reqwest::blocking::Client;
@@ -41,7 +41,7 @@ fn create_headers() -> Result<HeaderMap> {
     Ok(headers)
 }
 
-fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsResult<JsValue> {
+fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResult<JsValue> {
     let url = args
         .first()
         .unwrap()
@@ -49,21 +49,28 @@ fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context<'_>) -> JsR
         .to_std_string()
         .unwrap();
 
-    let headers = create_headers()
-        .map_err(|x| JsError::from_opaque(format!("Failed to create headers: {}", x).into()))?;
+    let headers = create_headers().map_err(|x| {
+        JsNativeError::error().with_message(format!("Failed to create headers: {}", x))
+    })?;
 
     let response = Client::new()
         .get(&url)
         .headers(headers)
         .send()
-        .map_err(|x| JsError::from_opaque(format!("Failed to fetch {url}: {}", x).into()))?;
+        .map_err(|x| {
+            JsNativeError::error().with_message(format!("Failed to fetch {url}: {}", x))
+        })?;
 
     let status = response.status().as_u16();
     let text = response.text().unwrap();
 
     let rv = JsObject::default();
-    let _ = rv.create_data_property("status", JsValue::Integer(status.into()), context);
-    let _ = rv.create_data_property("text", js_string!(text), context);
+    let _ = rv.create_data_property(
+        js_string!("status"),
+        JsValue::Integer(status.into()),
+        context,
+    );
+    let _ = rv.create_data_property(js_string!("text"), js_string!(text), context);
 
     Ok(JsValue::Object(rv))
 }
@@ -112,7 +119,11 @@ fn eval_script(script: &str) -> Result<ScriptResponse> {
 
     // Add httpGet
     context
-        .register_global_builtin_callable("httpGet", 1, NativeFunction::from_fn_ptr(http_get))
+        .register_global_builtin_callable(
+            "httpGet".into(),
+            1,
+            NativeFunction::from_fn_ptr(http_get),
+        )
         .unwrap();
 
     // Run script
