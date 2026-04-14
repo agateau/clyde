@@ -64,15 +64,11 @@ fn http_get(_this: &JsValue, args: &[JsValue], context: &mut Context) -> JsResul
     let status = response.status().as_u16();
     let text = response.text().unwrap();
 
-    let rv = JsObject::default();
-    let _ = rv.create_data_property(
-        js_string!("status"),
-        JsValue::Integer(status.into()),
-        context,
-    );
+    let rv = JsObject::default(context.intrinsics());
+    let _ = rv.create_data_property(js_string!("status"), JsValue::new(status), context);
     let _ = rv.create_data_property(js_string!("text"), js_string!(text), context);
 
-    Ok(JsValue::Object(rv))
+    Ok(JsValue::new(rv))
 }
 
 #[derive(Default)]
@@ -135,8 +131,14 @@ fn eval_script(script: &str) -> Result<ScriptResponse> {
 
     // Convert result into a ScriptResponse
     let json_result = match result.to_json(&mut context) {
-        Ok(x) => x,
-        Err(x) => return Err(anyhow!("Could not turn results into JSON: {}", x)),
+        Ok(Some(x)) => x,
+        Ok(None) => return Err(anyhow!("Fetch script returned `Undefined`")),
+        Err(x) => {
+            return Err(anyhow!(
+                "Could not turn the fetch script results into JSON: {}",
+                x
+            ))
+        }
     };
 
     if json_result.is_null() {
