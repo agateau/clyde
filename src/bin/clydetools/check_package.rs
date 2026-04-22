@@ -250,21 +250,19 @@ fn print_summary_line(ui: &Ui, count: usize, header: &str, packages: &[String]) 
     }
 }
 
-pub fn check_packages(ui: &Ui, paths: &Vec<PathBuf>) -> Result<()> {
+pub fn check_packages(ui: &Ui, paths: &[PathBuf]) -> Result<()> {
     let mut ok_packages = Vec::<String>::new();
     let mut not_on_arch_os_packages = Vec::<String>::new();
     let mut failed_packages = Vec::<FailedPackage>::new();
 
     let count = paths.len();
-    let mut idx = 1;
-    for path in paths {
+    for (idx, path) in paths.iter().enumerate() {
         print!(
             "[{idx}/{count} {:3}%] {}: ",
-            100 * idx / count,
+            100 * (idx + 1) / count,
             path.display()
         );
         io::stdout().lock().flush().unwrap_or_default();
-        idx += 1;
         let package = match load_package(path) {
             Ok(x) => x,
             Err(message) => {
