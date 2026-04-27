@@ -12,6 +12,8 @@ use tar::Archive;
 use crate::unpacker::unpacker_utils::apply_strip;
 use crate::unpacker::Unpacker;
 
+use crate::vendored::archiver_rs;
+
 pub struct TarUnpacker {
     pub archive_path: PathBuf,
 }

@@ -112,18 +112,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f202df86484c868dbad7eaa557ef785d5c66295e41b460ef922eca0723b842c"
 
 [[package]]
-name = "archiver-rs"
-version = "0.5.1"
-source = "git+https://github.com/agateau/archiver-rs.git?tag=0.5.2#11a2f728dd24344988f50202b5c111936fd0dc6b"
-dependencies = [
- "bzip2",
- "flate2",
- "thiserror 1.0.69",
- "xz2",
- "zip",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -560,10 +548,10 @@ name = "clyde"
 version = "0.8.0"
 dependencies = [
  "anyhow",
- "archiver-rs",
  "assert_fs",
  "boa_engine",
  "boa_runtime",
+ "bzip2",
  "chrono",
  "clap",
  "clap_complete",
@@ -571,6 +559,7 @@ dependencies = [
  "ctrlc",
  "dialoguer",
  "directories",
+ "flate2",
  "glob-match",
  "goblin",
  "hex",
@@ -589,7 +578,9 @@ dependencies = [
  "single-instance",
  "tar",
  "tempfile",
+ "thiserror 1.0.69",
  "which",
+ "xz2",
  "yare",
  "zip",
 ]
