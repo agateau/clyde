@@ -4,8 +4,8 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::vendored::archiver_rs::{self, Compressed};
 use anyhow::{anyhow, Result};
-use archiver_rs::Compressed;
 
 use crate::file_utils;
 use crate::unpacker::{tar_unpacker::TarUnpacker, Unpacker};

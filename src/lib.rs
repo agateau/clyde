@@ -20,6 +20,7 @@ pub mod test_file_utils;
 pub mod ui;
 pub mod unpacker;
 pub mod vars;
+pub mod vendored;
 
 #[macro_use]
 extern crate lazy_static;

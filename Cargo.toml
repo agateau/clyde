@@ -36,7 +36,6 @@ reqwest = { version = "0.13.2", default-features = false, features = ["rustls", 
 indicatif = "0.17.8"
 console = { version = "0.15.8", default-features = false, features = ["ansi-parsing"] }
 regex = "1.7.3"
-archiver-rs = { git = "https://github.com/agateau/archiver-rs.git", tag = "0.5.2", default-features = false, features = ["bzip", "gzip", "xz"] }
 single-instance = "0.3.3"
 boa_engine = { version = "0.21.1", features = ["deser", "trace"] }
 boa_runtime = "0.21.1"
@@ -47,6 +46,12 @@ open = "5.1.2"
 ctrlc = "3.4.4"
 tar = "0.4.45"
 chrono = { version = "0.4.43", features = ["now", "serde"], default-features = false }
+
+# archiver-rs dependencies
+thiserror = "1.0"
+bzip2 = "0.4"
+flate2 = "1.0"
+xz2 = "0.1"
 
 [build-dependencies]
 clap = { version = "4.2.0", features = ["derive"] }
