@@ -30,9 +30,7 @@ def _run(*args, check=True, **kwargs):
     result but in case of failure, calls pytest.fail() instead of raising an
     exception.
     """
-    proc = subprocess.run(
-        *args, capture_output=True, text=True, **kwargs
-    )
+    proc = subprocess.run(*args, capture_output=True, text=True, **kwargs)
     if check and proc.returncode != 0:
         pytest.fail(f"""Command {args} failed with exit code {proc.returncode}
 STDOUT:

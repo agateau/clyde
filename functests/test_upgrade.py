@@ -56,7 +56,7 @@ def test_upgrade_install_clyde_only(clyde_home):
     add_installed_package("starship", "0.1.0")
 
     # WHEN `clyde upgrade` runs
-    result = run_clyde("upgrade")
+    run_clyde("upgrade")
 
     # THEN it only upgrades clyde
     assert get_package_version("clyde") != "0.1.0"

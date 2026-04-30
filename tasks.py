@@ -11,17 +11,16 @@ import os
 import re
 import shutil
 import sys
-
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List
 
-from invoke import task, run
-
+from invoke import run, task
 
 ARTIFACTS_DIR = Path("artifacts")
 
 MAIN_BRANCH = "main"
+
 
 def get_version():
     return os.environ["VERSION"]
@@ -68,8 +67,9 @@ def update_version(c):
     version = get_version()
     path = Path("Cargo.toml")
     text = path.read_text()
-    text, count = re.subn(r"^version = .*", f"version = \"{version}\"", text,
-                          flags=re.MULTILINE)
+    text, count = re.subn(
+        r"^version = .*", f'version = "{version}"', text, flags=re.MULTILINE
+    )
     assert count == 0 or count == 1
     path.write_text(text)
 
