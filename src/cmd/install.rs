@@ -220,7 +220,7 @@ pub fn install_packages(
     app: &App,
     ui: &Ui,
     reinstall: bool,
-    install_requests: &Vec<InstallRequest>,
+    install_requests: &[InstallRequest],
 ) -> Result<()> {
     if let Some(clyde_request) = install_requests
         .iter()
