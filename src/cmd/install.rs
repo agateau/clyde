@@ -230,8 +230,18 @@ pub fn install_packages(
         return install_package(app, ui, reinstall, clyde_request);
     }
 
-    for request in install_requests {
-        install_package(app, ui, reinstall, request)?;
+    let errors: Vec<_> = install_requests
+        .iter()
+        .filter_map(|x| install_package(app, ui, reinstall, x).err())
+        .collect();
+
+    if !errors.is_empty() {
+        let first = format!("{}", errors[0]);
+        let message = errors
+            .iter()
+            .skip(1)
+            .fold(first, |acc, x| format!("{}, {}", acc, x));
+        return Err(anyhow!(message));
     }
     Ok(())
 }

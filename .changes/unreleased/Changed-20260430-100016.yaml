@@ -1,0 +1,3 @@
+kind: Changed
+body: 'When `clyde install` is called with multiple packages, it no longer stops at the first error. Instead it continues and shows all errors at the end.'
+time: 2026-04-30T10:00:16.504964444+02:00
