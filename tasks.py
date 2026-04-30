@@ -149,7 +149,7 @@ def tag(c):
 
 def get_artifact_list() -> List[Path]:
     assert ARTIFACTS_DIR.exists()
-    return list(ARTIFACTS_DIR.glob("*.tar.gz")) + list(ARTIFACTS_DIR.glob("*.zip"))
+    return list(ARTIFACTS_DIR.rglob("*.tar.gz")) + list(ARTIFACTS_DIR.rglob("*.zip"))
 
 
 @task
