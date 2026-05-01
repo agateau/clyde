@@ -5,7 +5,7 @@
 import subprocess
 from pathlib import Path
 
-from conftest import get_bin_path, run_clyde, run_in_clyde_home, IS_WINDOWS
+from conftest import get_bin_path, run_in_clyde_home, IS_WINDOWS
 
 
 def test_install_without_setup_show_message(clyde_home, monkeypatch):

@@ -18,8 +18,7 @@ def _onerror(func, path, exc_info):
 
 
 def rm_rf(path: str):
-    """A version of rmtree which actually works as expected on Windows
-    """
+    """A version of rmtree which actually works as expected on Windows"""
     if not os.path.exists(path):
         return
     shutil.rmtree(path, onerror=_onerror)

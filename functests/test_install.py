@@ -70,7 +70,7 @@ def test_install_cleans_after_itself_in_case_of_failure(clyde_home):
     for idx, existing_path in enumerate(paths):
         # GIVEN the glab package is not installed but one of its files exists
         existing_path.write_text("foo")
-        other_paths = paths[:idx] + paths[idx + 1:]
+        other_paths = paths[:idx] + paths[idx + 1 :]
 
         # WHEN one tries to install glab
         proc = run_clyde("install", "glab", check=False)
