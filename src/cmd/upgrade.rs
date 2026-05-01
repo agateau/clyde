@@ -100,7 +100,7 @@ pub fn upgrade_cmd(app: &App, ui: &Ui) -> Result<()> {
         ));
     }
 
-    let install_requests = upgrades
+    let install_requests: Vec<_> = upgrades
         .iter()
         .map(|u| {
             InstallRequest::new(
