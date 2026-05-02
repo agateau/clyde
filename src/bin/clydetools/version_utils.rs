@@ -23,7 +23,7 @@ lazy_static! {
     .ignore_whitespace(true)
     .build()
     .unwrap();
-    static ref LEADING_0_RX: Regex = Regex::new(r"0+([0-9])").unwrap();
+    static ref LEADING_0_RX: Regex = Regex::new(r"(^|\.)0+([0-9])").unwrap();
 }
 
 fn count_chars(txt: &str, wanted: char) -> usize {
@@ -49,7 +49,7 @@ pub fn version_from_tag(tag: &str) -> Result<Version> {
         version_str.push_str(".0");
     }
 
-    let version_str = LEADING_0_RX.replace_all(&version_str, "$1");
+    let version_str = LEADING_0_RX.replace_all(&version_str, "$1$2");
 
     let version = Version::parse(&version_str)?;
     Ok(version)
@@ -70,6 +70,7 @@ mod tests {
         missing_component2 = {"1.12", "1.12.0"},
         skip_leading_zero1 = {"01.002.003", "1.2.3"},
         skip_leading_zero2 = {"00.1", "0.1.0"},
+        keep_inside_zero = {"101.2.3", "101.2.3"},
     )]
     fn check_version_from_tag_success(tag: &str, expected_str: &str) {
         let expected = Version::parse(expected_str).unwrap();
