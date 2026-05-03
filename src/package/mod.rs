@@ -356,12 +356,13 @@ mod tests {
             .as_mapping()
             .unwrap();
 
-        // For now we want the V1 format, so there should be only one key: "x86_64-linux"
-        let keys: Vec<String> = release
+        // The release must be using the V2 format, with "assets" and "published_at" keys
+        let mut keys: Vec<String> = release
             .keys()
             .map(|x| x.as_str().unwrap().to_string())
             .collect();
-        assert_eq!(keys, &["x86_64-linux"]);
+        keys.sort();
+        assert_eq!(keys, &["assets", "published_at"]);
     }
 
     #[test]

@@ -1,0 +1,3 @@
+kind: Changed
+body: '`clydetools` now writes the `releases` section of packages using the V2 format. This format includes the date the package has been published.'
+time: 2026-05-03T20:54:57.766046604+02:00
