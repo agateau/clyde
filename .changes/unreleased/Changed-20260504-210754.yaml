@@ -1,0 +1,3 @@
+kind: Changed
+body: '`clydetools fetch` now uses the new Release V2 format and set the published date.'
+time: 2026-05-04T21:07:54.245915353+02:00
