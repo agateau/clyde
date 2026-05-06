@@ -32,7 +32,7 @@ pub type ReleaseAssets = HashMap<ArchOs, Asset>;
 
 #[derive(Debug, Clone, Default)]
 pub struct Release {
-    pub published_at: Option<DateTime<Utc>>,
+    pub added_at: Option<DateTime<Utc>>,
     pub assets: ReleaseAssets,
 }
 
@@ -42,8 +42,8 @@ impl Release {
         self
     }
 
-    pub fn with_published_at(mut self, published_at: Option<DateTime<Utc>>) -> Self {
-        self.published_at = published_at;
+    pub fn with_added_at(mut self, added_at: Option<DateTime<Utc>>) -> Self {
+        self.added_at = added_at;
         self
     }
 }
@@ -205,7 +205,7 @@ mod tests {
           url: https://example.com/foo-1.2.0
           sha256: '1234'
       1.3.0:
-        published_at: '2024-01-02T12:34:56Z'
+        added_at: '2024-01-02T12:34:56Z'
         assets:
           any:
             url: https://example.com/foo-1.3.0
@@ -287,7 +287,7 @@ mod tests {
             .releases
             .get(&Version::from_str("1.2.0").unwrap())
             .unwrap();
-        assert!(release_120.published_at.is_none());
+        assert!(release_120.added_at.is_none());
         let asset_120 = release_120.assets.get(&ArchOs::any()).unwrap();
         assert_eq!(asset_120.sha256, "1234");
 
@@ -297,7 +297,7 @@ mod tests {
             .get(&Version::from_str("1.3.0").unwrap())
             .unwrap();
         assert_eq!(
-            release_130.published_at,
+            release_130.added_at,
             Some(
                 DateTime::parse_from_rfc3339("2024-01-02T12:34:56Z")
                     .unwrap()
@@ -356,13 +356,13 @@ mod tests {
             .as_mapping()
             .unwrap();
 
-        // The release must be using the V2 format, with "assets" and "published_at" keys
+        // The release must be using the V2 format, with "assets" and "added_at" keys
         let mut keys: Vec<String> = release
             .keys()
             .map(|x| x.as_str().unwrap().to_string())
             .collect();
         keys.sort();
-        assert_eq!(keys, &["assets", "published_at"]);
+        assert_eq!(keys, &["added_at", "assets"]);
     }
 
     #[test]
