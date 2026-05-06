@@ -15,7 +15,7 @@ use crate::package::{Asset, FetcherConfig, Install, Package, Release};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub(crate) struct InternalReleaseV2 {
-    published_at: Option<DateTime<Utc>>,
+    added_at: Option<DateTime<Utc>>,
     // Key is arch-os
     assets: BTreeMap<String, Asset>,
 }
@@ -62,7 +62,7 @@ impl From<&Package> for InternalPackage {
                 .map(|(arch_os, asset)| (arch_os.to_str(), asset.clone()))
                 .collect();
             let internal_release_v2 = InternalReleaseV2 {
-                published_at: release.published_at,
+                added_at: release.added_at,
                 assets,
             };
             releases.insert(version_str, InternalReleaseEnum::V2(internal_release_v2));
@@ -108,7 +108,7 @@ impl InternalPackage {
                             })
                             .collect();
                         Release::default()
-                            .with_published_at(internal_release.published_at)
+                            .with_added_at(internal_release.added_at)
                             .with_assets(assets)
                     }
                     InternalReleaseEnum::V1(internal_release) => {
