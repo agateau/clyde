@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 use std::fs;
-use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
@@ -243,11 +242,12 @@ fn check_package(package: &Package, path: &Path) -> Result<bool> {
 }
 
 fn print_summary_line(ui: &Ui, count: usize, header: &str, packages: &[String]) {
-    ui.info(&format!("{header} ({}/{count})", packages.len()));
+    let mut msg = format!("{header} ({}/{count})", packages.len());
     if !packages.is_empty() {
         let joined = packages.join(", ");
-        println!("\n{joined}\n");
+        msg = format!("{msg}: {joined}");
     }
+    ui.info(&msg);
 }
 
 pub fn check_packages(ui: &Ui, paths: &[PathBuf]) -> Result<()> {
@@ -257,48 +257,48 @@ pub fn check_packages(ui: &Ui, paths: &[PathBuf]) -> Result<()> {
 
     let count = paths.len();
     for (idx, path) in paths.iter().enumerate() {
-        print!(
-            "[{idx}/{count} {:3}%] {}: ",
-            100 * (idx + 1) / count,
-            path.display()
-        );
-        io::stdout().lock().flush().unwrap_or_default();
+        ui.info(&format!("{}/{count}: {}", idx + 1, path.display()));
+        let ui2 = ui.nest();
+        ui2.info("Loading package file");
         let package = match load_package(path) {
             Ok(x) => x,
             Err(message) => {
                 failed_packages.push(FailedPackage::new(path, &message.to_string()));
-                println!("FAIL");
+                ui2.error(&message.to_string());
                 continue;
             }
         };
         let name = package.name.clone();
+        ui2.info("Checking package");
         match check_package(&package, path) {
             Ok(true) => {
                 ok_packages.push(name);
-                println!("OK");
+                ui2.info("OK");
             }
             Ok(false) => {
                 not_on_arch_os_packages.push(name);
-                println!("OK (not on arch-os)");
+                ui2.info("Skipped (not on arch-os)");
             }
             Err(message) => {
                 failed_packages.push(FailedPackage::new(path, &message.to_string()));
-                println!("FAIL");
+                ui2.error(&message.to_string());
             }
         };
     }
 
     ui.info("Finished");
     let failed_package_names: Vec<_> = failed_packages.iter().map(|x| x.name()).collect();
-    print_summary_line(ui, count, "OK", &ok_packages);
-    print_summary_line(ui, count, "N/A", &not_on_arch_os_packages);
-    print_summary_line(ui, count, "Failed", &failed_package_names);
+    let ui2 = ui.nest();
+    print_summary_line(&ui2, count, "OK", &ok_packages);
+    print_summary_line(&ui2, count, "Skipped", &not_on_arch_os_packages);
+    print_summary_line(&ui2, count, "Failed", &failed_package_names);
 
     if !failed_packages.is_empty() {
-        println!("\n# Failed packages details\n");
+        ui.error("Failed packages details");
+        let ui2 = ui.nest();
         for failed_package in &failed_packages {
-            println!("## {}", failed_package.name());
-            println!("\n{}\n", failed_package.error_message);
+            ui2.println(&failed_package.name());
+            ui2.nest().println(&failed_package.error_message);
         }
 
         return Err(anyhow!("{} package(s) failed", failed_packages.len()));
@@ -365,9 +365,6 @@ mod tests {
         assert!(result.is_err());
 
         // AND the report contains the command output
-        for line in &report {
-            println!("{}", line);
-        }
         let running_line = report.get(0).unwrap();
         assert!(running_line.contains("Running \"cargo"));
         assert_eq!(report.get(1).unwrap(), "STDOUT");
