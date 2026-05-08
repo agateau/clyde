@@ -1,0 +1,3 @@
+kind: Added
+body: 'Clyde now imposes a cooldown of 7 days: it refuses to install a package that has been added to the Clyde Store less than 7 days ago.'
+time: 2026-05-14T17:44:35.559211516+02:00

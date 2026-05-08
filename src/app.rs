@@ -17,6 +17,8 @@ use crate::db::Database;
 use crate::file_cache::FileCache;
 use crate::store::{GitStore, Store};
 
+const DEFAULT_COOLDOWN_DAYS: usize = 7;
+
 pub struct App {
     pub download_cache: FileCache,
     pub home: PathBuf,
@@ -33,6 +35,16 @@ fn create_single_instance_name(home: &Path) -> String {
     let mut hasher = Sha256::default();
     hasher.update(home.to_string_lossy().as_bytes());
     hex::encode(hasher.finalize_reset())
+}
+
+fn read_cooldown_days() -> usize {
+    let Some(value) = env::var_os("CLYDE_COOLDOWN_DAYS") else {
+        return DEFAULT_COOLDOWN_DAYS;
+    };
+    let Some(value) = value.to_str() else {
+        return DEFAULT_COOLDOWN_DAYS;
+    };
+    str::parse(value).unwrap_or(DEFAULT_COOLDOWN_DAYS)
 }
 
 impl App {
@@ -71,7 +83,8 @@ impl App {
             ));
         }
         let store_dir = home.join("store");
-        let store = GitStore::new(&store_dir);
+        let mut store = GitStore::new(&store_dir);
+        store.set_cooldown_days(read_cooldown_days());
 
         let db_path = home.join("clyde.sqlite");
         let database = Database::new_from_path(&db_path)?;
@@ -88,5 +101,29 @@ impl App {
             store: Box::new(store),
             database,
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use temp_env_vars::temp_env_vars;
+
+    use super::*;
+
+    #[test]
+    #[temp_env_vars]
+    fn app_use_default_cooldown_days() {
+        let dir = assert_fs::TempDir::new().unwrap();
+        let app = App::new(&dir).unwrap();
+        assert_eq!(app.store.cooldown_days(), DEFAULT_COOLDOWN_DAYS);
+    }
+
+    #[test]
+    #[temp_env_vars]
+    fn app_env_override_cooldown_days() {
+        env::set_var("CLYDE_COOLDOWN_DAYS", "2");
+        let dir = assert_fs::TempDir::new().unwrap();
+        let app = App::new(&dir).unwrap();
+        assert_eq!(app.store.cooldown_days(), 2);
     }
 }

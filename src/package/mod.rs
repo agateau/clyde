@@ -10,7 +10,7 @@ use std::fs::File;
 use std::path::{Path, PathBuf};
 
 use anyhow::{anyhow, Result};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, TimeDelta, Utc};
 use semver::{Version, VersionReq};
 use serde::{Deserialize, Serialize};
 
@@ -186,10 +186,24 @@ impl Package {
         let installs_for_arch_os = entry.1;
         installs_for_arch_os.get(arch_os)
     }
+
+    /// Return a copy of self without releases that were added less than `cooldown_days` ago
+    pub fn enforce_cooldown_days(&self, cooldown_days: usize) -> Self {
+        let mut package = self.clone();
+
+        let max_added_at = Utc::now() - TimeDelta::days(cooldown_days as i64);
+        package.releases.retain(|&_, r| match r.added_at {
+            None => true,
+            Some(added_at) => added_at <= max_added_at,
+        });
+        package
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use chrono::TimeDelta;
+
     use super::*;
     use std::{fs, str::FromStr};
 
@@ -495,5 +509,44 @@ mod tests {
             .get_install(&Version::new(1, 0, 0), &ArchOs::any())
             .unwrap();
         assert_eq!(install.strip, 0);
+    }
+
+    #[test]
+    fn enforce_cooldown_days_remove_too_recent_release() {
+        // GIVEN a package with release 2.0 from 2 day ago
+        // AND release 1.0 from 4 days ago
+        let now = Utc::now();
+        let v1_added_at = now - TimeDelta::days(4);
+        let v2_added_at = now - TimeDelta::days(2);
+        let package = Package::from_yaml_str(&format!(
+            "
+            name: foo
+            description: The foo package
+            homepage:
+            releases:
+              1.0.0:
+                added_at: {}
+                assets:
+                  any:
+                    url: https://example.com/foo
+                    sha256: '1234'
+              2.0.0:
+                added_at: {}
+                assets:
+                  any:
+                    url: https://example.com/foo
+                    sha256: '1234'
+            installs: {{}}
+            ",
+            v1_added_at, v2_added_at
+        ))
+        .unwrap();
+
+        // WHEN enforce_cooldown_days(3) is called
+        let package = package.enforce_cooldown_days(3);
+
+        // THEN only release 1.0 is kept
+        let versions: Vec<Version> = package.releases.keys().cloned().collect();
+        assert_eq!(versions, &[Version::new(1, 0, 0)]);
     }
 }

@@ -577,6 +577,7 @@ dependencies = [
  "shell-words",
  "single-instance",
  "tar",
+ "temp_env_vars",
  "tempfile",
  "thiserror 1.0.69",
  "which",
@@ -2855,6 +2856,25 @@ dependencies = [
  "filetime",
  "libc",
  "xattr",
+]
+
+[[package]]
+name = "temp_env_vars"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d44eec4b6fb0b9a8853b7180c2124b03f062f971fe0aeb47838a7acb07b17b8"
+dependencies = [
+ "temp_env_vars_macro",
+]
+
+[[package]]
+name = "temp_env_vars_macro"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "86e3381d9dcf425c55c450a365adb18de503f2a946f13eb05eb0402b53482484"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]

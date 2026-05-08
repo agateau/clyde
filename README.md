@@ -142,9 +142,9 @@ Shows the list of documentation files provided by the `foobar` package. Let you 
 
 Yes, but it still requires you to be careful.
 
-It is more secure in that Clyde checks the integrity of all downloaded archives (The Clyde store contains the sha256 checksum of all known archives), making it more complicated for an attacker to trick you into installing a corrupted archive.
+It is more secure because Clyde checks the integrity of all downloaded archives (The Clyde store contains the sha256 checksum of all known archives), making it more complicated for an attacker to trick you into installing a corrupted archive. If an attacker takes over the GitHub account of an app developer and replaces some release artifacts with others, Clyde will refuse to install them.
 
-This means if an attacker takes over the GitHub account of an app developer and replaces some release artifacts with others, Clyde will refuse to install them. It does not protect however from the case where the attacker releases a new version of the application. To protect against this you need to pin the version numbers.
+It does not provide absolute protection against the case where the attacker releases a new version of the package but it mitigates the effectiveness of such attack by imposing a cooldown of 7 days: Clyde won't install a release that has been added less than 7 days ago. The hope is that if a rogue package is published it will be detected and taken down before the cooldown expires. To truely protect against this you need to pin the version numbers. The duration of the cooldown can be changed using the `$CLYDE_COOLDOWN_DAYS` environment variable.
 
 Clyde does not sandbox the applications.
 

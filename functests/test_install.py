@@ -2,6 +2,7 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+from datetime import datetime
 import json
 
 from pathlib import Path
@@ -85,3 +86,31 @@ def test_install_cleans_after_itself_in_case_of_failure(clyde_home):
         # AND the existing file has been left untouched
         assert existing_path.read_text() == "foo"
         existing_path.unlink()
+
+
+def set_cooldown_to(monkeypatch, cooldown_date: datetime):
+    now = datetime.now()
+    days = (now - cooldown_date).days
+    monkeypatch.setenv("CLYDE_COOLDOWN_DAYS", str(days))
+
+
+def test_install_applies_cooldown(monkeypatch, clyde_home):
+    # GIVEN a Clyde home
+    # AND a cooldown that prevents installation of zellij 0.44.3 (added on 2006-05-13)
+    set_cooldown_to(monkeypatch, datetime(2026, 5, 10))
+    # WHEN running `clyde install zellij`
+    run_clyde("install", "zellij")
+
+    # THEN `zellij --version` says 0.44.2
+    result = run_in_clyde_home("zellij --version")
+    assert "zellij 0.44.2" in result.stdout
+
+    # WHEN cooldown is set to after the 0.44.3 release
+    set_cooldown_to(monkeypatch, datetime(2026, 5, 15))
+
+    # AND we run `clyde install zellij`
+    run_clyde("install", "zellij")
+
+    # THEN it installs version 0.44.3
+    result = run_in_clyde_home("zellij --version")
+    assert "zellij 0.44.3" in result.stdout
