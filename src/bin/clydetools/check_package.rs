@@ -220,9 +220,9 @@ fn check_package_name(package: &Package, path: &Path) -> Result<()> {
 }
 
 fn load_package(path: &Path) -> Result<Package> {
-    let path = path.canonicalize()?;
-    let package = Package::from_file(&path)?;
-    check_package_name(&package, &path)?;
+    let path = path.canonicalize().context("canonicalize() failed")?;
+    let package = Package::from_file(&path).context("Package::from_file() failed")?;
+    check_package_name(&package, &path).context("check_package_name() failed")?;
     Ok(package)
 }
 
