@@ -7,10 +7,12 @@ A set of tasks to simplify the release process. See docs/release-check-list.md
 for details.
 """
 
+import json
 import os
 import re
 import shutil
 import sys
+import time
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import List
@@ -153,11 +155,30 @@ def get_artifact_list() -> List[Path]:
 
 
 @task
+def wait_for_tag_run(c) -> int:
+    version = get_version()
+    while True:
+        proc = run(f"gh run list -b {version} --json databaseId,status")
+        results = json.loads(proc.stdout)
+        assert isinstance(results, list)
+        assert len(results) == 1
+
+        run_id = results[0]["databaseId"]
+        status = results[0]["status"]
+        print(f"tag run ID: {run_id}, status: {status}")
+        if status == "completed":
+            return run_id
+        print("Waiting 30s")
+        time.sleep(30)
+
+
+@task
 def download_artifacts(c):
+    run_id = wait_for_tag_run(c)
     if ARTIFACTS_DIR.exists():
         shutil.rmtree(ARTIFACTS_DIR)
     ARTIFACTS_DIR.mkdir()
-    erun(f"gh run download --dir {ARTIFACTS_DIR}", pty=True)
+    erun(f"gh run download {run_id} --dir {ARTIFACTS_DIR}", pty=True)
 
 
 def prepare_release_notes(version_md: Path) -> str:
@@ -175,11 +196,13 @@ def prepare_release_notes(version_md: Path) -> str:
 def publish(c):
     version = get_version()
     files_str = " ".join(str(x) for x in get_artifact_list())
+    print("Creating GitHub release")
     with NamedTemporaryFile() as tmp_file:
         content = prepare_release_notes(Path(".changes") / f"{version}.md")
         tmp_file.write(content.encode("utf-8"))
         tmp_file.flush()
         erun(f"gh release create {version} -F{tmp_file.name} {files_str}")
+    print("Publishing on crates.io")
     erun("cargo publish")
 
 
