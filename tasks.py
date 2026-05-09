@@ -196,11 +196,13 @@ def prepare_release_notes(version_md: Path) -> str:
 def publish(c):
     version = get_version()
     files_str = " ".join(str(x) for x in get_artifact_list())
+    print("Creating GitHub release")
     with NamedTemporaryFile() as tmp_file:
         content = prepare_release_notes(Path(".changes") / f"{version}.md")
         tmp_file.write(content.encode("utf-8"))
         tmp_file.flush()
         erun(f"gh release create {version} -F{tmp_file.name} {files_str}")
+    print("Publishing on crates.io")
     erun("cargo publish")
 
 
