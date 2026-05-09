@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.9.1 - 2026-05-09
+
+### Changed
+
+- When `clyde install` is called with multiple packages, it no longer stops at the first error. Instead it continues and shows all errors at the end.
+
+- `clydetools` now writes the `releases` section of packages using the V2 format. This format includes the date the package has been added to Clyde.
+
+- `clydetools fetch` now uses the new Release V2 format and sets the added date.
+
+### Fixed
+
+- `clydetools fetch` now correctly fetches updates for packages whose version components *contain* a zero digit.
+
 ## 0.9.0 - 2026-04-23
 
 ### Added

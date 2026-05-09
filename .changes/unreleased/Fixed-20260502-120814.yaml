@@ -1,3 +1,0 @@
-kind: Fixed
-body: '`clydetools fetch` now correctly fetches updates for packages whose version components *contain* a zero digit.'
-time: 2026-05-02T12:08:14.443974655+02:00
