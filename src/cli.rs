@@ -2,13 +2,20 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use clap::{Parser, Subcommand};
+use clap::{builder::styling, Parser, Subcommand};
 
-/// This file must build standalone because it's used by `build.rs` to generate shell
-/// auto-completion files
+// This file must build standalone because it's used by `build.rs` to generate shell
+// auto-completion files
+
+/// Colors to use in --help output
+const STYLES: styling::Styles = styling::Styles::styled()
+    .header(styling::AnsiColor::Green.on_default().bold())
+    .usage(styling::AnsiColor::Green.on_default().bold())
+    .literal(styling::AnsiColor::Blue.on_default().bold())
+    .placeholder(styling::AnsiColor::Cyan.on_default());
 
 #[derive(Debug, Parser)]
-#[command(name = "clyde", version, about)]
+#[command(name = "clyde", version, about, styles=STYLES)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
