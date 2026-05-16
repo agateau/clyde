@@ -179,7 +179,8 @@ fn check_can_install(package: &Package, package_path: &Path, version: &Version) 
         Command::new("clyde")
             .arg("install")
             .arg(format!("{package_str}@={version}"))
-            .env("CLYDE_HOME", home_dir.as_os_str()),
+            .env("CLYDE_HOME", home_dir.as_os_str())
+            .env("CLYDE_COOLDOWN_DAYS", "0"),
     )
     .map_err(|_| anyhow!(report.join("\n")))?;
 

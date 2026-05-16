@@ -22,6 +22,8 @@ pub struct SearchHit {
 }
 
 pub trait Store {
+    fn cooldown_days(&self) -> usize;
+    fn set_cooldown_days(&mut self, cooldown_days: usize);
     fn setup(&self, url: &str) -> Result<()>;
     fn update(&self) -> Result<()>;
     fn get_package(&self, name: &str) -> Result<Package>;
@@ -30,6 +32,7 @@ pub trait Store {
 
 pub struct GitStore {
     dir: PathBuf,
+    cooldown_days: usize,
 }
 
 impl SearchHit {
@@ -45,6 +48,7 @@ impl GitStore {
     pub fn new(dir: &Path) -> GitStore {
         GitStore {
             dir: dir.to_path_buf(),
+            cooldown_days: 0,
         }
     }
 
@@ -105,6 +109,14 @@ fn get_package_path(path: &Path) -> Option<PathBuf> {
 }
 
 impl Store for GitStore {
+    fn cooldown_days(&self) -> usize {
+        self.cooldown_days
+    }
+
+    fn set_cooldown_days(&mut self, cooldown_days: usize) {
+        self.cooldown_days = cooldown_days;
+    }
+
     fn setup(&self, url: &str) -> Result<()> {
         let mut cmd = Command::new("git");
         cmd.args(["clone", "--depth", "1", url]);
@@ -142,7 +154,8 @@ impl Store for GitStore {
         let path = self
             .find_package_path(name)
             .ok_or_else(|| anyhow!("No such package: {}", name))?;
-        Package::from_file(&path)
+        let package = Package::from_file(&path)?;
+        Ok(package.enforce_cooldown_days(self.cooldown_days))
     }
 
     fn search(&self, query_: &str) -> Result<(Vec<SearchHit>, Vec<Error>)> {
@@ -217,6 +230,8 @@ mod tests {
 
     use std::vec::Vec;
 
+    use chrono::{TimeDelta, Utc};
+    use semver::Version;
     use yare::parameterized;
 
     use crate::test_file_utils::{create_tree, CwdSaver};
@@ -226,12 +241,10 @@ mod tests {
     }
 
     fn create_package_file_with_desc(dir: &Path, name: &str, desc: &str) {
-        let package_dir = dir.join(name);
-        fs::create_dir(&package_dir).unwrap();
-        let path = package_dir.join(INDEX_NAME);
-        fs::write(
-            path,
-            format!(
+        create_package_file_with_content(
+            dir,
+            name,
+            &format!(
                 "
         name: {name}
         description: {desc}
@@ -242,8 +255,14 @@ mod tests {
                 name = name,
                 desc = desc
             ),
-        )
-        .unwrap();
+        );
+    }
+
+    fn create_package_file_with_content(dir: &Path, name: &str, content: &str) {
+        let package_dir = dir.join(name);
+        fs::create_dir(&package_dir).unwrap();
+        let path = package_dir.join(INDEX_NAME);
+        fs::write(path, content).unwrap();
     }
 
     fn create_old_package_file_with_desc(dir: &Path, name: &str, desc: &str) {
@@ -361,5 +380,54 @@ mod tests {
         let error = &errors[0];
         print!("{}", error.to_string());
         assert!(error.to_string().contains("bar"));
+    }
+
+    #[test]
+    fn get_package_enforces_cooldown() {
+        let dir = assert_fs::TempDir::new().unwrap();
+        // GIVEN a store with a cooldown of 3 days
+        let mut store = GitStore::new(&dir);
+        store.set_cooldown_days(3);
+
+        // AND the store has a package foo with 2 releases:
+        // - 1.0 that is 4 days old
+        // - 2.0 that is 2 day old
+        let now = Utc::now();
+        let v1_added_at = now - TimeDelta::days(4);
+        let v2_added_at = now - TimeDelta::days(2);
+        create_package_file_with_content(
+            &dir,
+            "foo",
+            &format!(
+                "
+                name: foo
+                description: The foo package
+                homepage:
+                releases:
+                  1.0.0:
+                    added_at: {}
+                    assets:
+                      any:
+                        url: https://example.com/foo
+                        sha256: '1234'
+                  2.0.0:
+                    added_at: {}
+                    assets:
+                      any:
+                        url: https://example.com/foo
+                        sha256: '1234'
+                installs: {{}}
+            ",
+                v1_added_at, v2_added_at
+            ),
+        );
+
+        // WHEN searching for foo
+        // THEN it returns a Package instance
+        let package = store.get_package("foo").unwrap();
+
+        // AND this instance only contains the 1.0 release
+        let versions: Vec<Version> = package.releases.keys().cloned().collect();
+        assert_eq!(versions, &[Version::new(1, 0, 0)]);
     }
 }

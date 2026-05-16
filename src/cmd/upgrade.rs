@@ -138,6 +138,10 @@ mod tests {
     }
 
     impl Store for FakeStore {
+        fn cooldown_days(&self) -> usize {
+            0
+        }
+        fn set_cooldown_days(&mut self, _cooldown_days: usize) {}
         fn setup(&self, _url: &str) -> Result<()> {
             Ok(())
         }
