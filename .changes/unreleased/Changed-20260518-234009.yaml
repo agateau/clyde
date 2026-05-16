@@ -1,0 +1,8 @@
+kind: Changed
+body: |
+  Changed the syntax of the `clyde show` command. Releases are no longer listed by default: it was often too verbose. Use `-r`,--release` to list them.
+
+  The `-l,--list` option has been renamed to `-f,--files`, but the old option still works.
+
+  The `--json` output now always includes all information, and the key listing the releases has been renamed from `available_versions` to `releases`.
+time: 2026-05-18T23:40:09.575783024+02:00
