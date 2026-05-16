@@ -2,6 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+use std::fmt::Display;
 use std::iter::zip;
 
 const COLUMN_CHAR: char = '│';
@@ -24,7 +25,7 @@ impl Table {
         }
     }
 
-    pub fn add_row(&self, cells: &[&str]) {
+    pub fn add_row<T: Display>(&self, cells: &[T]) {
         let mut first = true;
         for (width, cell) in zip(&self.columns, cells) {
             if first {

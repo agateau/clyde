@@ -2,10 +2,10 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use serde_json::json;
 
-use crate::{app::App, cli::ShowMode};
+use crate::{app::App, cli::ShowMode, table::Table};
 
 fn get_file_list(app: &App, package_name: &str) -> Result<Vec<String>> {
     let fileset = app.database.get_package_files(package_name)?;
@@ -33,15 +33,38 @@ fn show_details(app: &App, package_name: &str) -> Result<()> {
 
 fn show_releases(app: &App, package_name: &str) -> Result<()> {
     let package = app.store.get_package(package_name)?;
-    for (version, release) in package.releases.iter().rev() {
-        let added_at = match release.added_at {
-            Some(x) => format!(" {}", x.to_rfc3339()),
-            None => "".into(),
-        };
-        let mut arch_os_list = Vec::from_iter(release.assets.keys().map(|x| format!("{x}")));
-        arch_os_list.sort();
-        let arch_os_str = arch_os_list.join(", ");
-        println!("- {version} ({arch_os_str}){added_at}");
+
+    let rows: Vec<[String; 3]> = package
+        .releases
+        .iter()
+        .rev()
+        .map(|(version, release)| {
+            let added_at = match release.added_at {
+                Some(x) => format!("{}", x.format("%Y-%m-%d %H:%M")),
+                None => "".into(),
+            };
+
+            let mut arch_os_list = Vec::from_iter(release.assets.keys().map(|x| format!("{x}")));
+            arch_os_list.sort();
+            let arch_os_str = arch_os_list.join(", ");
+
+            [version.to_string(), added_at, arch_os_str]
+        })
+        .collect();
+
+    if rows.is_empty() {
+        return Err(anyhow!("No releases, this should not happen."));
+    }
+
+    let arch_os_width = rows.iter().map(|x| x[2].len()).max().unwrap();
+
+    let table = Table::new(&[10, 16, arch_os_width]);
+
+    table.add_row(&["Version", "Added at", "CPU architecture - OS"]);
+    table.add_separator();
+
+    for row in rows {
+        table.add_row(&row);
     }
     Ok(())
 }
