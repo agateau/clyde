@@ -325,7 +325,7 @@ _clyde() {
             return 0
             ;;
         clyde__subcmd__show)
-            opts="-l -j -h --list --json --help <PACKAGE_NAME>"
+            opts="-f -r -j -h --files --releases --json --help <PACKAGE_NAME>"
             if [[ ${cur} == -* || ${COMP_CWORD} -eq 2 ]] ; then
                 COMPREPLY=( $(compgen -W "${opts}" -- "${cur}") )
                 return 0

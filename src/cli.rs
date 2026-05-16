@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use clap::{builder::styling, Parser, Subcommand};
+use clap::{builder::styling, Args, Parser, Subcommand};
 
 // This file must build standalone because it's used by `build.rs` to generate shell
 // auto-completion files
@@ -19,6 +19,20 @@ const STYLES: styling::Styles = styling::Styles::styled()
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
+}
+
+#[derive(Debug, Args)]
+#[group(multiple = false)]
+pub struct ShowMode {
+    /// Show package files instead of package details
+    #[arg(short, long, short_alias = 'l', alias = "list")]
+    pub files: bool,
+    /// Show package releases instead of package details
+    #[arg(short, long)]
+    pub releases: bool,
+    /// JSON output
+    #[arg(short, long)]
+    pub json: bool,
 }
 
 #[derive(Debug, Subcommand)]
@@ -53,15 +67,12 @@ pub enum Command {
         #[arg(required = true, value_name = "APPLICATION_NAME")]
         package_names: Vec<String>,
     },
-    /// Show details about an application
+    /// Show details about a package
     Show {
-        /// List application files instead of showing information
-        #[arg(short, long)]
-        list: bool,
-        /// Use JSON output
-        #[arg(short, long)]
-        json: bool,
-        /// Application name
+        #[command(flatten)]
+        mode: ShowMode,
+
+        /// Package name
         package_name: String,
     },
     /// Search for available applications

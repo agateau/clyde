@@ -61,13 +61,15 @@ _arguments "${_arguments_options[@]}" : \
 ;;
 (show)
 _arguments "${_arguments_options[@]}" : \
-'-l[List application files instead of showing information]' \
-'--list[List application files instead of showing information]' \
-'-j[Use JSON output]' \
-'--json[Use JSON output]' \
+'-f[Show package files instead of package details]' \
+'--files[Show package files instead of package details]' \
+'-r[Show package releases instead of package details]' \
+'--releases[Show package releases instead of package details]' \
+'-j[JSON output]' \
+'--json[JSON output]' \
 '-h[Print help]' \
 '--help[Print help]' \
-':package_name -- Application name:_default' \
+':package_name -- Package name:_default' \
 && ret=0
 ;;
 (search)
@@ -166,7 +168,7 @@ _clyde_commands() {
 'update:Update Clyde store' \
 'install:Install applications' \
 'uninstall:Uninstall applications (alias\: remove)' \
-'show:Show details about an application' \
+'show:Show details about a package' \
 'search:Search for available applications' \
 'doc:Read documentation files provided by an application' \
 'list:List installed applications' \
@@ -187,7 +189,7 @@ _clyde__subcmd__help_commands() {
 'update:Update Clyde store' \
 'install:Install applications' \
 'uninstall:Uninstall applications (alias\: remove)' \
-'show:Show details about an application' \
+'show:Show details about a package' \
 'search:Search for available applications' \
 'doc:Read documentation files provided by an application' \
 'list:List installed applications' \

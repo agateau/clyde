@@ -29,7 +29,7 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update Clyde store')
             [CompletionResult]::new('install', 'install', [CompletionResultType]::ParameterValue, 'Install applications')
             [CompletionResult]::new('uninstall', 'uninstall', [CompletionResultType]::ParameterValue, 'Uninstall applications (alias: remove)')
-            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show details about an application')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show details about a package')
             [CompletionResult]::new('search', 'search', [CompletionResultType]::ParameterValue, 'Search for available applications')
             [CompletionResult]::new('doc', 'doc', [CompletionResultType]::ParameterValue, 'Read documentation files provided by an application')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List installed applications')
@@ -63,10 +63,12 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             break
         }
         'clyde;show' {
-            [CompletionResult]::new('-l', '-l', [CompletionResultType]::ParameterName, 'List application files instead of showing information')
-            [CompletionResult]::new('--list', '--list', [CompletionResultType]::ParameterName, 'List application files instead of showing information')
-            [CompletionResult]::new('-j', '-j', [CompletionResultType]::ParameterName, 'Use JSON output')
-            [CompletionResult]::new('--json', '--json', [CompletionResultType]::ParameterName, 'Use JSON output')
+            [CompletionResult]::new('-f', '-f', [CompletionResultType]::ParameterName, 'Show package files instead of package details')
+            [CompletionResult]::new('--files', '--files', [CompletionResultType]::ParameterName, 'Show package files instead of package details')
+            [CompletionResult]::new('-r', '-r', [CompletionResultType]::ParameterName, 'Show package releases instead of package details')
+            [CompletionResult]::new('--releases', '--releases', [CompletionResultType]::ParameterName, 'Show package releases instead of package details')
+            [CompletionResult]::new('-j', '-j', [CompletionResultType]::ParameterName, 'JSON output')
+            [CompletionResult]::new('--json', '--json', [CompletionResultType]::ParameterName, 'JSON output')
             [CompletionResult]::new('-h', '-h', [CompletionResultType]::ParameterName, 'Print help')
             [CompletionResult]::new('--help', '--help', [CompletionResultType]::ParameterName, 'Print help')
             break
@@ -98,7 +100,7 @@ Register-ArgumentCompleter -Native -CommandName 'clyde' -ScriptBlock {
             [CompletionResult]::new('update', 'update', [CompletionResultType]::ParameterValue, 'Update Clyde store')
             [CompletionResult]::new('install', 'install', [CompletionResultType]::ParameterValue, 'Install applications')
             [CompletionResult]::new('uninstall', 'uninstall', [CompletionResultType]::ParameterValue, 'Uninstall applications (alias: remove)')
-            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show details about an application')
+            [CompletionResult]::new('show', 'show', [CompletionResultType]::ParameterValue, 'Show details about a package')
             [CompletionResult]::new('search', 'search', [CompletionResultType]::ParameterValue, 'Search for available applications')
             [CompletionResult]::new('doc', 'doc', [CompletionResultType]::ParameterValue, 'Read documentation files provided by an application')
             [CompletionResult]::new('list', 'list', [CompletionResultType]::ParameterValue, 'List installed applications')

@@ -5,7 +5,7 @@
 use anyhow::Result;
 use serde_json::json;
 
-use crate::app::App;
+use crate::{app::App, cli::ShowMode};
 
 fn get_file_list(app: &App, package_name: &str) -> Result<Vec<String>> {
     let fileset = app.database.get_package_files(package_name)?;
@@ -28,9 +28,11 @@ fn show_details(app: &App, package_name: &str) -> Result<()> {
     if let Some(installed_version) = db.get_package_version(&package.name)? {
         println!("Installed version: {installed_version}");
     }
+    Ok(())
+}
 
-    println!();
-    println!("Available versions:");
+fn show_releases(app: &App, package_name: &str) -> Result<()> {
+    let package = app.store.get_package(package_name)?;
     for (version, release) in package.releases.iter().rev() {
         let added_at = match release.added_at {
             Some(x) => format!(" {}", x.to_rfc3339()),
@@ -52,7 +54,7 @@ fn show_files(app: &App, package_name: &str) -> Result<()> {
     Ok(())
 }
 
-fn show_as_json(app: &App, package_name: &str, list: bool) -> Result<()> {
+fn show_as_json(app: &App, package_name: &str) -> Result<()> {
     let db = &app.database;
     let package = app.store.get_package(package_name)?;
     let installed_version = db
@@ -73,26 +75,26 @@ fn show_as_json(app: &App, package_name: &str, list: bool) -> Result<()> {
         })
         .collect();
 
-    let mut value = json!({
+    let value = json!({
         "name": package.name,
         "description": package.description,
         "homepage": package.homepage,
         "repository": package.repository,
         "installed_version": installed_version,
-        "available_versions": available_versions,
+        "releases": available_versions,
+        "files": json!(get_file_list(app, &package.name)?),
     });
-    if list {
-        value["files"] = get_file_list(app, &package.name)?.into()
-    }
     println!("{}", value);
     Ok(())
 }
 
-pub fn show_cmd(app: &App, app_name: &str, json: bool, list: bool) -> Result<()> {
-    if json {
-        show_as_json(app, app_name, list)
-    } else if list {
+pub fn show_cmd(app: &App, app_name: &str, mode: ShowMode) -> Result<()> {
+    if mode.json {
+        show_as_json(app, app_name)
+    } else if mode.files {
         show_files(app, app_name)
+    } else if mode.releases {
+        show_releases(app, app_name)
     } else {
         show_details(app, app_name)
     }
