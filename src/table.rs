@@ -33,7 +33,7 @@ impl Table {
             } else {
                 putc(COLUMN_CHAR);
             }
-            print!("{cell:width$}");
+            print!(" {cell:width$} ");
         }
         println!();
     }
@@ -46,7 +46,8 @@ impl Table {
             } else {
                 putc(SEPARATOR_COLUMN_CHAR);
             }
-            for _ in 0..*width {
+
+            for _ in 0..(width + 2) {
                 putc(SEPARATOR_CHAR);
             }
         }
