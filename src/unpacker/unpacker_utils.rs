@@ -2,7 +2,9 @@
 //
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
+
+use anyhow::{anyhow, Result};
 
 pub fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {
     if strip == 0 {
@@ -15,6 +17,31 @@ pub fn apply_strip(path: &Path, strip: u32) -> Option<PathBuf> {
         return None;
     }
     apply_strip(path, strip - 1)
+}
+
+/// Prevent unpacking rogue archives: refuse any path that contains ".." or is absolute
+pub fn check_path_is_not_malicious(path: &Path) -> Result<()> {
+    for part in path.components() {
+        match part {
+            Component::RootDir => {
+                return Err(anyhow!(
+                    "Malicious path: contains the root dir ({:?})",
+                    path
+                ));
+            }
+            Component::Prefix(..) => {
+                return Err(anyhow!(
+                    "Malicious path: contains a Windows prefix ({:?})",
+                    path
+                ));
+            }
+            Component::ParentDir => {
+                return Err(anyhow!("Malicious path: contains \"..\" ({:?})", path));
+            }
+            _ => {}
+        };
+    }
+    Ok(())
 }
 
 #[cfg(test)]

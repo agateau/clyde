@@ -10,6 +10,7 @@ use anyhow::{Context, Result};
 use zip::ZipArchive;
 
 use crate::unpacker::unpacker_utils::apply_strip;
+use crate::unpacker::unpacker_utils::check_path_is_not_malicious;
 use crate::unpacker::Unpacker;
 
 pub struct ZipUnpacker {
@@ -42,6 +43,8 @@ impl Unpacker for ZipUnpacker {
                 Some(path) => path.to_owned(),
                 None => continue,
             };
+
+            check_path_is_not_malicious(&dst_sub_path)?;
 
             let dst_sub_path = match apply_strip(&dst_sub_path, strip) {
                 Some(x) => x,
