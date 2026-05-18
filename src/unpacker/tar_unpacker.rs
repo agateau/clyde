@@ -12,6 +12,7 @@ use tar::Archive;
 use crate::unpacker::unpacker_utils::apply_strip;
 use crate::unpacker::Unpacker;
 
+use crate::unpacker::unpacker_utils::check_path_is_not_malicious;
 use crate::vendored::archiver_rs;
 
 pub struct TarUnpacker {
@@ -67,7 +68,11 @@ impl Unpacker for TarUnpacker {
 
         for entry in tar_reader.entries()? {
             let mut entry = entry?;
-            let path = match apply_strip(&entry.path()?, strip) {
+            let path = entry.path()?;
+
+            check_path_is_not_malicious(&path)?;
+
+            let path = match apply_strip(&path, strip) {
                 Some(x) => x,
                 None => continue,
             };
@@ -85,6 +90,7 @@ impl Unpacker for TarUnpacker {
 
 #[cfg(test)]
 mod tests {
+    use assert_fs::fixture::PathChild;
     use yare::parameterized;
 
     use super::*;
@@ -155,5 +161,30 @@ mod tests {
         let expected_files =
             pathbufset_from_strings(&["bin/hello", "bin/hello-symlink", "README.md"]);
         assert_eq!(actual_files, expected_files);
+    }
+
+    #[test]
+    fn does_not_extract_in_dir_parent() {
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        // GIVEN a compressed tar archive that contains a ../evil file
+        let path = get_fixture_path("evil.tar.gz");
+
+        // AND a TarUnpacker on it
+        let unpacker = TarUnpacker::new(&path);
+
+        // AND a sub_dir inside the test dir
+        let sub_dir = dir.child("sub_dir");
+        fs::create_dir(&sub_dir).unwrap();
+
+        // WHEN unpack() is called in sub_dir
+        let result = unpacker.unpack(&sub_dir, 0);
+
+        // THEN the evil file is not created
+        let evil_path = dir.child("evil");
+        assert!(!evil_path.exists());
+
+        // AND the result is a failure
+        assert!(result.is_err());
     }
 }
