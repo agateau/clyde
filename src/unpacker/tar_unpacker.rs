@@ -12,7 +12,8 @@ use tar::Archive;
 use crate::unpacker::unpacker_utils::apply_strip;
 use crate::unpacker::Unpacker;
 
-use crate::unpacker::unpacker_utils::check_path_is_not_malicious;
+use crate::unpacker::unpacker_utils::check_path_is_safe;
+// use crate::unpacker::unpacker_utils::validate_inside_dst;
 use crate::vendored::archiver_rs;
 
 pub struct TarUnpacker {
@@ -70,13 +71,18 @@ impl Unpacker for TarUnpacker {
             let mut entry = entry?;
             let path = entry.path()?;
 
-            check_path_is_not_malicious(&path)?;
-
             let path = match apply_strip(&path, strip) {
                 Some(x) => x,
                 None => continue,
             };
-            if entry.header().entry_type() != tar::EntryType::Directory {
+            check_path_is_safe(&path)?;
+
+            let entry_type = entry.header().entry_type();
+            if entry_type != tar::EntryType::Directory {
+                if let Some(link_path) = entry.link_name()? {
+                    let target = path.parent().unwrap_or(Path::new(".")).join(link_path);
+                    check_path_is_safe(&target)?;
+                }
                 let entry_path = dst_dir.join(path);
                 let entry_dir = entry_path.parent().unwrap();
                 fs::create_dir_all(entry_dir)?;
@@ -90,7 +96,6 @@ impl Unpacker for TarUnpacker {
 
 #[cfg(test)]
 mod tests {
-    use assert_fs::fixture::PathChild;
     use yare::parameterized;
 
     use super::*;
@@ -174,17 +179,85 @@ mod tests {
         let unpacker = TarUnpacker::new(&path);
 
         // AND a sub_dir inside the test dir
-        let sub_dir = dir.child("sub_dir");
+        let sub_dir = dir.join("sub_dir");
         fs::create_dir(&sub_dir).unwrap();
 
         // WHEN unpack() is called in sub_dir
         let result = unpacker.unpack(&sub_dir, 0);
 
         // THEN the evil file is not created
-        let evil_path = dir.child("evil");
+        let evil_path = dir.join("evil");
         assert!(!evil_path.exists());
 
         // AND the result is a failure
         assert!(result.is_err());
+    }
+
+    #[test]
+    fn does_not_extract_bad_symlinks() {
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        // GIVEN a compressed tar archive that contains a ../evil file
+        let path = get_fixture_path("evil_link.tar.gz");
+
+        // AND a TarUnpacker on it
+        let unpacker = TarUnpacker::new(&path);
+
+        // AND a sub_dir inside the test dir
+        let sub_dir = dir.join("sub_dir");
+        fs::create_dir(&sub_dir).unwrap();
+
+        fs::create_dir(dir.join("dir")).unwrap();
+
+        // WHEN unpack() is called in sub_dir
+        let result = unpacker.unpack(&sub_dir, 0);
+
+        // THEN the evil file is not created
+        let evil_path = dir.join("dir").join("payload");
+        assert!(!evil_path.exists());
+
+        // AND the result is a failure
+        assert!(result.is_err());
+    }
+
+    fn assert_same_files(path1: &Path, path2: &Path) {
+        let path1 = path1.canonicalize().unwrap();
+        let path2 = path2.canonicalize().unwrap();
+        assert_eq!(path1, path2);
+    }
+
+    // This test does not pass on Windows. `assert!(symlink.exists())` fails.
+    // Disable it there for now.
+    #[cfg(not(windows))]
+    #[test]
+    fn extracts_good_symlinks() {
+        let dir = assert_fs::TempDir::new().unwrap();
+
+        // GIVEN a compressed tar archive that contains a symlink
+        // that goes one level up to another file in the archive
+        let path = get_fixture_path("ok_link.tar.gz");
+
+        // AND a TarUnpacker on it
+        let unpacker = TarUnpacker::new(&path);
+
+        // WHEN unpack() is called in dir
+        let result = unpacker.unpack(&dir, 0);
+
+        // THEN the archive is unpacked
+        let symlink = dir.join("dir1").join("symlink");
+        let real_file = dir.join("dir2").join("real_file");
+        let dir_symlink = dir.join("dir_symlink");
+
+        // AND "dir1/symlink" points to "dir2/real_file"
+        assert!(symlink.exists());
+        assert!(real_file.exists());
+
+        // AND "dir_symlink" points to "dir2"
+        assert!(dir_symlink.exists());
+        assert_same_files(&symlink, &real_file);
+        assert_same_files(&dir_symlink, &dir.join("dir2"));
+
+        // AND the result is OK
+        assert!(result.is_ok());
     }
 }
