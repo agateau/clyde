@@ -64,7 +64,7 @@ def test_install_cleans_after_itself_in_case_of_failure(clyde_home):
     # - provide binaries for all supported arch-os
     # - contains more than one file
     run_clyde("install", "glab")
-    xh_info = json.loads(run_clyde("show", "-l", "--json", "glab").stdout)
+    xh_info = json.loads(run_clyde("show", "--json", "glab").stdout)
     paths = [Path(x) for x in xh_info["files"]]
     run_clyde("uninstall", "glab")
 
