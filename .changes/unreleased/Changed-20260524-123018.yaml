@@ -1,0 +1,3 @@
+kind: Changed
+body: It's now possible to run read-only commands (`doc`, `show`, `list` and `search`) while another Clyde command is running.
+time: 2026-05-24T12:30:18.467389671+02:00

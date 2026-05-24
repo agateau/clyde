@@ -14,11 +14,23 @@ use clyde::cmd::{
 use clyde::ctrlcutils;
 use clyde::ui::Ui;
 
+/// Returns true if the command only read information and thus does not requires locking
+fn is_read_only_command(command: &Command) -> bool {
+    matches!(
+        command,
+        Command::Show { .. } | Command::Doc { .. } | Command::Search { .. } | Command::List { .. }
+    )
+}
+
 pub fn exec(cli: Cli) -> Result<()> {
     let ui = Ui::default();
     let home = App::find_home()?;
 
-    let _instance = App::create_single_instance(&home)?;
+    let _instance = if is_read_only_command(&cli.command) {
+        None
+    } else {
+        Some(App::create_single_instance(&home)?)
+    };
 
     let result = match cli.command {
         Command::Setup {
