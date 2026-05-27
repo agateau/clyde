@@ -49,7 +49,7 @@ chrono = { version = "0.4.44", features = ["now", "serde"], default-features = f
 
 # archiver-rs dependencies
 thiserror = "1.0"
-bzip2 = "0.4"
+bzip2 = "0.6"
 flate2 = "1.1"
 xz2 = "0.1"
 
