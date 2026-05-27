@@ -1,3 +1,0 @@
-kind: Security
-body: Clyde now refuses to unpack an archive if the path of one of its files is absolute, or contains `..`.
-time: 2026-05-18T23:43:04.296725963+02:00
