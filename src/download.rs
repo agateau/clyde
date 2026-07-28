@@ -95,6 +95,7 @@ fn https_download_internal(ui: &Ui, client: &Client, url: &Url, partial_path: &P
 
     let request = client
         .get(url.clone())
+        .header(header::USER_AGENT, "clyde")
         .header(header::RANGE, format!("bytes={partial_size}-"))
         .send()?;
     let mut response = request.error_for_status()?;
