@@ -45,7 +45,7 @@ pub fn uninstall_package(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
 
     ui.info(&format!(
         "Uninstalling {} {}",
-        &package_name, installed_version
+        package_name, installed_version
     ));
     let ui = ui.nest();
 
@@ -54,7 +54,7 @@ pub fn uninstall_package(app: &App, ui: &Ui, package_name: &str) -> Result<()> {
     for file in db.get_package_files(package_name)? {
         let path = app.install_dir.join(file);
         if !path_exists(&path) {
-            ui.warn(&format!("Expected {:?} to exist, but it does not", &path));
+            ui.warn(&format!("Expected {:?} to exist, but it does not", path));
             continue;
         }
         if cfg!(windows) && path == current_exe_path {

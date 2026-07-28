@@ -90,7 +90,7 @@ pub fn setup_cmd(ui: &Ui, home: &Path, update_scripts: bool, url: Option<&str>) 
 
     let app = App::new(home)?;
 
-    ui.info(&format!("Cloning Clyde store from {}", &url));
+    ui.info(&format!("Cloning Clyde store from {}", url));
     app.store.setup(url)?;
 
     ui.info("Creating Clyde database");
