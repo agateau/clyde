@@ -209,7 +209,7 @@ fn search_in_dir(
         let package = match Package::from_file(&path) {
             Ok(x) => x,
             Err(x) => {
-                let x = x.context(format!("Failed to parse {}", &path.display()));
+                let x = x.context(format!("Failed to parse {}", path.display()));
                 errors.push(x);
                 continue;
             }

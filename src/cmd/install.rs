@@ -45,7 +45,7 @@ fn unpack(archive: &Path, pkg_dir: &Path, strip: u32) -> Result<Option<String>> 
 /// Create dir containing `path` and all its parents, if necessary
 fn create_parent_dir(path: &Path) -> Result<()> {
     let dir = path.parent().unwrap();
-    fs::create_dir_all(dir).with_context(|| format!("Failed to create directory {:?}", &dir))?;
+    fs::create_dir_all(dir).with_context(|| format!("Failed to create directory {:?}", dir))?;
     Ok(())
 }
 
@@ -103,14 +103,12 @@ fn install_file_entry(
 
         match install_mode {
             InstallMode::Move => {
-                fs::rename(src_path, &dst_path).with_context(|| {
-                    format!("Failed to move {:?} to {:?}", &src_path, &dst_path)
-                })?;
+                fs::rename(src_path, &dst_path)
+                    .with_context(|| format!("Failed to move {:?} to {:?}", src_path, dst_path))?;
             }
             InstallMode::Copy => {
-                fs::copy(src_path, &dst_path).with_context(|| {
-                    format!("Failed to copy {:?} to {:?}", &src_path, &dst_path)
-                })?;
+                fs::copy(src_path, &dst_path)
+                    .with_context(|| format!("Failed to copy {:?} to {:?}", src_path, dst_path))?;
             }
         }
 
@@ -263,31 +261,27 @@ pub fn install_package(
         .ok_or_else(|| {
             anyhow!(
                 "No version matching '{}' available for {}",
-                &install_request.version,
-                &package.name
+                install_request.version,
+                package.name
             )
         })?;
 
     let build = package.get_asset(version, &arch_os).ok_or_else(|| {
         anyhow!(
             "No {arch_os} asset available for {} {version}",
-            &package.name
+            package.name
         )
     })?;
 
     let install = package
         .get_install(version, &arch_os)
-        .ok_or_else(|| anyhow!("No files instruction for {}", &package.name))?;
+        .ok_or_else(|| anyhow!("No files instruction for {}", package.name))?;
 
     let installed_version = db.get_package_version(&package.name)?;
     if !reinstall && installed_version == Some(version.clone()) {
-        return Err(anyhow!(
-            "{} {} is already installed",
-            &package.name,
-            version
-        ));
+        return Err(anyhow!("{} {} is already installed", package.name, version));
     }
-    ui.info(&format!("Installing {} {}", &package.name, &version));
+    ui.info(&format!("Installing {} {}", package.name, version));
 
     let ui = ui.nest();
     let asset_path = app
