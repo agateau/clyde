@@ -1,0 +1,3 @@
+kind: Fixed
+body: Fix fetch failing on some servers because Clyde did not set its user-agent.
+time: 2026-07-28T14:24:00.629524314+02:00
